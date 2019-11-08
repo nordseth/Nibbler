@@ -1,0 +1,23 @@
+#!/bin/bash
+set -e
+
+
+docker pull registry:2
+docker run -d --rm -p 5000:5000 --name registry registry:2
+
+docker pull mcr.microsoft.com/dotnet/core/aspnet:3.0
+docker tag mcr.microsoft.com/dotnet/core/aspnet:3.0 localhost:5000/dotnet/core/aspnet:3.0
+docker push localhost:5000/dotnet/core/aspnet:3.0
+
+docker pull hello-world:latest
+docker tag hello-world:latest localhost:5000/hello-world:latest
+docker push localhost:5000/hello-world:latest
+
+rm -rf TestTemp
+mkdir TestTemp
+
+curl -L https://mcr.microsoft.com/v2/dotnet/core/aspnet/blobs/sha256:9526604e089d8d4aa947f34e52a14ac8793232dd181022932f3c15291c5cd3af -o TestTemp/test.tar.gz
+
+cd TestTemp
+dotnet new webapp
+dotnet publish -o ./publish

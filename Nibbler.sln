@@ -1,0 +1,38 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29424.173
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{194229F5-EBA0-4F06-B160-AE78282F5271}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+		setup-test.sh = setup-test.sh
+		test.md = test.md
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nibbler", "Nibbler\Nibbler.csproj", "{651301E0-6804-4AB9-BAC6-8A41242F8F9D}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nibbler.Test", "Nibbler.Test\Nibbler.Test.csproj", "{AEA99A7A-5834-41E0-B416-69A0087A39B3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{651301E0-6804-4AB9-BAC6-8A41242F8F9D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{651301E0-6804-4AB9-BAC6-8A41242F8F9D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{651301E0-6804-4AB9-BAC6-8A41242F8F9D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{651301E0-6804-4AB9-BAC6-8A41242F8F9D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AEA99A7A-5834-41E0-B416-69A0087A39B3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AEA99A7A-5834-41E0-B416-69A0087A39B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AEA99A7A-5834-41E0-B416-69A0087A39B3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AEA99A7A-5834-41E0-B416-69A0087A39B3}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {3603F122-235D-4EB8-8E5B-CB631F651073}
+	EndGlobalSection
+EndGlobal
