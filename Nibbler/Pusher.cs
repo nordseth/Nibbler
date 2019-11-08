@@ -10,21 +10,25 @@ namespace Nibbler
 {
     public class Pusher
     {
+        private readonly bool _tryMount;
         private readonly bool _debug;
+        private readonly string _baseImageName;
         private readonly string _targetImageName;
         private readonly int _chunckSize;
         private readonly bool _reuseUploadUri;
         private readonly int _retryUpload;
         private string _uploadUri;
 
-        public Pusher(BuilderState state, string pushTo, bool debug)
+        public Pusher(BuilderState state, string pushTo, bool tryMount, bool debug)
         {
             State = state;
             PushTo = pushTo;
-            _targetImageName = ImageHelper.GetImageName(PushTo);
             _debug = debug;
+            _tryMount = tryMount;
+            _baseImageName = ImageHelper.GetImageName(state.BaseImage);
+            _targetImageName = ImageHelper.GetImageName(PushTo);
             // set to 0 to diable chunckes
-            _chunckSize = 100000;
+            _chunckSize = 1000000;
             _reuseUploadUri = false;
             _retryUpload = 3;
             Registry = state.GetRegistry();
@@ -32,7 +36,6 @@ namespace Nibbler
 
         public BuilderState State { get; }
         public string PushTo { get; }
-
         public Registry Registry { get; }
 
         public void ValidateDest()
@@ -63,9 +66,25 @@ namespace Nibbler
                 var existsBlobSize = await Registry.BlobExists(_targetImageName, layer.digest);
                 var exists = existsBlobSize.HasValue;
                 var toAdd = State.LayersAdded.Any(x => x.Digest.Equals(layer.digest));
+                bool mounted = false;
                 if (!exists && !toAdd)
                 {
-                    missingLayer.Add(layer.digest);
+                    if (_tryMount)
+                    {
+                        try
+                        {
+                            await Registry.MountBlob(_targetImageName, layer.digest, _baseImageName);
+                            mounted = true;
+                        }
+                        catch
+                        {
+                            missingLayer.Add(layer.digest);
+                        }
+                    }
+                    else
+                    {
+                        missingLayer.Add(layer.digest);
+                    }
                 }
 
                 if (_debug)
@@ -82,7 +101,18 @@ namespace Nibbler
                     }
                     else if (!exists && !toAdd)
                     {
-                        Console.WriteLine($"Error Missing!");
+                        if (mounted)
+                        {
+                            Console.WriteLine($"Was missing, Mount sucessful!");
+                        }
+                        else if (_tryMount)
+                        {
+                            Console.WriteLine($"Error Missing! (tried to mount)");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Error Missing!");
+                        }
                     }
                     else
                     {

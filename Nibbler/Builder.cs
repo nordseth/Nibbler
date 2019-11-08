@@ -234,7 +234,7 @@ namespace Nibbler
                 Console.WriteLine($"debug: Push({dest}, dryRun: {dryRun})");
             }
 
-            var pusher = new Pusher(_store.GetBuilderState(), dest, _debug);
+            var pusher = new Pusher(_store.GetBuilderState(), dest, true, _debug);
 
             pusher.ValidateDest();
             var manifest = _store.GetManifest();

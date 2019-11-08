@@ -108,11 +108,15 @@ namespace Nibbler
             return await response.Content.ReadAsStreamAsync();
         }
 
-        public async Task MountBlob(string uploadUrl, string digest, string fromName)
+        public async Task MountBlob(string name, string digest, string fromName)
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, AddUploadQuery(uploadUrl, $"digest={digest}&from={fromName}"));
+            var request = new HttpRequestMessage(HttpMethod.Post, $"/v2/{name}/blobs/uploads/?mount={digest}&from={fromName}");
             var response = await _client.SendAsync(request);
             await EnsureSuccessWithErrorContent(response);
+            if (response.StatusCode != System.Net.HttpStatusCode.Created)
+            {
+                throw new Exception($"Expected 201 Created, got {response.StatusCode}");
+            }
         }
 
         public async Task UploadBlob(string uploadUrl, string digest, Stream stream, long lenght)
