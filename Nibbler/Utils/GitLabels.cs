@@ -16,8 +16,18 @@ namespace Nibbler.Utils
         //label nibbler.git.url \"\$GIT_REPO" 
         public static IDictionary<string, string> GetLabels(string repoPath)
         {
+            string gitRepoPath;
+            if (!string.IsNullOrEmpty(repoPath))
+            {
+                gitRepoPath = System.IO.Path.GetFullPath(repoPath);
+            }
+            else
+            {
+                gitRepoPath = System.IO.Directory.GetCurrentDirectory();
+            }
+
             var result = new Dictionary<string, string>();
-            using (var repo = new Repository(repoPath))
+            using (var repo = new Repository(gitRepoPath))
             {
                 var commit = repo.Head.Tip;
                 string description = repo.Describe(commit, new DescribeOptions { UseCommitIdAsFallback = true });
@@ -31,34 +41,6 @@ namespace Nibbler.Utils
             }
 
             return result;
-        }
-
-        public static void AddLabels(string repoPath, Builder builder, bool debug)
-        {
-            string gitRepoPath;
-            if (!string.IsNullOrEmpty(repoPath))
-            {
-                gitRepoPath = System.IO.Path.GetFullPath(repoPath);
-            }
-            else
-            {
-                gitRepoPath = System.IO.Directory.GetCurrentDirectory();
-            }
-
-            var labels = GetLabels(gitRepoPath);
-
-            if (debug)
-            {
-                foreach (var l in labels)
-                {
-                    Console.WriteLine($"debug: (git) label {l.Key} = {l.Value}");
-                }
-            }
-
-            foreach (var l in labels)
-            {
-                builder.Label(l.Key, l.Value);
-            }
         }
     }
 }

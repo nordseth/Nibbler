@@ -10,46 +10,44 @@ namespace Nibbler
 {
     public class Pusher
     {
-        private readonly bool _tryMount;
-        private readonly bool _debug;
         private readonly string _baseImageName;
+        private readonly string _destination;
         private readonly string _targetImageName;
+        private readonly IEnumerable<BuilderLayer> _addedLayers;
+        private readonly Registry _registry;
+        private readonly bool _debug;
         private readonly int _chunckSize;
         private readonly bool _reuseUploadUri;
         private readonly int _retryUpload;
+
         private string _uploadUri;
 
-        public Pusher(BuilderState state, string pushTo, bool tryMount, bool debug)
+        public Pusher(string baseImage, string destination, IEnumerable<BuilderLayer> addedLayers, Registry registry, bool debug)
         {
-            State = state;
-            PushTo = pushTo;
+            _baseImageName = ImageHelper.GetImageName(baseImage);
+            _destination = destination;
+            _targetImageName = ImageHelper.GetImageName(_destination);
+            _addedLayers = addedLayers;
+            _registry = registry;
             _debug = debug;
-            _tryMount = tryMount;
-            _baseImageName = ImageHelper.GetImageName(state.BaseImage);
-            _targetImageName = ImageHelper.GetImageName(PushTo);
             // set to 0 to diable chunckes
             _chunckSize = 1000000;
             _reuseUploadUri = false;
             _retryUpload = 3;
-            Registry = state.GetRegistry();
         }
-
-        public BuilderState State { get; }
-        public string PushTo { get; }
-        public Registry Registry { get; }
 
         public void ValidateDest()
         {
-            var destRegistryUri = ImageHelper.GetRegistryBaseUrl(PushTo, State.Insecure);
-            if (Registry.BaseUri != destRegistryUri)
+            var destRegistryUri = ImageHelper.GetRegistryBaseUrl(_destination, _registry.BaseUri.Scheme == "http");
+            if (_registry.BaseUri != destRegistryUri)
             {
-                throw new Exception($"Source ({Registry.BaseUri.Authority}) and destination ({destRegistryUri.Authority}) registries must be the same.");
+                throw new Exception($"Source ({_registry.BaseUri.Authority}) and destination ({destRegistryUri.Authority}) registries must be the same.");
             }
         }
 
         public async Task<bool> CheckConfigExists(ManifestV2 manifest)
         {
-            var configExists = await Registry.BlobExists(_targetImageName, manifest.config.digest);
+            var configExists = await _registry.BlobExists(_targetImageName, manifest.config.digest);
             if (_debug)
             {
                 Console.WriteLine($"debug: config {manifest.config.digest} ({manifest.config.size}) - {(configExists.HasValue ? "Exists" : "To be uploaded")}");
@@ -58,22 +56,22 @@ namespace Nibbler
             return configExists.HasValue;
         }
 
-        public async Task ValidateLayers(ManifestV2 manifest)
+        public async Task ValidateLayers(ManifestV2 manifest, bool tryMount)
         {
             var missingLayer = new List<string>();
             foreach (var layer in manifest.layers)
             {
-                var existsBlobSize = await Registry.BlobExists(_targetImageName, layer.digest);
+                var existsBlobSize = await _registry.BlobExists(_targetImageName, layer.digest);
                 var exists = existsBlobSize.HasValue;
-                var toAdd = State.LayersAdded.Any(x => x.Digest.Equals(layer.digest));
+                var toAdd = _addedLayers.Any(x => x.Digest.Equals(layer.digest));
                 bool mounted = false;
                 if (!exists && !toAdd)
                 {
-                    if (_tryMount)
+                    if (tryMount)
                     {
                         try
                         {
-                            await Registry.MountBlob(_targetImageName, layer.digest, _baseImageName);
+                            await _registry.MountBlob(_targetImageName, layer.digest, _baseImageName);
                             mounted = true;
                         }
                         catch
@@ -105,7 +103,7 @@ namespace Nibbler
                         {
                             Console.WriteLine($"Was missing, Mount sucessful!");
                         }
-                        else if (_tryMount)
+                        else if (tryMount)
                         {
                             Console.WriteLine($"Error Missing! (tried to mount)");
                         }
@@ -142,11 +140,11 @@ namespace Nibbler
                     {
                         if (_chunckSize > 0)
                         {
-                            await Registry.UploadBlobChuncks(uploadUri, config.digest, stream, _chunckSize, _debug);
+                            await _registry.UploadBlobChuncks(uploadUri, config.digest, stream, _chunckSize, _debug);
                         }
                         else
                         {
-                            await Registry.UploadBlob(uploadUri, config.digest, stream, config.size);
+                            await _registry.UploadBlob(uploadUri, config.digest, stream, config.size);
                         }
                     }
                 });
@@ -154,7 +152,7 @@ namespace Nibbler
 
         public async Task PushLayers(Func<string, System.IO.Stream> layerStream)
         {
-            foreach (var layer in State.LayersAdded)
+            foreach (var layer in _addedLayers)
             {
                 await PushLayer(layerStream, layer);
             }
@@ -175,11 +173,11 @@ namespace Nibbler
                     {
                         if (_chunckSize > 0)
                         {
-                            await Registry.UploadBlobChuncks(uploadUri, layer.Digest, stream, _chunckSize, _debug);
+                            await _registry.UploadBlobChuncks(uploadUri, layer.Digest, stream, _chunckSize, _debug);
                         }
                         else
                         {
-                            await Registry.UploadBlob(uploadUri, layer.Digest, stream, layer.Size);
+                            await _registry.UploadBlob(uploadUri, layer.Digest, stream, layer.Size);
                         }
 
                     }
@@ -190,7 +188,7 @@ namespace Nibbler
         {
             if (!_reuseUploadUri || _uploadUri == null)
             {
-                _uploadUri = await Registry.StartUpload(_targetImageName);
+                _uploadUri = await _registry.StartUpload(_targetImageName);
             }
 
             return _uploadUri;
@@ -201,7 +199,7 @@ namespace Nibbler
             await RetryHelper.Retry(_retryUpload, _debug,
                 async () =>
                 {
-                    var destImageRef = ImageHelper.GetImageReference(PushTo);
+                    var destImageRef = ImageHelper.GetImageReference(_destination);
                     using (var stream = manifestStream())
                     {
                         if (_debug)
@@ -209,7 +207,7 @@ namespace Nibbler
                             Console.WriteLine($"debug: uploading manifest");
                         }
 
-                        await Registry.UploadManifest(_targetImageName, destImageRef, stream);
+                        await _registry.UploadManifest(_targetImageName, destImageRef, stream);
                     }
                 });
         }

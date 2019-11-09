@@ -33,12 +33,15 @@ echo "-------- Install Nibbler --------"
 dotnet tool install -g Nibbler --version $nibblerVersion
 
 echo "-------- Build image with Nibbler --------"
-nibbler init host.docker.internal:5000/dotnet/core/aspnet:$dotnetRuntimeTag --insecure --debug
-nibbler labels git --debug
-nibbler cmd dotnet aspnetcore-new.dll --debug
-nibbler workdir /app --debug
-nibbler add publish /app --debug
-nibbler push host.docker.internal:5000/$targetImage:$dotnetVersion --debug
+nibbler \
+	--base-image host.docker.internal:5000/dotnet/core/aspnet:$dotnetRuntimeTag \
+	--destination host.docker.internal:5000/$targetImage:$dotnetVersion \
+	--add "publish:/app" \
+	--git-labels \
+	--workdir /app \
+	--cmd "dotnet aspnetcore-new.dll" \
+	--insecure \
+	--debug
 
 echo "-------- Success building image with Nibbler! --------"
 EOF

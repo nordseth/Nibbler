@@ -52,7 +52,7 @@ namespace Nibbler.Models
         {
             return new ImageV1History
             {
-                author = Builder.ProgramName,
+                author = Program.ProgramName,
                 created = "0001-01-01T00:00:00Z",
                 created_by = createdBy,
                 empty_layer = empty,

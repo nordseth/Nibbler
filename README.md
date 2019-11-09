@@ -19,11 +19,12 @@ nibbler --help
 
 ```
 dotnet publish -o $PWD/artifacts
-nibbler init my-registry.com/repo/baseimage:latest
-nibbler workdir /app
-nibbler entrypoint dotnet MyApp.dll
-nibbler add ./artifacts /app
-nibbler push my-registy.com/repo/image:latest 
+nibbler \
+	--base-image my-registry.com/repo/baseimage:latest \
+	--destination my-registy.com/repo/image:latest  \
+	--add "artifacts:/app" \
+	--workdir /app \
+	--entrypoint "dotnet MyApp.dll" 
 ```
 
 ## Features
