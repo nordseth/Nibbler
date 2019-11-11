@@ -4,7 +4,7 @@ set -e
 dotnetVersion=3.0
 dotnetRuntimeTag=$dotnetVersion
 dotnetSdkTag=$dotnetVersion-bionic
-nibblerVersion=1.0.0-beta.2
+nibblerVersion=1.0.0-beta.3
 targetImage=nibbler-test
 
 echo "-------- Prepair images --------"
@@ -30,7 +30,7 @@ dotnet build --no-restore
 dotnet publish -o ./publish --no-build
 
 echo "-------- Install Nibbler --------"
-dotnet tool install -g Nibbler --version 1.0.0-beta.2
+dotnet tool install -g Nibbler --version $nibblerVersion
 
 echo "-------- Build image with Nibbler --------"
 nibbler init host.docker.internal:5000/dotnet/core/aspnet:$dotnetRuntimeTag --insecure --debug

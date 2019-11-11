@@ -102,7 +102,6 @@ namespace Nibbler
 
             var archive = new Archive(
                 System.IO.Path.Combine(_store.FolderPath, $"{layer.Name}.tar.gz"),
-                System.IO.Path.Combine(_store.FolderPath, $"{layer.Name}.tar"),
                 true);
 
             archive.CreateEntries(source, dest, false, null, null);
@@ -115,10 +114,10 @@ namespace Nibbler
                 }
             }
 
-            archive.WriteFiles();
+            var (digest, diffId) = archive.WriteFileAndCalcDigests();
 
-            layer.Digest = archive.CalculateDigest();
-            layer.DiffId = archive.CalculateDiffId();
+            layer.Digest = digest;
+            layer.DiffId = diffId;
             layer.Size = archive.GetSize();
             state.LayersAdded.Add(layer);
             _store.SaveState(state);

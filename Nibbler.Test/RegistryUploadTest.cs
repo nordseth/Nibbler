@@ -53,7 +53,7 @@ namespace Nibbler.Test
         {
             try
             {
-                await RetryHelper.Retry(3, true, async () => throw new Exception());
+                await RetryHelper.Retry(3, true, () => throw new Exception());
                 Assert.Fail("Should throw exception");
             }
             catch

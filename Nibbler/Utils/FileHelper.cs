@@ -16,7 +16,7 @@ namespace Nibbler.Utils
         };
 
         // https://github.com/docker/distribution/blob/master/docs/spec/api.md#digest-parameter
-        public static string Digest(Stream stream)
+        public static string Digest(this Stream stream)
         {
             using (var hasher = SHA256.Create())
             {
@@ -25,7 +25,7 @@ namespace Nibbler.Utils
             }
         }
 
-        public static string Digest(byte[] bytes)
+        public static string Digest(this byte[] bytes)
         {
             using (var hasher = SHA256.Create())
             {
@@ -34,7 +34,7 @@ namespace Nibbler.Utils
             }
         }
 
-        public static string ToDigestString(byte[] hash)
+        public static string ToDigestString(this byte[] hash)
         {
             return $"sha256:{BitConverter.ToString(hash).Replace("-", string.Empty).ToLowerInvariant()}";
         }

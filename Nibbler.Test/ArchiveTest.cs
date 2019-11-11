@@ -39,7 +39,7 @@ namespace Nibbler.Test
         [DataRow(@"../../../../TestTemp/publish/", "/app")]
         public void Archive_Enumerate(string source, string dest)
         {
-            var tar = new Archive(null, null, false);
+            var tar = new Archive(null, false);
             tar.CreateEntries(source, dest, false, null, null);
 
             foreach (var e in tar.Entries)
@@ -50,23 +50,19 @@ namespace Nibbler.Test
 
         [TestMethod]
         [DataRow(@"../../../../TestTemp/publish/", "/app", "../../../../TestTemp")]
-        public void Archive_Add_Files(string source, string dest, string tempFolder)
+        public void Archive_OneFile_Add_Files(string source, string dest, string tempFolder)
         {
-            var layer = Path.Combine(tempFolder, "nibbler-test.tar.gz");
-            var tempLayer = Path.Combine(tempFolder, "nibbler-test.tar");
+            var layer = Path.Combine(tempFolder, "nibbler-test2.tar.gz");
 
             Console.WriteLine($"layer: {layer}");
-            Console.WriteLine($"temp layer: {tempLayer}");
-            var tar = new Archive(layer, tempLayer, true);
+            var tar = new Archive(layer, true);
             tar.CreateEntries(source, dest, false, null, null);
-            tar.WriteFiles();
+            var (gzipDigest, tarDigest) = tar.WriteFileAndCalcDigests();
 
             var size = tar.GetSize();
             Console.WriteLine($"size: {size}");
-            var digest = tar.CalculateDigest();
-            Console.WriteLine($"digest: {digest}");
-            var diffId = tar.CalculateDiffId();
-            Console.WriteLine($"diffId: {diffId}");
+            Console.WriteLine($"digest: {gzipDigest}");
+            Console.WriteLine($"diffId: {tarDigest}");
         }
     }
 }
