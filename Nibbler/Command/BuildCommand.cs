@@ -77,8 +77,10 @@ namespace Nibbler.Command
 
         public async Task<int> ExecuteAsync(CancellationToken cancellationToken)
         {
+            var sw = System.Diagnostics.Stopwatch.StartNew();
             try
             {
+
                 var registry = CreateRegistry();
                 var (manifest, image) = await LoadBaseImage(registry);
                 UpdateImageConfig(image);
@@ -132,6 +134,11 @@ namespace Nibbler.Command
                     File.WriteAllText(digestFilepath, manifestDigest);
                 }
 
+                if (_debug)
+                {
+                    Console.WriteLine($"debug: completed in {sw.ElapsedMilliseconds} ms");
+                }
+
                 return 0;
             }
             catch (Exception ex)
@@ -140,6 +147,7 @@ namespace Nibbler.Command
                 if (_debug)
                 {
                     Console.Error.WriteLine(ex);
+                    Console.WriteLine($"debug: completed in {sw.ElapsedMilliseconds} ms");
                 }
 
                 return 1;

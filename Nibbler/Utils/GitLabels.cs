@@ -31,16 +31,32 @@ namespace Nibbler.Utils
             {
                 var commit = repo.Head.Tip;
                 string description = repo.Describe(commit, new DescribeOptions { UseCommitIdAsFallback = true });
+                string branch = GetBranch(repo.Head);
 
                 result.Add("nibbler.git.commit.id", commit.Id.ToString());
                 result.Add("nibbler.git.commit.message", commit.MessageShort);
-                result.Add("nibbler.git.commit.ref", $"{commit.Author.Name} <{commit.Author.Email}>");
-                result.Add("nibbler.git.commit.author", commit.Author.When.ToString("u"));
-                result.Add("nibbler.git.commit.date", $"{repo.Head.FriendlyName}, {description}");
+                result.Add("nibbler.git.commit.author", $"{commit.Author.Name} <{commit.Author.Email}>");
+                result.Add("nibbler.git.commit.date", commit.Author.When.ToString("u"));
+                result.Add("nibbler.git.commit.ref", $"{branch}, {description}");
                 result.Add("nibbler.git.url", repo.Network.Remotes.FirstOrDefault(r => r.Name == "origin")?.Url);
             }
 
             return result;
+        }
+
+        private static string GetBranch(Branch head)
+        {
+            // try to fallback to env var $GIT_BRANCH, if detached head
+            if (head.CanonicalName == "(no branch)")
+            {
+                string branchVar = Environment.GetEnvironmentVariable("GIT_BRANCH");
+                if (!string.IsNullOrEmpty(branchVar))
+                {
+                    return branchVar;
+                }
+            }
+
+            return head.FriendlyName;
         }
     }
 }
