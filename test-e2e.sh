@@ -4,7 +4,7 @@ set -e
 dotnetVersion=3.0
 dotnetRuntimeTag=$dotnetVersion
 dotnetSdkTag=$dotnetVersion-bionic
-nibblerVersion=1.0.0-beta.3
+nibblerVersion=1.0.0-beta.4
 targetImage=nibbler-test
 
 echo "-------- Prepair images --------"
