@@ -6,9 +6,6 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{194229F5-EBA0-4F06-B160-AE78282F5271}"
 	ProjectSection(SolutionItems) = preProject
 		README.md = README.md
-		setup-test.sh = setup-test.sh
-		test-e2e.sh = test-e2e.sh
-		test.md = test.md
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nibbler", "Nibbler\Nibbler.csproj", "{651301E0-6804-4AB9-BAC6-8A41242F8F9D}"

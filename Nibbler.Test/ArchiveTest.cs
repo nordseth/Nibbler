@@ -12,7 +12,7 @@ namespace Nibbler.Test
     public class ArchiveTest
     {
         [TestMethod]
-        [DataRow(@"../../../../TestTemp/test.tar.gz")]
+        [DataRow(@"../../../../test/TestData/test.tar.gz")]
         public void Tar_Read_Archive_Details(string archive)
         {
             byte[] dataBuffer = new byte[4096];
@@ -36,7 +36,7 @@ namespace Nibbler.Test
         }
 
         [TestMethod]
-        [DataRow(@"../../../../TestTemp/publish/", "/app")]
+        [DataRow(@"../../../../test/TestData/publish/", "/app")]
         public void Archive_Enumerate(string source, string dest)
         {
             var tar = new Archive(null, false);
@@ -49,7 +49,7 @@ namespace Nibbler.Test
         }
 
         [TestMethod]
-        [DataRow(@"../../../../TestTemp/publish/", "/app", "../../../../TestTemp")]
+        [DataRow(@"../../../../test/TestData/publish/", "/app", "../../../../test/TestData")]
         public void Archive_OneFile_Add_Files(string source, string dest, string tempFolder)
         {
             var layer = Path.Combine(tempFolder, "nibbler-test2.tar.gz");

@@ -34,7 +34,7 @@ namespace Nibbler.Test
         [DataRow(new string[] {
             "--base-image", "localhost:5000/dotnet/core/aspnet:3.0",
             "--destination", "localhost:5000/test/nibbler-test:latest",
-            "--add", @"../../../../TestTemp/publish/:/app",
+            "--add", @"../../../../test/TestData/publish/:/app",
             "--insecure",
             "--debug", "--dry-run" })]
         [DataRow(new string[] {
@@ -56,8 +56,8 @@ namespace Nibbler.Test
         [DataRow(new string[] {
             "--base-image", "localhost:5000/dotnet/core/aspnet:3.0",
             "--destination", "localhost:5000/test/nibbler-test:latest",
-            "--cmd", "dotnet TestTemp.dll",
-            "--entrypoint", "dotnet TestTemp.dll",
+            "--cmd", "dotnet TestData.dll",
+            "--entrypoint", "dotnet TestData.dll",
             "--insecure",
             "--debug", "--dry-run" })]
         [DataRow(new string[] {
