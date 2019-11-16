@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using LibGit2Sharp;
+using Nordseth.Git;
 
 namespace Nibbler.Utils
 {
@@ -26,37 +26,20 @@ namespace Nibbler.Utils
                 gitRepoPath = System.IO.Directory.GetCurrentDirectory();
             }
 
-            var result = new Dictionary<string, string>();
-            using (var repo = new Repository(gitRepoPath))
-            {
-                var commit = repo.Head.Tip;
-                string description = repo.Describe(commit, new DescribeOptions { UseCommitIdAsFallback = true });
-                string branch = GetBranch(repo.Head);
+            var repo = new Repo(gitRepoPath);
 
-                result.Add("nibbler.git.commit.id", commit.Id.ToString());
-                result.Add("nibbler.git.commit.message", commit.MessageShort);
-                result.Add("nibbler.git.commit.author", $"{commit.Author.Name} <{commit.Author.Email}>");
-                result.Add("nibbler.git.commit.date", commit.Author.When.ToString("u"));
-                result.Add("nibbler.git.commit.ref", $"{branch}, {description}");
-                result.Add("nibbler.git.url", repo.Network.Remotes.FirstOrDefault(r => r.Name == "origin")?.Url);
-            }
+            var result = new Dictionary<string, string>();
+
+            var gitInfo = repo.GetGitInfo();
+
+            result.Add("nibbler.git.commit.id", gitInfo.CommitId);
+            result.Add("nibbler.git.commit.message", gitInfo.CommitMessage);
+            result.Add("nibbler.git.commit.author", gitInfo.CommitAuthor);
+            result.Add("nibbler.git.commit.date", gitInfo.CommitDate);
+            result.Add("nibbler.git.commit.ref", $"{gitInfo.Branch ?? Environment.GetEnvironmentVariable("GIT_BRANCH")}, {gitInfo.CommitDescription}");
+            result.Add("nibbler.git.url", gitInfo.OriginUrl);
 
             return result;
-        }
-
-        private static string GetBranch(Branch head)
-        {
-            // try to fallback to env var $GIT_BRANCH, if detached head
-            if (head.CanonicalName == "(no branch)")
-            {
-                string branchVar = Environment.GetEnvironmentVariable("GIT_BRANCH");
-                if (!string.IsNullOrEmpty(branchVar))
-                {
-                    return branchVar;
-                }
-            }
-
-            return head.FriendlyName;
         }
     }
 }
