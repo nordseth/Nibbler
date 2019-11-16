@@ -1,0 +1,18 @@
+#!/bin/bash
+set -e
+
+echo "-------- dotnet-build.sh: download repo --------"
+
+curl -L https://github.com/nordseth/aspnetcore-new/archive/2.2.tar.gz -o ../src.tar.gz
+tar -xzf ../src.tar.gz
+cd aspnetcore-new-2.2
+
+echo "-------- dotnet-build.sh: dotnet build artifacts --------"
+
+dotnet restore
+dotnet build --no-restore -c Release
+rm -rf /opt/app-root/workspace/TestData/publish-docker
+dotnet publish -c Release --no-build -o /opt/app-root/workspace/TestData/publish-docker \
+  -p:MicrosoftNETPlatformLibrary=Microsoft.NETCore.App
+  
+echo "-------- dotnet-build.sh: end --------"

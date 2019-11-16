@@ -58,7 +58,7 @@ namespace Nibbler
             return JsonConvert.DeserializeObject<ManifestV2>(await GetManifestFile(name, reference));
         }
 
-        public async Task<(string, string)> GetImageFile(string name, string digest)
+        public async Task<(string content, string digest)> GetImageFile(string name, string digest)
         {
             var request = new HttpRequestMessage(HttpMethod.Get, $"/v2/{name}/blobs/{digest}");
             request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(ImageV1.MimeType));

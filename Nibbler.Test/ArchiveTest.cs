@@ -15,8 +15,6 @@ namespace Nibbler.Test
         [DataRow(@"../../../../test/TestData/test.tar.gz")]
         public void Tar_Read_Archive_Details(string archive)
         {
-            byte[] dataBuffer = new byte[4096];
-
             using var fs = new FileStream(archive, FileMode.Open, FileAccess.Read);
             using var gzipStream = new GZipInputStream(fs);
             using var tarStream = new TarInputStream(gzipStream);
