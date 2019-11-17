@@ -12,7 +12,7 @@ namespace Nibbler.Test
     public class ArchiveTest
     {
         [TestMethod]
-        [DataRow(@"../../../../test/TestData/test.tar.gz")]
+        [DataRow(@"../../../../tests/TestData/test.tar.gz")]
         public void Tar_Read_Archive_Details(string archive)
         {
             using var fs = new FileStream(archive, FileMode.Open, FileAccess.Read);
@@ -27,27 +27,27 @@ namespace Nibbler.Test
         }
 
         [TestMethod]
-        [DataRow(@"../../../../test/TestData/publish/", "/app")]
+        [DataRow(@"../../../../tests/TestData/publish/", "/app")]
         public void Archive_Enumerate(string source, string dest)
         {
             var tar = new Archive(null, false);
-            tar.CreateEntries(source, dest, false, null, null);
+            tar.CreateEntries(source, dest, null, null, null);
 
             foreach (var e in tar.Entries)
             {
-                Console.WriteLine(Archive.PrintEntry(e.Item2));
+                Console.WriteLine(Archive.PrintEntry(e.Value.Item2));
             }
         }
 
         [TestMethod]
-        [DataRow(@"../../../../test/TestData/publish/", "/app", "../../../../test/TestData")]
+        [DataRow(@"../../../../tests/TestData/publish/", "/app", "../../../../tests/TestData")]
         public void Archive_OneFile_Add_Files(string source, string dest, string tempFolder)
         {
             var layer = Path.Combine(tempFolder, "nibbler-test2.tar.gz");
 
             Console.WriteLine($"layer: {layer}");
             var tar = new Archive(layer, true);
-            tar.CreateEntries(source, dest, false, null, null);
+            tar.CreateEntries(source, dest, null, null, null);
             var (gzipDigest, tarDigest) = tar.WriteFileAndCalcDigests();
 
             var size = tar.GetSize();

@@ -13,7 +13,6 @@ namespace Nibbler
     {
         private readonly string _outfile;
         private readonly bool _reproducable;
-        private readonly List<(string, TarEntry)> _entries = new List<(string, TarEntry)>();
         private readonly bool _isLinux;
 
         public Archive(string outfile, bool reproducable)
@@ -24,18 +23,10 @@ namespace Nibbler
             _isLinux = System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux);
         }
 
-        public IEnumerable<(string, TarEntry)> Entries => _entries.AsReadOnly();
+        public IDictionary<string, (string, TarEntry)> Entries { get; } = new Dictionary<string, (string, TarEntry)>();
 
-        // ref: https://github.com/icsharpcode/SharpZipLib/wiki/GZip-and-Tar-Samples#createFull
-        //      https://github.com/icsharpcode/SharpZipLib/tree/master/src/ICSharpCode.SharpZipLib/Tar
-        public void CreateEntries(string source, string dest, bool addFolders, string owner, string group)
+        public void CreateEntries(string source, string dest, int? owner, int? group, int? mode)
         {
-            if (addFolders)
-            {
-                // add folders on dest
-                throw new NotImplementedException();
-            }
-
             foreach (var path in Directory.EnumerateFiles(source))
             {
                 var fileInfo = new FileInfo(path);
@@ -48,9 +39,9 @@ namespace Nibbler
                 // entry.TarHeader.Mode = isDir ? 1003 : 33216;
                 // not sure about the mode?
 
-                FillEntry(entry, fileInfo, owner, group);
+                FillEntry(entry, fileInfo, owner, group, mode);
 
-                _entries.Add((path, entry));
+                Entries[tarName] = (path, entry);
             }
 
             foreach (var path in Directory.EnumerateDirectories(source))
@@ -63,8 +54,47 @@ namespace Nibbler
                 //entry.Size = 0;
                 // _entries.Add((path, entry));
 
-                CreateEntries(path, Path.Combine(dest, dirInfo.Name), false, owner, group);
+                CreateEntries(path, Path.Combine(dest, dirInfo.Name), owner, group, mode);
             }
+        }
+
+        public void CreateFolderEntry(string dest, int? ownerId, int? groupId, int? mode)
+        {
+            var tarName = dest.Replace('\\', '/');
+            if (!tarName.EndsWith("/"))
+            {
+                tarName = tarName + "/";
+            }
+
+            var entry = TarEntry.CreateTarEntry(tarName);
+
+            if (ownerId.HasValue)
+            {
+                entry.UserId = ownerId.Value;
+            }
+
+            if (groupId.HasValue)
+            {
+                entry.GroupId = groupId.Value;
+            }
+
+            if (mode.HasValue)
+            {
+                // 040xxx
+                int maskedMode = 16384 + (mode.Value & 0b_0001_1111_1111);
+                entry.TarHeader.Mode = maskedMode;
+            }
+            else
+            {
+                entry.TarHeader.Mode = Convert.ToInt32("040755", 8);
+            }
+
+            if (_reproducable)
+            {
+                entry.ModTime = new DateTime(2000, 1, 1);
+            }
+
+            Entries[tarName] = (null, entry);
         }
 
         public (string gzipDigest, string tarDigest) WriteFileAndCalcDigests()
@@ -78,12 +108,17 @@ namespace Nibbler
             using (var tarDigestStream = GetHashStream(gzipStream, tarDigest))
             using (var tarStream = new TarOutputStream(tarDigestStream))
             {
-                foreach (var i in _entries)
+                foreach (var i in Entries)
                 {
-                    tarStream.PutNextEntry(i.Item2);
-                    using (var fileStream = File.OpenRead(i.Item1))
+                    tarStream.PutNextEntry(i.Value.Item2);
+
+                    // directories have null in source file
+                    if (i.Value.Item1 != null)
                     {
-                        fileStream.CopyTo(tarStream);
+                        using (var fileStream = File.OpenRead(i.Value.Item1))
+                        {
+                            fileStream.CopyTo(tarStream);
+                        }
                     }
 
                     tarStream.CloseEntry();
@@ -107,9 +142,8 @@ namespace Nibbler
             return $"{e.ModTime} {Convert.ToString(e.TarHeader.Mode, 8)} {e.UserId}/{e.UserName} {e.GroupId}/{e.GroupName} {e.Size} bytes - {e.Name} {e.File}{(e.IsDirectory ? " - D" : "")}";
         }
 
-        private void FillEntry(TarEntry entry, FileInfo fileInfo, string owner, string group)
+        private void FillEntry(TarEntry entry, FileInfo fileInfo, int? ownerId, int? groupId, int? mode)
         {
-            //todo fill inn other entry data, like mode, modified (if !_reproducable), owner, group
             if (_isLinux)
             {
                 FillLinuxFileInfo(entry, fileInfo);
@@ -117,7 +151,26 @@ namespace Nibbler
             else
             {
                 entry.ModTime = fileInfo.LastWriteTime;
-                entry.TarHeader.Mode = Convert.ToInt32("755", 8);
+                entry.TarHeader.Mode = Convert.ToInt32("100755", 8);
+            }
+
+            if (ownerId.HasValue)
+            {
+                entry.UserId = ownerId.Value;
+                entry.UserName = String.Empty;
+            }
+
+            if (groupId.HasValue)
+            {
+                entry.GroupId = groupId.Value;
+                entry.GroupName = String.Empty;
+            }
+
+            if (mode.HasValue)
+            {
+                // 100xxx
+                int maskedMode = 32768 + (mode.Value & 0b_0001_1111_1111);
+                entry.TarHeader.Mode = maskedMode;
             }
 
             if (_reproducable)
@@ -131,7 +184,9 @@ namespace Nibbler
         {
             var info = LinuxFileUtils.LinuxFileInfo.LStat(fileInfo.FullName);
             entry.ModTime = info.LastModTime;
-            entry.TarHeader.Mode = (int)info.Mode;
+            // 100xxx
+            int maskedMode = 32768 + (info.Mode & 0b_0001_1111_1111);
+            entry.TarHeader.Mode = maskedMode;
             entry.UserId = info.OwnerId;
             entry.UserName = null;
             entry.GroupId = info.GroupId;

@@ -43,5 +43,17 @@ namespace Nibbler.Utils
         {
             return JsonConvert.SerializeObject(obj, JsonSerializerSettings);
         }
+
+        public static string AsOctalString(this int? mode)
+        {
+            if (mode.HasValue)
+            {
+                return Convert.ToString(mode.Value, 8);
+            }
+            else
+            {
+                return null;
+            }
+        }
     }
 }

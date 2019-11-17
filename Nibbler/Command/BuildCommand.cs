@@ -24,6 +24,7 @@ namespace Nibbler.Command
         public CommandOption Destination { get; private set; }
 
         public CommandOption Add { get; private set; }
+        public CommandOption AddFolder { get; private set; }
 
         public CommandOption Label { get; private set; }
         public CommandOption Env { get; private set; }
@@ -53,7 +54,8 @@ namespace Nibbler.Command
             Destination = app.Option("--destination", "Destination to push the modified image  (required)", CommandOptionType.SingleValue).IsRequired();
 
             // "commands"
-            Add = app.Option("--add", "Add a folder to the image 'sourceFolder:destFolder'", CommandOptionType.MultipleValue);
+            Add = app.Option("--add", "Add contents of a folder to the image 'sourceFolder:destFolder[:ownerId:groupId:permissions]'", CommandOptionType.MultipleValue);
+            AddFolder = app.Option("--addFolder", "Add a folder to the image 'destFolder[:ownerId:groupId:permissions]'", CommandOptionType.MultipleValue);
             Label = app.Option("--label", "Add label to the image 'name=value'", CommandOptionType.MultipleValue);
             Env = app.Option("--env", "Add a environment variable to the image 'name=value'", CommandOptionType.MultipleValue);
             GitLabels = app.Option("--git-labels", "Add common git labels to image, optionally define the path to the git repo.", CommandOptionType.SingleOrNoValue);
@@ -87,9 +89,9 @@ namespace Nibbler.Command
                 UpdateConfigInManifest(manifest, image);
 
                 var layersAdded = new List<BuilderLayer>();
-                foreach (var folder in Add.Values)
+                if (Add.HasValue())
                 {
-                    var layer = AddFolder(folder, $"layer{layersAdded.Count():00}");
+                    var layer = CreateLayer(Add.Values, AddFolder.Values, $"layer{layersAdded.Count():00}");
                     layersAdded.Add(layer);
                     AddLayerToConfigAndManifest(layer, manifest, image);
                 }
@@ -286,49 +288,54 @@ namespace Nibbler.Command
             manifest.config.size = imageBytes.Length;
         }
 
-        private BuilderLayer AddFolder(string folder, string layerName)
+        private BuilderLayer CreateLayer(IEnumerable<string> adds, IEnumerable<string> addFolders, string layerName)
         {
-            // todo: windows path will not work as we will get more than one ':'
-            // should we use a different seperator, or find the last ':'?
-            var split = folder.Split(':', 2);
-            if (split.Length != 2)
-            {
-                throw new Exception($"Invalid add {folder}");
-            }
-
-            var source = split[0];
-            var dest = split[1];
-
-            if (_debug)
-            {
-                Console.WriteLine($"debug: --add {source} {dest}");
-            }
-
-            var layer = new BuilderLayer
-            {
-                Source = source,
-                Dest = dest,
-                Name = layerName,
-            };
-
+            var description = new StringBuilder();
             EnsureTempFolder();
             var archive = new Archive(Path.Combine(_tempFolderPath, $"{layerName}.tar.gz"), true);
 
-            archive.CreateEntries(source, dest, false, null, null);
+            foreach (var a in adds)
+            {
+                var arg = AddArgument.Parse(a, false);
+                if (_debug)
+                {
+                    Console.WriteLine($"debug: --add {arg.Source} {arg.Dest} {arg.OwnerId} {arg.GroupId} {arg.Mode.AsOctalString()}");
+                }
+
+                description.Append($"--add . {arg.Dest} {arg.OwnerId} {arg.GroupId} {arg.Mode.AsOctalString()} ");
+                archive.CreateEntries(arg.Source, arg.Dest, arg.OwnerId, arg.GroupId, arg.Mode);
+            }
+
+            foreach (var a in addFolders ?? Enumerable.Empty<string>())
+            {
+                var arg = AddArgument.Parse(a, true);
+                if (_debug)
+                {
+                    Console.WriteLine($"debug: --addFolder {arg.Dest} {arg.OwnerId} {arg.GroupId} {arg.Mode.AsOctalString()}");
+                }
+
+                description.Append($"--addFolder {arg.Dest} {arg.OwnerId} {arg.GroupId} {arg.Mode.AsOctalString()} ");
+                archive.CreateFolderEntry(arg.Dest, arg.OwnerId, arg.GroupId, arg.Mode);
+            }
 
             if (_debug)
             {
+                Console.WriteLine($"debug:  layer contents:");
                 foreach (var e in archive.Entries)
                 {
-                    Console.WriteLine($"debug:  (file) {Archive.PrintEntry(e.Item2)}");
+                    Console.WriteLine($"debug:      {Archive.PrintEntry(e.Value.Item2)}");
                 }
             }
 
             var (digest, diffId) = archive.WriteFileAndCalcDigests();
-
-            layer.Digest = digest;
-            layer.DiffId = diffId;
-            layer.Size = archive.GetSize();
+            var layer = new BuilderLayer
+            {
+                Name = layerName,
+                Digest = digest,
+                DiffId = diffId,
+                Size = archive.GetSize(),
+                Description = description.ToString(),
+            };
 
             if (_debug)
             {
@@ -341,7 +348,7 @@ namespace Nibbler.Command
         private void AddLayerToConfigAndManifest(BuilderLayer layer, ManifestV2 manifest, ImageV1 image)
         {
             image.rootfs.diff_ids.Add(layer.DiffId);
-            image.history.Add(ImageV1History.Create($"--add {layer.Dest}", null));
+            image.history.Add(ImageV1History.Create(layer.Description, null));
 
             var (imageBytes, imageDigest) = ToJson(image);
 
@@ -388,6 +395,51 @@ namespace Nibbler.Command
         {
             var (bytes, _) = ToJson(obj);
             return new MemoryStream(bytes);
+        }
+
+        private class AddArgument
+        {
+            public string Source { get; set; }
+            public string Dest { get; set; }
+            public int? OwnerId { get; set; }
+            public int? GroupId { get; set; }
+            public int? Mode { get; set; }
+
+            public static AddArgument Parse(string s, bool isFolder)
+            {
+                var split = s.Split(':');
+                if (!isFolder && split.Length < 2)
+                {
+                    throw new Exception($"Invalid add {s}");
+                }
+
+                int i = 0;
+                string source = null;
+                if (!isFolder)
+                {
+                    source = split[i++];
+                }
+
+                string dest = split[i++];
+
+                bool hasOwner = int.TryParse(split.Skip(i++).FirstOrDefault(), out int ownerId);
+                bool hasGroup = int.TryParse(split.Skip(i++).FirstOrDefault(), out int groupId);
+                string modeString = split.Skip(i++).FirstOrDefault();
+                int? mode = null;
+                if (!string.IsNullOrEmpty(modeString))
+                {
+                    mode = Convert.ToInt32(modeString, 8);
+                }
+
+                return new AddArgument
+                {
+                    Source = source,
+                    Dest = dest,
+                    OwnerId = hasOwner ? ownerId : (int?)null,
+                    GroupId = hasGroup ? groupId : (int?)null,
+                    Mode = mode,
+                };
+            }
         }
     }
 }

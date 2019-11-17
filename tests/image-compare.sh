@@ -48,7 +48,7 @@ echo "-------- Nibbler build --------"
 cat << EOF | docker run -i --rm -v /$PWD:/opt/app-root/workspace registry.centos.org/dotnet/dotnet-22-centos7:latest bash
 set -e
 
-dotnet tool install -g Nibbler --version 1.0.0-beta.5 
+dotnet tool install -g Nibbler --version 1.0.0-beta.9 
 echo "-------- Nibbler tool installed --------"
 nibbler \
 	--base-image host.docker.internal:5000/dotnet/dotnet-22-runtime-centos7:latest \
