@@ -4,7 +4,6 @@ set -e
 dotnetVersion=3.0
 dotnetRuntimeTag=$dotnetVersion
 dotnetSdkTag=$dotnetVersion-bionic
-nibblerVersion=1.0.0-beta.4
 targetImage=nibbler-test
 
 echo "-------- Prepair images --------"
@@ -13,9 +12,12 @@ docker pull mcr.microsoft.com/dotnet/core/aspnet:$dotnetRuntimeTag
 docker tag mcr.microsoft.com/dotnet/core/aspnet:$dotnetRuntimeTag localhost:5000/dotnet/core/aspnet:$dotnetRuntimeTag
 docker push localhost:5000/dotnet/core/aspnet:$dotnetRuntimeTag
 
+echo "-------- Create Nibbler nuget --------"
+dotnet pack ../Nibbler -o ./nuget -p:PackageVersion=1.0.0-test.e2e
+
 echo "-------- Run build in docker image --------"
 
-cat << EOF | docker run -i --rm mcr.microsoft.com/dotnet/core/sdk:$dotnetSdkTag bash
+cat << EOF | docker run -i --rm -v /$PWD/nuget:/nuget mcr.microsoft.com/dotnet/core/sdk:$dotnetSdkTag bash
 set -e
 export PATH="\$PATH:/root/.dotnet/tools"
 
@@ -30,7 +32,7 @@ dotnet build --no-restore
 dotnet publish -o ./publish --no-build
 
 echo "-------- Install Nibbler --------"
-dotnet tool install -g Nibbler --version $nibblerVersion
+dotnet tool install -g Nibbler --version 1.0.0-test.e2e --add-source /nuget
 
 echo "-------- Build image with Nibbler --------"
 nibbler \
