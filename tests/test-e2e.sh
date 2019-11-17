@@ -39,6 +39,7 @@ nibbler \
 	--base-image host.docker.internal:5000/dotnet/core/aspnet:$dotnetRuntimeTag \
 	--destination host.docker.internal:5000/$targetImage:$dotnetVersion \
 	--add "publish:/app" \
+	--addFolder "/app:1001:1001:777" \
 	--git-labels \
 	--workdir /app \
 	--cmd "dotnet aspnetcore-new.dll" \
@@ -52,5 +53,5 @@ echo "-------- Pull and run built image locally at http://localhost:8080/ ------
 echo "-- remember to stop the running image: docker ps, docker stop nibbler-test-app"
 
 docker pull localhost:5000/$targetImage:$dotnetVersion
-docker run -i --rm -p 8080:80 --name nibbler-test-app localhost:5000/$targetImage:$dotnetVersion
-
+docker run -d --rm -p 8080:80 --name nibbler-test-app localhost:5000/$targetImage:$dotnetVersion
+docker ps -a -f name=nibbler-test-app
