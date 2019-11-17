@@ -12,7 +12,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nibbler", "Nibbler\Nibbler.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nibbler.Test", "Nibbler.Test\Nibbler.Test.csproj", "{AEA99A7A-5834-41E0-B416-69A0087A39B3}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mono.Posix.NETStandard-netstandard_2_0", "Mono.Posix\Mono.Posix.NETStandard-netstandard_2_0.csproj", "{E7064BFD-41E7-4F2C-AE54-8330D0D0AB52}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nibbler.LinuxFileUtils", "Nibbler.LinuxFileUtils\Nibbler.LinuxFileUtils.csproj", "{B401D70B-6A48-47F3-AE64-2180759C6699}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -28,10 +28,10 @@ Global
 		{AEA99A7A-5834-41E0-B416-69A0087A39B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AEA99A7A-5834-41E0-B416-69A0087A39B3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AEA99A7A-5834-41E0-B416-69A0087A39B3}.Release|Any CPU.Build.0 = Release|Any CPU
-		{E7064BFD-41E7-4F2C-AE54-8330D0D0AB52}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E7064BFD-41E7-4F2C-AE54-8330D0D0AB52}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E7064BFD-41E7-4F2C-AE54-8330D0D0AB52}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E7064BFD-41E7-4F2C-AE54-8330D0D0AB52}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B401D70B-6A48-47F3-AE64-2180759C6699}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B401D70B-6A48-47F3-AE64-2180759C6699}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B401D70B-6A48-47F3-AE64-2180759C6699}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B401D70B-6A48-47F3-AE64-2180759C6699}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

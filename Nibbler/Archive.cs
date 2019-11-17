@@ -5,7 +5,6 @@ using System.Security.Cryptography;
 using System.Text;
 using ICSharpCode.SharpZipLib.GZip;
 using ICSharpCode.SharpZipLib.Tar;
-using Mono.Unix;
 using Nibbler.Utils;
 
 namespace Nibbler
@@ -130,13 +129,13 @@ namespace Nibbler
         // ref: https://github.com/mono/mono/tree/master/mcs/class/Mono.Posix/Mono.Unix
         private void FillLinuxFileInfo(TarEntry entry, FileInfo fileInfo)
         {
-            var info = UnixFileSystemInfo.GetFileSystemEntry(fileInfo.FullName);
-            entry.ModTime = info.LastWriteTime;
-            entry.TarHeader.Mode = (int)info.FileAccessPermissions;
-            entry.UserId = (int)info.OwnerUserId;
-            entry.UserName = info.OwnerUser.UserName;
-            entry.GroupId = (int)info.OwnerGroupId;
-            entry.GroupName = info.OwnerGroup.GroupName;
+            var info = LinuxFileUtils.LinuxFileInfo.LStat(fileInfo.FullName);
+            entry.ModTime = info.LastModTime;
+            entry.TarHeader.Mode = (int)info.Mode;
+            entry.UserId = info.OwnerId;
+            entry.UserName = null;
+            entry.GroupId = info.GroupId;
+            entry.GroupName = null;
         }
 
         private static Stream GetHashStream(Stream outStream, HashAlgorithm hasher)

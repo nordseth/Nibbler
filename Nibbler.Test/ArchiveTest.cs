@@ -27,13 +27,6 @@ namespace Nibbler.Test
         }
 
         [TestMethod]
-        [DataRow(".")]
-        public void Linux_File_Attributes(string path)
-        {
-            var e = Mono.Unix.UnixFileSystemInfo.GetFileSystemEntry(path);
-        }
-
-        [TestMethod]
         [DataRow(@"../../../../test/TestData/publish/", "/app")]
         public void Archive_Enumerate(string source, string dest)
         {

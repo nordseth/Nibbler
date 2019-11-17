@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Mono.Posix\Mono.Posix.NETStandard-netstandard_2_0.csproj" />
+    <ProjectReference Include="..\Nibbler.LinuxFileUtils\Nibbler.LinuxFileUtils.csproj" />
   </ItemGroup>
 
 </Project>
