@@ -212,16 +212,28 @@ namespace Nibbler.Command
         {
             var historyStrings = new List<string>();
 
-            // do git labels before labels, to enable users to overwrite them
+            // do git labels before other labels, to enable users to overwrite them
             if (GitLabels.HasValue())
             {
                 image.config.Labels = image.config.Labels ?? new Dictionary<string, string>();
-                var gitLabels = Utils.GitLabels.GetLabels(GitLabels.Value());
-
-                foreach (var l in gitLabels)
+                IDictionary<string, string> gitLabels = null;
+                try
                 {
-                    image.config.Labels[l.Key] = l.Value;
-                    historyStrings.Add($"--gitLabels {l.Key}={l.Value}");
+                    gitLabels = Utils.GitLabels.GetLabels(GitLabels.Value());
+
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"debug: Failed to read git labels: {ex.Message}");
+                }
+
+                if (gitLabels != null)
+                {
+                    foreach (var l in gitLabels)
+                    {
+                        image.config.Labels[l.Key] = l.Value;
+                        historyStrings.Add($"--gitLabels {l.Key}={l.Value}");
+                    }
                 }
             }
 
