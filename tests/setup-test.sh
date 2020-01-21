@@ -4,9 +4,9 @@ set -e
 docker pull registry:2
 docker run -d --rm -p 5000:5000 --name registry registry:2
 
-docker pull mcr.microsoft.com/dotnet/core/aspnet:3.0
-docker tag mcr.microsoft.com/dotnet/core/aspnet:3.0 localhost:5000/dotnet/core/aspnet:3.0
-docker push localhost:5000/dotnet/core/aspnet:3.0
+docker pull mcr.microsoft.com/dotnet/core/aspnet:3.1
+docker tag mcr.microsoft.com/dotnet/core/aspnet:3.1 localhost:5000/dotnet/core/aspnet:3.1
+docker push localhost:5000/dotnet/core/aspnet:3.1
 
 docker pull hello-world:latest
 docker tag hello-world:latest localhost:5000/hello-world:latest

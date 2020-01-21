@@ -1,9 +1,9 @@
 #!/bin/bash
 set -e
 
-dotnetVersion=3.0
+dotnetVersion=3.1
 dotnetRuntimeTag=$dotnetVersion
-dotnetSdkTag=$dotnetVersion-bionic
+dotnetSdkTag=$dotnetVersion
 targetImage=nibbler-test
 
 echo "-------- Prepair images --------"
