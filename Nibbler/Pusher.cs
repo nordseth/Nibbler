@@ -17,10 +17,7 @@ namespace Nibbler
         private readonly Registry _registry;
         private readonly bool _debug;
         private readonly int _chunckSize;
-        private readonly bool _reuseUploadUri;
         private readonly int _retryUpload;
-
-        private string _uploadUri;
 
         public Pusher(string baseImage, string destination, IEnumerable<BuilderLayer> addedLayers, Registry registry, bool debug)
         {
@@ -31,8 +28,7 @@ namespace Nibbler
             _registry = registry;
             _debug = debug;
             // set to 0 to diable chunckes
-            _chunckSize = 1000000;
-            _reuseUploadUri = false;
+            _chunckSize = 0;
             _retryUpload = 3;
         }
 
@@ -186,12 +182,7 @@ namespace Nibbler
 
         private async Task<string> GetUploadUri()
         {
-            if (!_reuseUploadUri || _uploadUri == null)
-            {
-                _uploadUri = await _registry.StartUpload(_targetImageName);
-            }
-
-            return _uploadUri;
+            return await _registry.StartUpload(_targetImageName);
         }
 
         public async Task PushManifest(Func<System.IO.Stream> manifestStream)

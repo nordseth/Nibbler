@@ -121,7 +121,7 @@ namespace Nibbler
 
         public async Task UploadBlob(string uploadUrl, string digest, Stream stream, long lenght)
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, AddUploadQuery(uploadUrl, $"digest={digest}"));
+            var request = new HttpRequestMessage(HttpMethod.Put, AddUploadQuery(uploadUrl, $"digest={digest}"));
             request.Content = new StreamContent(stream);
             request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
             request.Content.Headers.ContentLength = lenght;
@@ -189,7 +189,7 @@ namespace Nibbler
             if (!response.IsSuccessStatusCode)
             {
                 var content = await response.Content.ReadAsStringAsync();
-                throw new HttpRequestException($"Responce not success: {(int)response.StatusCode} {response.ReasonPhrase}{Environment.NewLine}{content}");
+                throw new HttpRequestException($"Response not success: {(int)response.StatusCode} {response.ReasonPhrase}{Environment.NewLine}{content}");
             }
         }
 

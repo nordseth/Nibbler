@@ -34,7 +34,7 @@ nibbler \
 ## Features
 
 - uses docker registry api v2
-  - https://docs.docker.com/registry/spec/api/
+  - https://github.com/opencontainers/distribution-spec/blob/master/spec.md
 - supports oci image manifest and ocean image config spec
   - https://github.com/opencontainers/image-spec/blob/master/manifest.md
   - https://github.com/opencontainers/image-spec/blob/master/config.md
