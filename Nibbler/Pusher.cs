@@ -15,18 +15,18 @@ namespace Nibbler
         private readonly string _targetImageName;
         private readonly IEnumerable<BuilderLayer> _addedLayers;
         private readonly Registry _registry;
-        private readonly bool _debug;
+        private readonly ILogger _logger;
         private readonly int _chunckSize;
         private readonly int _retryUpload;
 
-        public Pusher(string baseImage, string destination, IEnumerable<BuilderLayer> addedLayers, Registry registry, bool debug)
+        public Pusher(string baseImage, string destination, IEnumerable<BuilderLayer> addedLayers, Registry registry, ILogger logger)
         {
             _baseImageName = ImageHelper.GetImageName(baseImage);
             _destination = destination;
             _targetImageName = ImageHelper.GetImageName(_destination);
             _addedLayers = addedLayers;
             _registry = registry;
-            _debug = debug;
+            _logger = logger;
             // set to 0 to diable chunckes
             _chunckSize = 0;
             _retryUpload = 3;
@@ -44,10 +44,7 @@ namespace Nibbler
         public async Task<bool> CheckConfigExists(ManifestV2 manifest)
         {
             var configExists = await _registry.BlobExists(_targetImageName, manifest.config.digest);
-            if (_debug)
-            {
-                Console.WriteLine($"debug: config {manifest.config.digest} ({manifest.config.size}) - {(configExists.HasValue ? "Exists" : "To be uploaded")}");
-            }
+            _logger.LogDebug($"config {manifest.config.digest} ({manifest.config.size}) - {(configExists.HasValue ? "Exists" : "To be uploaded")}");
 
             return configExists.HasValue;
         }
@@ -81,38 +78,36 @@ namespace Nibbler
                     }
                 }
 
-                if (_debug)
+                string logMsg;
+                if (toAdd && exists)
                 {
-                    Console.Write($"debug: layer {layer.digest} ({layer.size}) - ");
-
-                    if (toAdd && exists)
+                    logMsg = $"Exists (unchanged?)";
+                }
+                else if (toAdd)
+                {
+                    logMsg = $"To be uploaded";
+                }
+                else if (!exists && !toAdd)
+                {
+                    if (mounted)
                     {
-                        Console.WriteLine($"Exists (unchanged?)");
+                        logMsg = $"Was missing, Mount sucessful!";
                     }
-                    else if (toAdd)
+                    else if (tryMount)
                     {
-                        Console.WriteLine($"To be uploaded");
-                    }
-                    else if (!exists && !toAdd)
-                    {
-                        if (mounted)
-                        {
-                            Console.WriteLine($"Was missing, Mount sucessful!");
-                        }
-                        else if (tryMount)
-                        {
-                            Console.WriteLine($"Error Missing! (tried to mount)");
-                        }
-                        else
-                        {
-                            Console.WriteLine($"Error Missing!");
-                        }
+                        logMsg = $"Error Missing! (tried to mount)";
                     }
                     else
                     {
-                        Console.WriteLine($"Exists");
+                        logMsg = $"Error Missing!";
                     }
                 }
+                else
+                {
+                    logMsg = $"Exists";
+                }
+
+                _logger.LogDebug($"layer {layer.digest} ({layer.size}) - {logMsg}");
             }
 
             if (missingLayer.Any())
@@ -123,20 +118,17 @@ namespace Nibbler
 
         public async Task PushConfig(ManifestV2Layer config, Func<System.IO.Stream> configStream)
         {
-            await RetryHelper.Retry(_retryUpload, _debug,
+            await RetryHelper.Retry(_retryUpload, _logger,
                 async () =>
                 {
                     var uploadUri = await GetUploadUri();
-                    if (_debug)
-                    {
-                        Console.WriteLine($"debug: uploading config. (upload uri: {uploadUri})");
-                    }
+                    _logger.LogDebug($"uploading config. (upload uri: {uploadUri})");
 
                     using (var stream = configStream())
                     {
                         if (_chunckSize > 0)
                         {
-                            await _registry.UploadBlobChuncks(uploadUri, config.digest, stream, _chunckSize, _debug);
+                            await _registry.UploadBlobChuncks(uploadUri, config.digest, stream, _chunckSize);
                         }
                         else
                         {
@@ -156,20 +148,17 @@ namespace Nibbler
 
         private async Task PushLayer(Func<string, System.IO.Stream> layerStream, BuilderLayer layer)
         {
-            await RetryHelper.Retry(_retryUpload, _debug,
+            await RetryHelper.Retry(_retryUpload, _logger,
                 async () =>
                 {
                     var uploadUri = await GetUploadUri();
-                    if (_debug)
-                    {
-                        Console.WriteLine($"debug: uploading layer {layer.Digest}, {layer.Size} bytes. (upload uri: {uploadUri})");
-                    }
+                    _logger.LogDebug($"uploading layer {layer.Digest}, {layer.Size} bytes. (upload uri: {uploadUri})");
 
                     using (var stream = layerStream($"{layer.Name}.tar.gz"))
                     {
                         if (_chunckSize > 0)
                         {
-                            await _registry.UploadBlobChuncks(uploadUri, layer.Digest, stream, _chunckSize, _debug);
+                            await _registry.UploadBlobChuncks(uploadUri, layer.Digest, stream, _chunckSize);
                         }
                         else
                         {
@@ -187,16 +176,13 @@ namespace Nibbler
 
         public async Task PushManifest(Func<System.IO.Stream> manifestStream)
         {
-            await RetryHelper.Retry(_retryUpload, _debug,
+            await RetryHelper.Retry(_retryUpload, _logger,
                 async () =>
                 {
                     var destImageRef = ImageHelper.GetImageReference(_destination);
                     using (var stream = manifestStream())
                     {
-                        if (_debug)
-                        {
-                            Console.WriteLine($"debug: uploading manifest");
-                        }
+                        _logger.LogDebug($"uploading manifest");
 
                         await _registry.UploadManifest(_targetImageName, destImageRef, stream);
                     }

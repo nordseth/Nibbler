@@ -30,7 +30,7 @@ namespace Nibbler.Test
             "--base-image", "localhost:5000/dotnet/core/aspnet:3.1",
             "--destination", "localhost:5000/test/nibbler-test:unittest",
             "--insecure",
-            "--debug"})]
+            "-v"})]
         public async Task BuilderCommand_Minimal_Args(string[] args) => await Run(args);
 
         [TestMethod]
@@ -39,7 +39,7 @@ namespace Nibbler.Test
             "--destination", "localhost:5000/test/nibbler-test:unittest",
             "--add", @"../../../../tests/TestData/publish/:/app",
             "--insecure",
-            "--debug" })]
+            "-v" })]
         public async Task BuilderCommand_Add(string[] args) => await Run(args);
 
         [TestMethod]
@@ -48,7 +48,7 @@ namespace Nibbler.Test
             "--destination", "localhost:5000/test/nibbler-test:unittest",
             "--add", @"../../../../tests/TestData/publish/:/app:1001",
             "--insecure",
-            "--debug" })]
+            "-v" })]
         public async Task BuilderCommand_Add_User(string[] args) => await Run(args);
 
         [TestMethod]
@@ -57,7 +57,7 @@ namespace Nibbler.Test
             "--destination", "localhost:5000/test/nibbler-test:unittest",
             "--add", @"../../../../tests/TestData/publish/:/app:1001:1001",
             "--insecure",
-            "--debug" })]
+            "-v" })]
         public async Task BuilderCommand_Add_User_Group(string[] args) => await Run(args);
 
         [TestMethod]
@@ -66,7 +66,7 @@ namespace Nibbler.Test
             "--destination", "localhost:5000/test/nibbler-test:unittest",
             "--add", @"../../../../tests/TestData/publish/:/app:1001:0:777",
             "--insecure",
-            "--debug" })]
+            "-v" })]
         public async Task BuilderCommand_Add_User_Group_Mode(string[] args) => await Run(args);
 
         [TestMethod]
@@ -75,7 +75,7 @@ namespace Nibbler.Test
             "--destination", "localhost:5000/test/nibbler-test:unittest",
             "--add", @"../../../../tests/TestData/publish/:/app:::777",
             "--insecure",
-            "--debug" })]
+            "-v" })]
         public async Task BuilderCommand_Add_Mode(string[] args) => await Run(args);
 
         [TestMethod]
@@ -86,7 +86,7 @@ namespace Nibbler.Test
             "--add", @"../../../../tests/TestData/publish/:/app",
             "--add", @"../../../../tests/TestData/wwwroot/:/wwwroot",
             "--insecure",
-            "--debug" })]
+            "-v" })]
         public async Task BuilderCommand_Adds(string[] args) => await Run(args);
 
         [TestMethod]
@@ -96,7 +96,7 @@ namespace Nibbler.Test
             "--add", @"../../../../tests/TestData/publish/:/app",
             "--addFolder", @"/app:1001:0:777",
             "--insecure",
-            "--debug" })]
+            "-v" })]
         public async Task BuilderCommand_Add_AddFolder(string[] args) => await Run(args);
 
         [TestMethod]
@@ -105,7 +105,7 @@ namespace Nibbler.Test
             "--destination", "localhost:5000/test/nibbler-test:unittest",
             "--workdir", "/root",
             "--insecure",
-            "--debug" })]
+            "-v" })]
         public async Task BuilderCommand_WorkDir(string[] args) => await Run(args);
 
         [TestMethod]
@@ -115,7 +115,7 @@ namespace Nibbler.Test
             "--label", "test1=test2",
             "--label", "test4=test4",
             "--insecure",
-            "--debug" })]
+            "-v" })]
         public async Task BuilderCommand_Labels(string[] args) => await Run(args);
 
         [TestMethod]
@@ -124,7 +124,7 @@ namespace Nibbler.Test
             "--destination", "localhost:5000/test/nibbler-test:unittest",
             "--user", "1000",
             "--insecure",
-            "--debug" })]
+            "-v" })]
         public async Task BuilderCommand_User(string[] args) => await Run(args);
 
         [TestMethod]
@@ -134,7 +134,7 @@ namespace Nibbler.Test
             "--env", "ENV_VAR_1=test2",
             "--env", "ENV_VAR_2=test4",
             "--insecure",
-            "--debug" })]
+            "-v" })]
         public async Task BuilderCommand_Env(string[] args) => await Run(args);
     
         [TestMethod]
@@ -144,7 +144,7 @@ namespace Nibbler.Test
             "--cmd", "dotnet TestData.dll",
             "--entrypoint", "dotnet TestData.dll",
             "--insecure",
-            "--debug" })]
+            "-v" })]
         public async Task BuilderCommand_EntryPoint_Cmd(string[] args) => await Run(args);
 
         [TestMethod]
@@ -153,7 +153,7 @@ namespace Nibbler.Test
             "--destination", "localhost:5000/test/nibbler-test:unittest",
             "--git-labels=../../../../",
             "--insecure",
-            "--debug" })]
+            "-v" })]
         public async Task BuilderCommand_GitLabels(string[] args) => await Run(args);
       
         [TestMethod]
@@ -162,7 +162,7 @@ namespace Nibbler.Test
             "--destination", "localhost:5000/test/nibbler-test:unittest",
             "--digest-file",
             "--insecure",
-            "--debug" })]
+            "-v" })]
         public async Task BuilderCommand_DigestFile(string[] args) => await Run(args);
 
         private static async Task Run(string[] args)

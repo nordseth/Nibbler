@@ -44,7 +44,7 @@ nibbler \
 	--workdir /app \
 	--cmd "dotnet aspnetcore-new.dll" \
 	--insecure \
-	--debug
+	-v
 
 echo "-------- Success building image with Nibbler! --------"
 EOF

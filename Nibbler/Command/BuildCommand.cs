@@ -13,11 +13,13 @@ namespace Nibbler.Command
 {
     public class BuildCommand
     {
+        private readonly ILogger _logger;
         private const string ManifestDigestFileName = "digest";
         private string _tempFolderPath;
 
         public BuildCommand()
         {
+            _logger = new Logger("BUILD", false);
         }
 
         public CommandOption BaseImage { get; private set; }
@@ -34,7 +36,7 @@ namespace Nibbler.Command
         public CommandOption Cmd { get; private set; }
         public CommandOption Entrypoint { get; private set; }
 
-        public CommandOption Debug { get; private set; }
+        public CommandOption Verbose { get; private set; }
         public CommandOption DryRun { get; private set; }
 
         public CommandOption Username { get; private set; }
@@ -44,8 +46,6 @@ namespace Nibbler.Command
         public CommandOption SkipTlsVerify { get; private set; }
         public CommandOption TempFolder { get; private set; }
         public CommandOption DigestFile { get; private set; }
-
-        private bool _debug => Debug.HasValue();
 
         public void AddOptions(CommandLineApplication app)
         {
@@ -65,8 +65,8 @@ namespace Nibbler.Command
             Entrypoint = app.Option("--entrypoint", "Set the image entrypoint", CommandOptionType.SingleValue);
 
             // options:
-            Debug = app.Option("--debug", "Output debug log", CommandOptionType.NoValue);
-            DryRun = app.Option("--dry-run", "Does not push, only shows what would happen (use with --debug)", CommandOptionType.NoValue);
+            Verbose = app.Option("-v|--verbose|--debug", "Verbose output", CommandOptionType.NoValue);
+            DryRun = app.Option("--dry-run", "Does not push, only shows what would happen (use with -v)", CommandOptionType.NoValue);
             Username = app.Option("--username", "Registry username", CommandOptionType.SingleValue);
             Password = app.Option("--password", "Registry password", CommandOptionType.SingleValue);
             DockerConfig = app.Option("--docker-config", "Use docker config file to authenticate with registry, optionally specify file path", CommandOptionType.SingleOrNoValue);
@@ -80,9 +80,10 @@ namespace Nibbler.Command
         public async Task<int> ExecuteAsync(CancellationToken cancellationToken)
         {
             var sw = System.Diagnostics.Stopwatch.StartNew();
+            _logger.SetEnable(Verbose.HasValue());
+
             try
             {
-
                 var registry = CreateRegistry();
                 var (manifest, image) = await LoadBaseImage(registry);
                 UpdateImageConfig(image);
@@ -96,7 +97,7 @@ namespace Nibbler.Command
                     AddLayerToConfigAndManifest(layer, manifest, image);
                 }
 
-                var pusher = new Pusher(BaseImage.Value(), Destination.Value(), layersAdded, registry, _debug);
+                var pusher = new Pusher(BaseImage.Value(), Destination.Value(), layersAdded, registry, CreateLogger("PUSHR"));
                 pusher.ValidateDest();
                 bool configExists = await pusher.CheckConfigExists(manifest);
                 await pusher.ValidateLayers(manifest, !DryRun.HasValue());
@@ -118,7 +119,7 @@ namespace Nibbler.Command
                     manifestDigest = FileHelper.Digest(manifestStream);
                 }
 
-                Console.WriteLine(manifestDigest);
+                _logger.LogDebug($"Image digest: {manifestDigest}");
 
                 if (DigestFile.HasValue())
                 {
@@ -136,47 +137,45 @@ namespace Nibbler.Command
                     File.WriteAllText(digestFilepath, manifestDigest);
                 }
 
-                if (_debug)
-                {
-                    Console.WriteLine($"debug: completed in {sw.ElapsedMilliseconds} ms");
-                }
+                _logger.LogDebug($"completed in {sw.ElapsedMilliseconds} ms");
+                Console.WriteLine(manifestDigest);
 
                 return 0;
             }
             catch (Exception ex)
             {
                 Console.Error.WriteLine($"Error: {ex.Message}");
-                if (_debug)
-                {
-                    Console.Error.WriteLine(ex);
-                    Console.WriteLine($"debug: completed in {sw.ElapsedMilliseconds} ms");
-                }
+                _logger.LogDebug(ex, "exception");
+                _logger.LogDebug($"completed in {sw.ElapsedMilliseconds} ms");
 
                 return 1;
             }
         }
 
+        private ILogger CreateLogger(string name)
+        {
+            return new Logger(name, Verbose.HasValue());
+        }
+
         private Registry CreateRegistry()
         {
+            var registryLogger = CreateLogger("REGRY");
             var baseUri = ImageHelper.GetRegistryBaseUrl(BaseImage.Value(), Insecure.HasValue());
-            if (_debug)
+            var options = $"{(SkipTlsVerify.HasValue() ? ", skipTlsVerify" : "")}";
+            if (DockerConfig.HasValue())
             {
-                var options = $"{(SkipTlsVerify.HasValue() ? ", skipTlsVerify" : "")}";
-                if (DockerConfig.HasValue())
-                {
-                    Console.WriteLine($"debug: using registry: {baseUri}, useConf: {DockerConfig.Value()}{options})");
-                }
-                else if (!string.IsNullOrEmpty(Username.Value()) && !string.IsNullOrEmpty(Password.Value()))
-                {
-                    Console.WriteLine($"debug: using registry: {baseUri}, u: {Username.HasValue()}, p: {Password.HasValue()}{options})");
-                }
-                else
-                {
-                    Console.WriteLine($"debug: using registry: {baseUri}{options})");
-                }
+                registryLogger.LogDebug($"{baseUri}, useConf: {DockerConfig.Value()}{options})");
+            }
+            else if (!string.IsNullOrEmpty(Username.Value()) && !string.IsNullOrEmpty(Password.Value()))
+            {
+                registryLogger.LogDebug($"{baseUri}, u: {Username.HasValue()}, p: {Password.HasValue()}{options})");
+            }
+            else
+            {
+                registryLogger.LogDebug($"{baseUri}{options})");
             }
 
-            var registry = new Registry(baseUri, SkipTlsVerify.HasValue());
+            var registry = new Registry(baseUri, registryLogger, SkipTlsVerify.HasValue());
 
             if (DockerConfig.HasValue())
             {
@@ -197,10 +196,7 @@ namespace Nibbler.Command
             var imageName = ImageHelper.GetImageName(BaseImage.Value());
             var imageRef = ImageHelper.GetImageReference(BaseImage.Value());
 
-            if (_debug)
-            {
-                Console.WriteLine($"debug: --baseImage {registry.BaseUri}, {imageName}, {imageRef}");
-            }
+            _logger.LogDebug($"--baseImage {registry.BaseUri}, {imageName}, {imageRef}");
 
             var manifest = await registry.GetManifest(imageName, imageRef);
             var image = await registry.GetImage(imageName, manifest.config.digest);
@@ -220,11 +216,10 @@ namespace Nibbler.Command
                 try
                 {
                     gitLabels = Utils.GitLabels.GetLabels(GitLabels.Value());
-
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"debug: Failed to read git labels: {ex.Message}");
+                    _logger.LogWarning($"Failed to read git labels: {ex.Message}");
                 }
 
                 if (gitLabels != null)
@@ -284,12 +279,10 @@ namespace Nibbler.Command
             }
 
             image.history.Add(ImageV1History.Create(string.Join(", ", historyStrings), true));
-            if (_debug)
+
+            foreach (var h in historyStrings)
             {
-                foreach (var h in historyStrings)
-                {
-                    Console.WriteLine($"debug: {h}");
-                }
+                _logger.LogDebug(h);
             }
         }
 
@@ -309,10 +302,7 @@ namespace Nibbler.Command
             foreach (var a in adds)
             {
                 var arg = AddArgument.Parse(a, false);
-                if (_debug)
-                {
-                    Console.WriteLine($"debug: --add {arg.Source} {arg.Dest} {arg.OwnerId} {arg.GroupId} {arg.Mode.AsOctalString()}");
-                }
+                _logger.LogDebug($"--add {arg.Source} {arg.Dest} {arg.OwnerId} {arg.GroupId} {arg.Mode.AsOctalString()}");
 
                 description.Append($"--add . {arg.Dest} {arg.OwnerId} {arg.GroupId} {arg.Mode.AsOctalString()} ");
                 archive.CreateEntries(arg.Source, arg.Dest, arg.OwnerId, arg.GroupId, arg.Mode);
@@ -321,23 +311,12 @@ namespace Nibbler.Command
             foreach (var a in addFolders ?? Enumerable.Empty<string>())
             {
                 var arg = AddArgument.Parse(a, true);
-                if (_debug)
-                {
-                    Console.WriteLine($"debug: --addFolder {arg.Dest} {arg.OwnerId} {arg.GroupId} {arg.Mode.AsOctalString()}");
-                }
+                _logger.LogDebug($"--addFolder {arg.Dest} {arg.OwnerId} {arg.GroupId} {arg.Mode.AsOctalString()}");
 
                 description.Append($"--addFolder {arg.Dest} {arg.OwnerId} {arg.GroupId} {arg.Mode.AsOctalString()} ");
                 archive.CreateFolderEntry(arg.Dest, arg.OwnerId, arg.GroupId, arg.Mode);
             }
 
-            if (_debug)
-            {
-                Console.WriteLine($"debug:  layer contents:");
-                foreach (var e in archive.Entries)
-                {
-                    Console.WriteLine($"debug:      {Archive.PrintEntry(e.Value.Item2)}");
-                }
-            }
 
             var (digest, diffId) = archive.WriteFileAndCalcDigests();
             var layer = new BuilderLayer
@@ -349,9 +328,11 @@ namespace Nibbler.Command
                 Description = description.ToString(),
             };
 
-            if (_debug)
+            var layerLogger = CreateLogger("LAYER");
+            layerLogger.LogDebug($"{layer}");
+            foreach (var e in archive.Entries)
             {
-                Console.WriteLine($"debug:  (layer) {layer}");
+                layerLogger.LogDebug($"    {Archive.PrintEntry(e.Value.Item2)}");
             }
 
             return layer;

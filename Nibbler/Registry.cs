@@ -15,11 +15,13 @@ namespace Nibbler
     {
         public Uri BaseUri { get; }
 
+        private readonly ILogger _logger;
         private readonly HttpClient _client;
 
-        public Registry(Uri baseUri, bool skipTlsVerify = false)
+        public Registry(Uri baseUri, ILogger logger, bool skipTlsVerify = false)
         {
             BaseUri = baseUri;
+            _logger = logger;
             var httpClientHandler = new HttpClientHandler();
             if (skipTlsVerify)
             {
@@ -129,7 +131,7 @@ namespace Nibbler
             await EnsureSuccessWithErrorContent(response);
         }
 
-        public async Task UploadBlobChuncks(string uploadUrl, string digest, Stream stream, int chunckSize, bool debug)
+        public async Task UploadBlobChuncks(string uploadUrl, string digest, Stream stream, int chunckSize)
         {
             var buffer = new byte[chunckSize];
             int currentIndex = 0;
@@ -152,10 +154,9 @@ namespace Nibbler
                 request.Content.Headers.ContentLength = read;
                 request.Content.Headers.TryAddWithoutValidation("Content-Range", $"{currentIndex}-{currentIndex + read - 1}");
                 var response = await _client.SendAsync(request);
-                if (debug)
-                {
-                    Console.WriteLine($"debug: uploaded {currentIndex}-{currentIndex + read - 1}{(request.Method == HttpMethod.Put ? " (last)" : "")} - {(int)response.StatusCode}");
-                }
+
+                _logger.LogDebug($"uploaded {currentIndex}-{currentIndex + read - 1}{(request.Method == HttpMethod.Put ? " (last)" : "")} - {(int)response.StatusCode}");
+
                 await EnsureSuccessWithErrorContent(response);
                 currentIndex += read;
 

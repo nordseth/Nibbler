@@ -8,7 +8,7 @@ namespace Nibbler.Utils
 {
     public static class RetryHelper
     {
-        public static async Task Retry(int times, bool debug, Func<Task> action)
+        public static async Task Retry(int times, ILogger logger, Func<Task> action)
         {
             int tries = 0;
             while (true)
@@ -26,11 +26,8 @@ namespace Nibbler.Utils
                     }
                     else
                     {
-                        if (debug)
-                        {
-                            var msg = JsonConvert.SerializeObject(ex.Message);
-                            Console.WriteLine($"debug: will retry error: {msg}");
-                        }
+                        var msg = JsonConvert.SerializeObject(ex.Message);
+                        logger.LogWarning($"failed, but will retry! error: {msg}");
 
                         tries++;
                     }

@@ -9,12 +9,19 @@ namespace Nibbler.Test
     [TestClass]
     public class RegistryTest
     {
+        private readonly Utils.Logger _registryLogger;
+
+        public RegistryTest()
+        {
+            _registryLogger = new Utils.Logger("REGISTRY", true);
+        }
+
         [TestMethod]
         [DataRow("https://mcr.microsoft.com", "dotnet/core/aspnet", "3.1")]
         [DataRow("http://localhost:5000", "hello-world", "latest")]
         public async Task Registry_Get_ManifestFile(string registryUrl, string imageName, string imageRef)
         {
-            var registry = new Registry(new Uri(registryUrl));
+            var registry = new Registry(new Uri(registryUrl), _registryLogger);
 
             var manifest = await registry.GetManifestFile(imageName, imageRef);
             Console.WriteLine(manifest);
@@ -25,7 +32,7 @@ namespace Nibbler.Test
         [DataRow("http://localhost:5000", "hello-world", "latest")]
         public async Task Registry_Get_Manifest(string registryUrl, string imageName, string imageRef)
         {
-            var registry = new Registry(new Uri(registryUrl));
+            var registry = new Registry(new Uri(registryUrl), _registryLogger);
 
             var manifest = await registry.GetManifest(imageName, imageRef);
             Assert.IsNotNull(manifest);
@@ -49,7 +56,7 @@ namespace Nibbler.Test
         [DataRow("http://localhost:5000", "hello-world", "sha256:fce289e99eb9bca977dae136fbe2a82b6b7d4c372474c9235adc1741675f587e")]
         public async Task Registry_Get_ImageFile(string registryUrl, string imageName, string digest)
         {
-            var registry = new Registry(new Uri(registryUrl));
+            var registry = new Registry(new Uri(registryUrl), _registryLogger);
 
             var image = await registry.GetImageFile(imageName, digest);
             Console.WriteLine(image);
@@ -60,7 +67,7 @@ namespace Nibbler.Test
         [DataRow("http://localhost:5000", "hello-world", "sha256:fce289e99eb9bca977dae136fbe2a82b6b7d4c372474c9235adc1741675f587e")]
         public async Task Registry_Get_Image(string registryName, string imageName, string digest)
         {
-            var registry = new Registry(new Uri(registryName));
+            var registry = new Registry(new Uri(registryName), _registryLogger);
 
             var image = await registry.GetImage(imageName, digest);
             Assert.IsNotNull(image);

@@ -57,7 +57,7 @@ nibbler \
 	--workdir /opt/app-root/app \
 	--cmd "dotnet aspnetcore-new.dll" \
 	--insecure \
-	--debug
+	-v
 EOF
 
 docker pull localhost:5000/nibbler-test:nibbler

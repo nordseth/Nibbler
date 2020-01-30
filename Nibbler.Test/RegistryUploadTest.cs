@@ -12,11 +12,18 @@ namespace Nibbler.Test
     [TestClass]
     public class RegistryUploadTest
     {
+        private readonly Logger _registryLogger;
+
+        public RegistryUploadTest()
+        {
+            _registryLogger = new Logger("REGISTRY", true);
+        }
+
         [TestMethod]
         [DataRow("https://mcr.microsoft.com", "dotnet/core/aspnet", "3.1")]
         public async Task Digest_Compare(string registryUrl, string imageName, string imageTag)
         {
-            var source = new Registry(new Uri(registryUrl));
+            var source = new Registry(new Uri(registryUrl), _registryLogger);
             var manifest = await source.GetManifest(imageName, imageTag);
             var (json, digest) = await source.GetImageFile(imageName, manifest.config.digest);
 
@@ -27,11 +34,11 @@ namespace Nibbler.Test
         [DataRow("https://mcr.microsoft.com", "dotnet/core/aspnet", "3.1", "http://localhost:5000", false)]
         public async Task Registry_Upload(string sourceRegistryUrl, string imageName, string imageTag, string destRegistryUrl, bool useDockerConfigDest)
         {
-            var source = new Registry(new Uri(sourceRegistryUrl));
+            var source = new Registry(new Uri(sourceRegistryUrl), _registryLogger);
             var manifest = await source.GetManifest(imageName, imageTag);
             var image = await source.GetImage(imageName, manifest.config.digest);
 
-            var dest = new Registry(new Uri(destRegistryUrl));
+            var dest = new Registry(new Uri(destRegistryUrl), _registryLogger);
             if (useDockerConfigDest)
             {
                 dest.UseAuthorization(ImageHelper.GetDockerConfigAuth(destRegistryUrl, null));
@@ -53,7 +60,7 @@ namespace Nibbler.Test
         {
             try
             {
-                await RetryHelper.Retry(3, true, () => throw new Exception());
+                await RetryHelper.Retry(3, new Logger("RETRY", true), () => throw new Exception());
                 Assert.Fail("Should throw exception");
             }
             catch
@@ -70,7 +77,7 @@ namespace Nibbler.Test
             {
                 Console.WriteLine($"Copying layer: {layer.digest} - {layer.mediaType} - {layer.size}");
                 var blob = await source.DownloadBlob(imageName, layer.digest);
-                await dest.UploadBlobChuncks(uploadUri, layer.digest, blob, 10000, true);
+                await dest.UploadBlobChuncks(uploadUri, layer.digest, blob, 10000);
                 Console.WriteLine($"Done copying layer: {layer.digest} to {uploadUri}");
             }
         }
