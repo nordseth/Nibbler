@@ -49,7 +49,7 @@ namespace Nibbler
             return configExists.HasValue;
         }
 
-        public async Task ValidateLayers(ManifestV2 manifest, bool tryMount)
+        public async Task ValidateLayers(ManifestV2 manifest, bool tryMount, bool fakePullAndRetryMount)
         {
             var missingLayer = new List<string>();
             foreach (var layer in manifest.layers)
@@ -64,7 +64,7 @@ namespace Nibbler
                     {
                         try
                         {
-                            await _registry.MountBlob(_targetImageName, layer.digest, _baseImageName);
+                            await MountLayer(layer, fakePullAndRetryMount);
                             mounted = true;
                         }
                         catch
@@ -187,6 +187,43 @@ namespace Nibbler
                         await _registry.UploadManifest(_targetImageName, destImageRef, stream);
                     }
                 });
+        }
+
+        private async Task MountLayer(ManifestV2Layer layer, bool fakePullAndRetryMount)
+        {
+            try
+            {
+                await _registry.MountBlob(_targetImageName, layer.digest, _baseImageName);
+            }
+            catch
+            {
+                if (fakePullAndRetryMount)
+                {
+                    await FakePullAndMount(layer);
+                }
+                else
+                {
+                    throw;
+                }
+            }
+        }
+
+        private async Task FakePullAndMount(ManifestV2Layer layer)
+        {
+            _logger.LogDebug($"Mount failed, trying to fake pull and retry {_baseImageName} {layer.digest}");
+
+            try
+            {
+                var blobStream = await _registry.DownloadBlob(_baseImageName, layer.digest);
+                await blobStream.CopyToAsync(System.IO.Stream.Null);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug(ex, $"Fake pull failed");
+                throw;
+            }
+
+            await _registry.MountBlob(_targetImageName, layer.digest, _baseImageName);
         }
     }
 }

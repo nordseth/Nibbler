@@ -100,7 +100,7 @@ namespace Nibbler.Command
                 var pusher = new Pusher(BaseImage.Value(), Destination.Value(), layersAdded, registry, CreateLogger("PUSHR"));
                 pusher.ValidateDest();
                 bool configExists = await pusher.CheckConfigExists(manifest);
-                await pusher.ValidateLayers(manifest, !DryRun.HasValue());
+                await pusher.ValidateLayers(manifest, !DryRun.HasValue(), true);
 
                 if (!DryRun.HasValue())
                 {

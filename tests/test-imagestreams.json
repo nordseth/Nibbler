@@ -1,0 +1,45 @@
+{
+    "kind": "ImageStreamList",
+    "apiVersion": "v1",
+    "metadata": {
+        "name": "test-dotnet-image-streams"
+    },
+    "items": [
+        {
+            "kind": "ImageStream",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "test-dotnet"
+            },
+            "spec": {
+                "tags": [
+                    {
+                        "name": "3.1",
+                        "from": {
+                            "kind": "DockerImage",
+                            "name": "mcr.microsoft.com/dotnet/core/sdk:3.1"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "kind": "ImageStream",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "test-dotnet-runtime"
+            },
+            "spec": {
+                "tags": [
+                    {
+                        "name": "3.1",
+                        "from": {
+                            "kind": "DockerImage",
+                            "name": "mcr.microsoft.com/dotnet/core/aspnet:3.1"
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}
