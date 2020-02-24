@@ -86,14 +86,20 @@ namespace Nibbler.Utils
                 throw new Exception($"Could not load docker config \"{configPath}\"", ex);
             }
 
-            if (config.auths != null && config.auths.TryGetValue(registry, out var auth) && auth?.auth != null)
+            if (config.auths != null && config.auths.TryGetValue(registry, out var auth))
             {
-                return $"Basic {auth.auth}";
+                if (auth?.auth != null)
+                {
+                    return $"Basic {auth.auth}";
+                }
+                else if (auth?.username != null && auth?.password != null)
+                {
+                    var basicAuth = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{auth.username}:{auth.password}"));
+                    return $"Basic {basicAuth}";
+                }
             }
-            else
-            {
-                throw new Exception($"Could find credentials for {registry} in \"{configPath}\"");
-            }
+
+            throw new Exception($"Could find credentials for {registry} in \"{configPath}\"");
         }
 
         private class DockerConfig
