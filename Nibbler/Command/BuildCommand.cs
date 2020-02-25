@@ -184,7 +184,7 @@ namespace Nibbler.Command
             }
             else if (!string.IsNullOrEmpty(Username.Value()) && !string.IsNullOrEmpty(Password.Value()))
             {
-                var auth = $"Basic {Convert.ToBase64String(Encoding.UTF8.GetBytes($"{Username.Value()}:{Password.Value()}"))}";
+                var auth = $"Bearer {Convert.ToBase64String(Encoding.UTF8.GetBytes($"{Username.Value()}:{Password.Value()}"))}";
                 registry.UseAuthorization(auth);
             }
 

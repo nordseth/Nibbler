@@ -90,12 +90,12 @@ namespace Nibbler.Utils
             {
                 if (auth?.auth != null)
                 {
-                    return $"Basic {auth.auth}";
+                    return $"Bearer {auth.auth}";
                 }
                 else if (auth?.username != null && auth?.password != null)
                 {
                     var basicAuth = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{auth.username}:{auth.password}"));
-                    return $"Basic {basicAuth}";
+                    return $"Bearer {basicAuth}";
                 }
             }
 

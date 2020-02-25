@@ -35,7 +35,7 @@ namespace Nibbler
         public void UseBasicAuthentication(string username, string password)
         {
             var auth = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{username}:{password}"));
-            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", auth);
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", auth);
         }
 
         public void UseAuthorization(string header)
