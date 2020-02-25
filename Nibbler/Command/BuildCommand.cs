@@ -164,15 +164,15 @@ namespace Nibbler.Command
             var options = $"{(SkipTlsVerify.HasValue() ? ", skipTlsVerify" : "")}";
             if (DockerConfig.HasValue())
             {
-                registryLogger.LogDebug($"{baseUri}, useConf: {DockerConfig.Value()}{options})");
+                registryLogger.LogDebug($"{baseUri}, useConf: {DockerConfig.Value()}{options}");
             }
             else if (!string.IsNullOrEmpty(Username.Value()) && !string.IsNullOrEmpty(Password.Value()))
             {
-                registryLogger.LogDebug($"{baseUri}, u: {Username.HasValue()}, p: {Password.HasValue()}{options})");
+                registryLogger.LogDebug($"{baseUri}, u: {Username.HasValue()}, p: {Password.HasValue()}{options}");
             }
             else
             {
-                registryLogger.LogDebug($"{baseUri}{options})");
+                registryLogger.LogDebug($"{baseUri}{options}");
             }
 
             var registry = new Registry(baseUri, registryLogger, SkipTlsVerify.HasValue());
