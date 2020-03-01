@@ -39,11 +39,18 @@ namespace Nibbler.Command
         public CommandOption Verbose { get; private set; }
         public CommandOption DryRun { get; private set; }
 
+        public CommandOption DockerConfig { get; private set; }
+
         public CommandOption Username { get; private set; }
         public CommandOption Password { get; private set; }
-        public CommandOption DockerConfig { get; private set; }
+
         public CommandOption Insecure { get; private set; }
         public CommandOption SkipTlsVerify { get; private set; }
+        public CommandOption InsecurePush { get; private set; }
+        public CommandOption SkipTlsVerifyPush { get; private set; }
+        public CommandOption InsecurePull { get; private set; }
+        public CommandOption SkipTlsVerifyPull { get; private set; }
+
         public CommandOption TempFolder { get; private set; }
         public CommandOption DigestFile { get; private set; }
 
@@ -67,13 +74,23 @@ namespace Nibbler.Command
             // options:
             Verbose = app.Option("-v|--verbose|--debug", "Verbose output", CommandOptionType.NoValue);
             DryRun = app.Option("--dry-run", "Does not push, only shows what would happen (use with -v)", CommandOptionType.NoValue);
-            Username = app.Option("--username", "Registry username", CommandOptionType.SingleValue);
-            Password = app.Option("--password", "Registry password", CommandOptionType.SingleValue);
-            DockerConfig = app.Option("--docker-config", "Use docker config file to authenticate with registry, optionally specify file path", CommandOptionType.SingleOrNoValue);
-            Insecure = app.Option("--insecure", "Insecure registry (http)", CommandOptionType.NoValue);
-            SkipTlsVerify = app.Option("--skip-tls-verify", "Skip verifying registry TLS certificate", CommandOptionType.NoValue);
 
-            TempFolder = app.Option("--temp-folder", "Set temp folder (default is ./.nibbler)", CommandOptionType.SingleValue);
+            DockerConfig = app.Option("--docker-config", "Specify docker config file for authentication with registry. (default: ~/.docker/config.json)", CommandOptionType.SingleOrNoValue);
+
+            var baseAndDestValidator = new RegistryBaseAndDestValidator();
+
+            Username = app.Option("--username", "Registry username (deprecated, use docker-config)", CommandOptionType.SingleValue, c => c.Validators.Add(baseAndDestValidator));
+            Password = app.Option("--password", "Registry password (deprecated, use docker-config)", CommandOptionType.SingleValue, c => c.Validators.Add(baseAndDestValidator));
+            Insecure = app.Option("--insecure", "Insecure registry (http). Only use if base image and destination is the same registry.", CommandOptionType.NoValue, c => c.Validators.Add(baseAndDestValidator));
+            SkipTlsVerify = app.Option("--skip-tls-verify", "Skip verifying registry TLS certificate. Only use if base image and destination is the same registry.", CommandOptionType.NoValue, c => c.Validators.Add(baseAndDestValidator));
+
+            InsecurePull = app.Option("--insecure-pull", "Insecure base registry (http)", CommandOptionType.NoValue);
+            SkipTlsVerifyPull = app.Option("--skip-tls-verify-pull", "Skip verifying base registry TLS certificate", CommandOptionType.NoValue);
+
+            InsecurePush = app.Option("--insecure-push", "Insecure destination registry (http)", CommandOptionType.NoValue);
+            SkipTlsVerifyPush = app.Option("--skip-tls-verify-push", "Skip verifying destination registry TLS certificate", CommandOptionType.NoValue);
+
+            TempFolder = app.Option("--temp-folder", "Set temp folder (default: ./.nibbler)", CommandOptionType.SingleValue);
             DigestFile = app.Option("--digest-file", "Output image digest to file, optionally specify file", CommandOptionType.SingleOrNoValue);
         }
 
@@ -84,8 +101,8 @@ namespace Nibbler.Command
 
             try
             {
-                var registry = CreateRegistry();
-                var (manifest, image) = await LoadBaseImage(registry);
+                var (baseRegistry, destRegistry) = CreateRegistries();
+                var (manifest, image) = await LoadBaseImage(baseRegistry);
                 UpdateImageConfig(image);
                 UpdateConfigInManifest(manifest, image);
 
@@ -97,10 +114,9 @@ namespace Nibbler.Command
                     AddLayerToConfigAndManifest(layer, manifest, image);
                 }
 
-                var pusher = new Pusher(BaseImage.Value(), Destination.Value(), layersAdded, registry, CreateLogger("PUSHR"));
-                pusher.ValidateDest();
+                var pusher = new Pusher(BaseImage.Value(), Destination.Value(), destRegistry, layersAdded, CreateLogger("PUSHR"));
                 bool configExists = await pusher.CheckConfigExists(manifest);
-                await pusher.ValidateLayers(manifest, !DryRun.HasValue(), true);
+                await pusher.ValidateLayers(manifest, !DryRun.HasValue() && destRegistry == baseRegistry, true);
 
                 if (!DryRun.HasValue())
                 {
@@ -157,7 +173,7 @@ namespace Nibbler.Command
             return new Logger(name, Verbose.HasValue());
         }
 
-        private Registry CreateRegistry()
+        private (Registry src, Registry dest) CreateRegistries()
         {
             var registryLogger = CreateLogger("REGRY");
             var baseUri = ImageHelper.GetRegistryBaseUrl(BaseImage.Value(), Insecure.HasValue());
@@ -188,7 +204,7 @@ namespace Nibbler.Command
                 registry.UseAuthorization(auth);
             }
 
-            return registry;
+            return (registry, registry);
         }
 
         public async Task<(ManifestV2, ImageV1)> LoadBaseImage(Registry registry)

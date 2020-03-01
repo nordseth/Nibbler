@@ -13,32 +13,23 @@ namespace Nibbler
         private readonly string _baseImageName;
         private readonly string _destination;
         private readonly string _targetImageName;
-        private readonly IEnumerable<BuilderLayer> _addedLayers;
         private readonly Registry _registry;
+        private readonly IEnumerable<BuilderLayer> _addedLayers;
         private readonly ILogger _logger;
         private readonly int _chunckSize;
         private readonly int _retryUpload;
 
-        public Pusher(string baseImage, string destination, IEnumerable<BuilderLayer> addedLayers, Registry registry, ILogger logger)
+        public Pusher(string baseImage, string destination, Registry registry, IEnumerable<BuilderLayer> addedLayers, ILogger logger)
         {
             _baseImageName = ImageHelper.GetImageName(baseImage);
             _destination = destination;
             _targetImageName = ImageHelper.GetImageName(_destination);
-            _addedLayers = addedLayers;
             _registry = registry;
+            _addedLayers = addedLayers;
             _logger = logger;
             // set to 0 to diable chunckes
             _chunckSize = 0;
             _retryUpload = 3;
-        }
-
-        public void ValidateDest()
-        {
-            var destRegistryUri = ImageHelper.GetRegistryBaseUrl(_destination, _registry.BaseUri.Scheme == "http");
-            if (_registry.BaseUri != destRegistryUri)
-            {
-                throw new Exception($"Source ({_registry.BaseUri.Authority}) and destination ({destRegistryUri.Authority}) registries must be the same.");
-            }
         }
 
         public async Task<bool> CheckConfigExists(ManifestV2 manifest)
