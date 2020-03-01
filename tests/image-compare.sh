@@ -5,17 +5,18 @@ echo "-------- Prepair images --------"
 
 docker pull gcr.io/kaniko-project/executor:latest
 docker pull docker
-docker pull registry.centos.org/dotnet/dotnet-22-centos7:latest
-docker pull registry.centos.org/dotnet/dotnet-22-runtime-centos7:latest
-docker tag registry.centos.org/dotnet/dotnet-22-runtime-centos7:latest localhost:5000/dotnet/dotnet-22-runtime-centos7:latest
-docker push localhost:5000/dotnet/dotnet-22-runtime-centos7:latest
+docker pull registry.centos.org/dotnet/dotnet-31-centos7:latest
+docker pull registry.centos.org/dotnet/dotnet-31-runtime-centos7:latest
+docker tag registry.centos.org/dotnet/dotnet-31-runtime-centos7:latest localhost:5000/dotnet/dotnet-31-runtime-centos7:latest
+docker push localhost:5000/dotnet/dotnet-31-runtime-centos7:latest
 
 echo "-------- Build artifacts --------"
 
+# warning: when running on windows the "dotnet-build.sh" might be mounted with wrong line endings
 docker run --rm \
 	--name dotnet-build \
 	-v /$PWD:/opt/app-root/workspace \
-	registry.centos.org/dotnet/dotnet-22-centos7:latest -- bash -c "../workspace/dotnet-build.sh"
+	registry.centos.org/dotnet/dotnet-31-centos7:latest -- bash -c "../workspace/dotnet-build.sh"
 cp Dockerfile TestData/publish-docker
 
 echo "-------- Kaniko build --------"
@@ -45,13 +46,16 @@ docker run -d --rm -p 8080:8080 --name docker-test-app nibbler-test:docker
 
 echo "-------- Nibbler build --------"
 
-cat << EOF | docker run -i --rm -v /$PWD:/opt/app-root/workspace registry.centos.org/dotnet/dotnet-22-centos7:latest bash
+echo "-------- Create Nibbler nuget --------"
+dotnet pack ../Nibbler -o ./nuget -p:PackageVersion=1.0.0-test.e2e
+
+cat << EOF | docker run -i --rm -v /$PWD:/opt/app-root/workspace registry.centos.org/dotnet/dotnet-31-centos7:latest bash
 set -e
 
-dotnet tool install -g Nibbler --version 1.0.0-beta.9 
+dotnet tool install -g Nibbler --version 1.0.0-test.e2e --add-source /opt/app-root/workspace/nuget
 echo "-------- Nibbler tool installed --------"
 nibbler \
-	--base-image host.docker.internal:5000/dotnet/dotnet-22-runtime-centos7:latest \
+	--base-image host.docker.internal:5000/dotnet/dotnet-31-runtime-centos7:latest \
 	--destination host.docker.internal:5000/nibbler-test:nibbler \
 	--add "/opt/app-root/workspace/TestData/publish-docker:/opt/app-root/app" \
 	--workdir /opt/app-root/app \
@@ -64,3 +68,8 @@ docker pull localhost:5000/nibbler-test:nibbler
 docker run -d --rm -p 8082:8080 --name nibbler-test-app localhost:5000/nibbler-test:nibbler
 
 echo "-------- Done! --------"
+
+echo "-> test apps running:"
+echo "  kaniko-test-app: http://localhost:8081"
+echo "  docker-test-app: http://localhost:8080"
+echo "  nibbler-test-app: http://localhost:8082"
