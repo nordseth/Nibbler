@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using McMaster.Extensions.CommandLineUtils;
+using McMaster.Extensions.CommandLineUtils.Abstractions;
 using Nibbler.Models;
 using Nibbler.Utils;
 
@@ -23,6 +25,7 @@ namespace Nibbler.Command
         }
 
         public CommandOption BaseImage { get; private set; }
+
         public CommandOption Destination { get; private set; }
 
         public CommandOption Add { get; private set; }
@@ -39,11 +42,18 @@ namespace Nibbler.Command
         public CommandOption Verbose { get; private set; }
         public CommandOption DryRun { get; private set; }
 
+        public CommandOption DockerConfig { get; private set; }
+
         public CommandOption Username { get; private set; }
         public CommandOption Password { get; private set; }
-        public CommandOption DockerConfig { get; private set; }
+
         public CommandOption Insecure { get; private set; }
         public CommandOption SkipTlsVerify { get; private set; }
+        public CommandOption InsecurePush { get; private set; }
+        public CommandOption SkipTlsVerifyPush { get; private set; }
+        public CommandOption InsecurePull { get; private set; }
+        public CommandOption SkipTlsVerifyPull { get; private set; }
+
         public CommandOption TempFolder { get; private set; }
         public CommandOption DigestFile { get; private set; }
 
@@ -67,14 +77,59 @@ namespace Nibbler.Command
             // options:
             Verbose = app.Option("-v|--verbose|--debug", "Verbose output", CommandOptionType.NoValue);
             DryRun = app.Option("--dry-run", "Does not push, only shows what would happen (use with -v)", CommandOptionType.NoValue);
-            Username = app.Option("--username", "Registry username", CommandOptionType.SingleValue);
-            Password = app.Option("--password", "Registry password", CommandOptionType.SingleValue);
-            DockerConfig = app.Option("--docker-config", "Use docker config file to authenticate with registry, optionally specify file path", CommandOptionType.SingleOrNoValue);
-            Insecure = app.Option("--insecure", "Insecure registry (http)", CommandOptionType.NoValue);
-            SkipTlsVerify = app.Option("--skip-tls-verify", "Skip verifying registry TLS certificate", CommandOptionType.NoValue);
 
-            TempFolder = app.Option("--temp-folder", "Set temp folder (default is ./.nibbler)", CommandOptionType.SingleValue);
+            DockerConfig = app.Option("--docker-config", "Specify docker config file for authentication with registry. (default: ~/.docker/config.json)", CommandOptionType.SingleOrNoValue);
+
+            Username = app.Option("--username", "Registry username (deprecated, use docker-config)", CommandOptionType.SingleValue);
+            Password = app.Option("--password", "Registry password (deprecated, use docker-config)", CommandOptionType.SingleValue);
+            Insecure = app.Option("--insecure", "Insecure registry (http). Only use if base image and destination is the same registry.", CommandOptionType.NoValue);
+            SkipTlsVerify = app.Option("--skip-tls-verify", "Skip verifying registry TLS certificate. Only use if base image and destination is the same registry.", CommandOptionType.NoValue);
+
+            InsecurePull = app.Option("--insecure-pull", "Insecure base registry (http)", CommandOptionType.NoValue);
+            SkipTlsVerifyPull = app.Option("--skip-tls-verify-pull", "Skip verifying base registry TLS certificate", CommandOptionType.NoValue);
+
+            InsecurePush = app.Option("--insecure-push", "Insecure destination registry (http)", CommandOptionType.NoValue);
+            SkipTlsVerifyPush = app.Option("--skip-tls-verify-push", "Skip verifying destination registry TLS certificate", CommandOptionType.NoValue);
+
+            TempFolder = app.Option("--temp-folder", "Set temp folder (default: ./.nibbler)", CommandOptionType.SingleValue);
             DigestFile = app.Option("--digest-file", "Output image digest to file, optionally specify file", CommandOptionType.SingleOrNoValue);
+        }
+
+        public ValidationResult Validate(ValidationContext context)
+        {
+            if (Username.HasValue() || Password.HasValue() || Insecure.HasValue() || SkipTlsVerify.HasValue())
+            {
+                var srcReg = ImageHelper.GetRegistryName(BaseImage.Value());
+                var destReg = ImageHelper.GetRegistryName(Destination.Value());
+
+                if (srcReg != destReg)
+                {
+                    var fields = new List<string>();
+                    if (Username.HasValue())
+                    {
+                        fields.Add(Username.LongName);
+                    }
+
+                    if (Password.HasValue())
+                    {
+                        fields.Add(Password.LongName);
+                    }
+
+                    if (Insecure.HasValue())
+                    {
+                        fields.Add(Insecure.LongName);
+                    }
+
+                    if (SkipTlsVerify.HasValue())
+                    {
+                        fields.Add(SkipTlsVerify.LongName);
+                    }
+
+                    return new ValidationResult($"{string.Join(", ", fields)} can only be set if baseImage registry is the same as destination", fields);
+                }
+            }
+
+            return ValidationResult.Success;
         }
 
         public async Task<int> ExecuteAsync(CancellationToken cancellationToken)
@@ -84,8 +139,8 @@ namespace Nibbler.Command
 
             try
             {
-                var registry = CreateRegistry();
-                var (manifest, image) = await LoadBaseImage(registry);
+                var (baseRegistry, destRegistry) = CreateRegistries();
+                var (manifest, image) = await LoadBaseImage(baseRegistry);
                 UpdateImageConfig(image);
                 UpdateConfigInManifest(manifest, image);
 
@@ -97,10 +152,13 @@ namespace Nibbler.Command
                     AddLayerToConfigAndManifest(layer, manifest, image);
                 }
 
-                var pusher = new Pusher(BaseImage.Value(), Destination.Value(), layersAdded, registry, CreateLogger("PUSHR"));
-                pusher.ValidateDest();
+                var pusher = new Pusher(BaseImage.Value(), Destination.Value(), destRegistry, layersAdded, CreateLogger("PUSHR"))
+                {
+                    FakePullAndRetryMount = true,
+                };
+
                 bool configExists = await pusher.CheckConfigExists(manifest);
-                await pusher.ValidateLayers(manifest, !DryRun.HasValue(), true);
+                var missingLayers = await pusher.FindMissingLayers(manifest, !DryRun.HasValue() && destRegistry == baseRegistry);
 
                 if (!DryRun.HasValue())
                 {
@@ -109,6 +167,7 @@ namespace Nibbler.Command
                         await pusher.PushConfig(manifest.config, () => GetJsonStream(image));
                     }
 
+                    await pusher.CopyLayers(baseRegistry, ImageHelper.GetImageName(BaseImage.Value()), missingLayers);
                     await pusher.PushLayers(f => File.OpenRead(Path.Combine(_tempFolderPath, f)));
                     await pusher.PushManifest(() => GetJsonStream(manifest));
                 }
@@ -157,38 +216,52 @@ namespace Nibbler.Command
             return new Logger(name, Verbose.HasValue());
         }
 
-        private Registry CreateRegistry()
+        private (Registry src, Registry dest) CreateRegistries()
         {
             var registryLogger = CreateLogger("REGRY");
-            var baseUri = ImageHelper.GetRegistryBaseUrl(BaseImage.Value(), Insecure.HasValue());
-            var options = $"{(SkipTlsVerify.HasValue() ? ", skipTlsVerify" : "")}";
-            if (DockerConfig.HasValue())
+            var credentialHelper = new CredentialHelper(DockerConfig.Value());
+
+            var baseUri = ImageHelper.GetRegistryBaseUrl(BaseImage.Value(), Insecure.HasValue() || InsecurePull.HasValue());
+            var destUri = ImageHelper.GetRegistryBaseUrl(Destination.Value(), Insecure.HasValue() || InsecurePush.HasValue());
+
+            if (baseUri == destUri)
             {
-                registryLogger.LogDebug($"{baseUri}, useConf: {DockerConfig.Value()}{options}");
-            }
-            else if (!string.IsNullOrEmpty(Username.Value()) && !string.IsNullOrEmpty(Password.Value()))
-            {
-                registryLogger.LogDebug($"{baseUri}, u: {Username.HasValue()}, p: {Password.HasValue()}{options}");
-            }
-            else
-            {
-                registryLogger.LogDebug($"{baseUri}{options}");
+                var authHandler = new AuthenticationHandler(
+                    ImageHelper.GetRegistryName(BaseImage.Value()),
+                    credentialHelper,
+                    registryLogger);
+
+                if (Username.HasValue() && Password.HasValue())
+                {
+                    credentialHelper.OverrideUsernamePassword(Username.Value(), Password.Value());
+                }
+
+                bool skipTlsVerify = SkipTlsVerify.HasValue() || SkipTlsVerifyPull.HasValue() || SkipTlsVerifyPush.HasValue();
+                var registry = new Registry(baseUri, registryLogger, authHandler, skipTlsVerify);
+
+                registryLogger.LogDebug($"using {baseUri} for pull and push{(skipTlsVerify ? ", skipTlsVerify" : "")}");
+                return (registry, registry);
             }
 
-            var registry = new Registry(baseUri, registryLogger, SkipTlsVerify.HasValue());
+            var baseRegAuthHandler = new AuthenticationHandler(
+                ImageHelper.GetRegistryName(BaseImage.Value()),
+                credentialHelper,
+                registryLogger);
 
-            if (DockerConfig.HasValue())
-            {
-                var auth = ImageHelper.GetDockerConfigAuth(ImageHelper.GetRegistryName(BaseImage.Value()), DockerConfig.Value());
-                registry.UseAuthorization(auth);
-            }
-            else if (!string.IsNullOrEmpty(Username.Value()) && !string.IsNullOrEmpty(Password.Value()))
-            {
-                var auth = $"Bearer {Convert.ToBase64String(Encoding.UTF8.GetBytes($"{Username.Value()}:{Password.Value()}"))}";
-                registry.UseAuthorization(auth);
-            }
+            var baseRegistry = new Registry(baseUri, registryLogger, baseRegAuthHandler, SkipTlsVerifyPull.HasValue());
 
-            return registry;
+            registryLogger.LogDebug($"using {baseUri} for pull{(SkipTlsVerifyPull.HasValue() ? ", skipTlsVerify" : "")}");
+
+            var destRegAuthHandler = new AuthenticationHandler(
+                ImageHelper.GetRegistryName(Destination.Value()),
+                credentialHelper,
+                registryLogger);
+
+            var destRegistry = new Registry(destUri, registryLogger, destRegAuthHandler, SkipTlsVerifyPush.HasValue());
+
+            registryLogger.LogDebug($"using {destUri} for push{(SkipTlsVerifyPush.HasValue() ? ", skipTlsVerify" : "")}");
+
+            return (baseRegistry, destRegistry);
         }
 
         public async Task<(ManifestV2, ImageV1)> LoadBaseImage(Registry registry)
@@ -206,12 +279,12 @@ namespace Nibbler.Command
 
         private void UpdateImageConfig(ImageV1 image)
         {
+            var config = image.config;
             var historyStrings = new List<string>();
 
             // do git labels before other labels, to enable users to overwrite them
             if (GitLabels.HasValue())
             {
-                image.config.Labels = image.config.Labels ?? new Dictionary<string, string>();
                 IDictionary<string, string> gitLabels = null;
                 try
                 {
@@ -226,7 +299,8 @@ namespace Nibbler.Command
                 {
                     foreach (var l in gitLabels)
                     {
-                        image.config.Labels[l.Key] = l.Value;
+                        config.Labels = config.Labels ?? new Dictionary<string, string>();
+                        config.Labels[l.Key] = l.Value;
                         historyStrings.Add($"--gitLabels {l.Key}={l.Value}");
                     }
                 }
@@ -234,51 +308,54 @@ namespace Nibbler.Command
 
             foreach (var label in Label.Values)
             {
-                image.config.Labels = image.config.Labels ?? new Dictionary<string, string>();
+                config.Labels = config.Labels ?? new Dictionary<string, string>();
                 var split = label.Split('=', 2);
                 if (split.Length != 2)
                 {
                     throw new Exception($"Invalid label {label}");
                 }
 
-                image.config.Labels[split[0]] = split[1];
+                config.Labels[split[0]] = split[1];
                 historyStrings.Add($"--label {split[0]}={split[1]}");
             }
 
             foreach (var var in Env.Values)
             {
-                image.config.Env = image.config.Env ?? new List<string>();
-                image.config.Env.Add(var);
+                config.Env = config.Env ?? new List<string>();
+                config.Env.Add(var);
                 historyStrings.Add($"--env {var}");
             }
 
             if (WorkDir.HasValue())
             {
-                image.config.WorkingDir = WorkDir.Value();
+                config.WorkingDir = WorkDir.Value();
                 historyStrings.Add($"--workdir {WorkDir.Value()}");
             }
 
             if (User.HasValue())
             {
-                image.config.User = User.Value();
+                config.User = User.Value();
                 historyStrings.Add($"--user {User.Value()}");
             }
 
             if (Cmd.HasValue())
             {
-                image.config.Cmd = SplitCmd(Cmd.Value()).ToList();
-                var cmdString = string.Join(", ", image.config.Cmd.Select(c => $"\"{c}\""));
+                config.Cmd = SplitCmd(Cmd.Value()).ToList();
+                var cmdString = string.Join(", ", config.Cmd.Select(c => $"\"{c}\""));
                 historyStrings.Add($"--cmd {cmdString}");
             }
 
             if (Entrypoint.HasValue())
             {
-                image.config.Entrypoint = SplitCmd(Entrypoint.Value()).ToList();
-                var epString = string.Join(", ", image.config.Entrypoint.Select(c => $"\"{c}\""));
+                config.Entrypoint = SplitCmd(Entrypoint.Value()).ToList();
+                var epString = string.Join(", ", config.Entrypoint.Select(c => $"\"{c}\""));
                 historyStrings.Add($"--entrypoint {epString}");
             }
 
-            image.history.Add(ImageV1History.Create(string.Join(", ", historyStrings), true));
+            if (historyStrings.Any())
+            {
+                image.history.Add(ImageV1History.Create(string.Join(", ", historyStrings), true));
+            }
 
             foreach (var h in historyStrings)
             {
@@ -400,7 +477,7 @@ namespace Nibbler.Command
 
             public static AddArgument Parse(string s, bool isFolder)
             {
-                var split = s.Split(':');
+                var split = s.Split(new[] { ':', ';' });
                 if (!isFolder && split.Length < 2)
                 {
                     throw new Exception($"Invalid add {s}");

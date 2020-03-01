@@ -23,7 +23,7 @@ namespace Nibbler.Test
         [DataRow("https://mcr.microsoft.com", "dotnet/core/aspnet", "3.1")]
         public async Task Digest_Compare(string registryUrl, string imageName, string imageTag)
         {
-            var source = new Registry(new Uri(registryUrl), _registryLogger);
+            var source = new Registry(new Uri(registryUrl), _registryLogger, null);
             var manifest = await source.GetManifest(imageName, imageTag);
             var (json, digest) = await source.GetImageFile(imageName, manifest.config.digest);
 
@@ -31,18 +31,14 @@ namespace Nibbler.Test
         }
 
         [TestMethod]
-        [DataRow("https://mcr.microsoft.com", "dotnet/core/aspnet", "3.1", "http://localhost:5000", false)]
-        public async Task Registry_Upload(string sourceRegistryUrl, string imageName, string imageTag, string destRegistryUrl, bool useDockerConfigDest)
+        [DataRow("https://mcr.microsoft.com", "dotnet/core/aspnet", "3.1", "http://localhost:5000")]
+        public async Task Registry_Upload(string sourceRegistryUrl, string imageName, string imageTag, string destRegistryUrl)
         {
-            var source = new Registry(new Uri(sourceRegistryUrl), _registryLogger);
+            var source = new Registry(new Uri(sourceRegistryUrl), _registryLogger, null);
             var manifest = await source.GetManifest(imageName, imageTag);
             var image = await source.GetImage(imageName, manifest.config.digest);
 
-            var dest = new Registry(new Uri(destRegistryUrl), _registryLogger);
-            if (useDockerConfigDest)
-            {
-                dest.UseAuthorization(ImageHelper.GetDockerConfigAuth(destRegistryUrl, null));
-            }
+            var dest = new Registry(new Uri(destRegistryUrl), _registryLogger, null);
             var uploadUri = await dest.StartUpload(imageName);
             Console.WriteLine($"uploadUri: {uploadUri}");
 

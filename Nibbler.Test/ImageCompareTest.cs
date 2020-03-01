@@ -21,7 +21,7 @@ namespace Nibbler.Test
         [DataRow("localhost:5000/nibbler-test:nibbler", true)]
         public async Task ImageCompare_Download_Image_And_Layer(string image, bool insecure)
         {
-            var registry = new Registry(ImageHelper.GetRegistryBaseUrl(image, insecure), new Logger("REGISTRY", true));
+            var registry = new Registry(ImageHelper.GetRegistryBaseUrl(image, insecure), new Logger("REGISTRY", true), null);
 
             var manifest = await registry.GetManifest(ImageHelper.GetImageName(image), ImageHelper.GetImageReference(image));
             //Console.WriteLine("-------------");

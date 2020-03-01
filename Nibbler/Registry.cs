@@ -18,29 +18,25 @@ namespace Nibbler
         private readonly ILogger _logger;
         private readonly HttpClient _client;
 
-        public Registry(Uri baseUri, ILogger logger, bool skipTlsVerify = false)
+        public Registry(Uri baseUri, ILogger logger, DelegatingHandler authenticationHandler, bool skipTlsVerify = false)
         {
             BaseUri = baseUri;
             _logger = logger;
-            var httpClientHandler = new HttpClientHandler();
+            var primaryHandler = new HttpClientHandler();
             if (skipTlsVerify)
             {
-                httpClientHandler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true;
+                primaryHandler.ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
             }
 
-            _client = new HttpClient(httpClientHandler);
+            HttpMessageHandler handler = primaryHandler;
+            if (authenticationHandler != null)
+            {
+                authenticationHandler.InnerHandler = handler;
+                handler = authenticationHandler;
+            }
+
+            _client = new HttpClient(handler);
             _client.BaseAddress = BaseUri;
-        }
-
-        public void UseBasicAuthentication(string username, string password)
-        {
-            var auth = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{username}:{password}"));
-            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", auth);
-        }
-
-        public void UseAuthorization(string header)
-        {
-            _client.DefaultRequestHeaders.Authorization = AuthenticationHeaderValue.Parse(header);
         }
 
         public async Task<string> GetManifestFile(string name, string reference)

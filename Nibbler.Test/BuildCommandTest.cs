@@ -14,14 +14,14 @@ namespace Nibbler.Test
         [TestMethod]
         public async Task BuildCommand_Build_Options_Show_Help()
         {
-            var result = await RunProgram(new string[] { "--help" });
+            var result = await Program.Main(new string[] { "--help" });
             Assert.AreEqual(0, result);
         }
 
         [TestMethod]
         public async Task BuildCommand_Error_No_Args()
         {
-            int result = await RunProgram(new string[] { });
+            int result = await Program.Main(new string[] { });
             Assert.AreEqual(1, result);
         }
 
@@ -165,27 +165,28 @@ namespace Nibbler.Test
             "-v" })]
         public async Task BuilderCommand_DigestFile(string[] args) => await Run(args);
 
-        private static async Task Run(string[] args)
+        [TestMethod]
+        [DataRow(new string[] {
+            "--base-image", "registry.hub.docker.com/library/hello-world:latest",
+            "--destination", "localhost:5000/hello-world:latest",
+            "--insecure-push",
+            "-v" })]
+        [DataRow(new string[] {
+            "--base-image", "registry.hub.docker.com/library/ubuntu:xenial",
+            "--destination", "localhost:5000/ubuntu:xenial",
+            "--insecure-push",
+            "-v" })]
+        [DataRow(new string[] {
+            "--base-image", "registry.hub.docker.com/library/ubuntu:bionic",
+            "--destination", "localhost:5000/ubuntu:bionic",
+            "--insecure-push",
+            "-v" })]
+        public async Task BuilderCommand_Copy_Image(string[] args) => await Run(args);
+
+        public static async Task Run(string[] args)
         {
-            int result = await RunProgram(args);
+            int result = await Program.Main(args);
             Assert.AreEqual(0, result);
-        }
-
-        private static async Task<int> RunProgram(string[] args)
-        {
-            var app = new CommandLineApplication
-            {
-                Name = "nibbler",
-                Description = "Do simple changes to OCI images",
-            };
-            app.HelpOption();
-
-            var cmd = new BuildCommand();
-            cmd.AddOptions(app);
-            app.OnExecuteAsync(cmd.ExecuteAsync);
-
-            var result = await app.ExecuteAsync(args);
-            return result;
         }
     }
 }

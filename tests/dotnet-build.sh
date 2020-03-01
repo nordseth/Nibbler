@@ -3,9 +3,9 @@ set -e
 
 echo "-------- dotnet-build.sh: download repo --------"
 
-curl -L https://github.com/nordseth/aspnetcore-new/archive/2.2.tar.gz -o ../src.tar.gz
+curl -L https://github.com/nordseth/aspnetcore-new/archive/3.1.tar.gz -o ../src.tar.gz
 tar -xzf ../src.tar.gz
-cd aspnetcore-new-2.2
+cd aspnetcore-new-3.1
 
 echo "-------- dotnet-build.sh: dotnet build artifacts --------"
 

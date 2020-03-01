@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Nibbler.Models;
+using Nibbler.Utils;
 
 namespace Nibbler.Test
 {
@@ -21,7 +22,7 @@ namespace Nibbler.Test
         [DataRow("http://localhost:5000", "hello-world", "latest")]
         public async Task Registry_Get_ManifestFile(string registryUrl, string imageName, string imageRef)
         {
-            var registry = new Registry(new Uri(registryUrl), _registryLogger);
+            var registry = new Registry(new Uri(registryUrl), _registryLogger, null);
 
             var manifest = await registry.GetManifestFile(imageName, imageRef);
             Console.WriteLine(manifest);
@@ -32,8 +33,36 @@ namespace Nibbler.Test
         [DataRow("http://localhost:5000", "hello-world", "latest")]
         public async Task Registry_Get_Manifest(string registryUrl, string imageName, string imageRef)
         {
-            var registry = new Registry(new Uri(registryUrl), _registryLogger);
+            var registry = new Registry(new Uri(registryUrl), _registryLogger, null);
 
+            var manifest = await registry.GetManifest(imageName, imageRef);
+            Assert.IsNotNull(manifest);
+            Assert.IsNotNull(manifest.layers);
+            Assert.IsTrue(manifest.layers.Any());
+            Assert.IsNotNull(manifest.layers.First().digest);
+            Assert.IsNotNull(manifest.config);
+            Assert.IsNotNull(manifest.config.digest);
+            try
+            {
+                Assert.AreEqual(ImageV1.MimeType, manifest.config.mediaType);
+            }
+            catch
+            {
+                Assert.AreEqual(ImageV1.AltMimeType, manifest.config.mediaType);
+            }
+        }
+
+        [TestMethod]
+        [DataRow("registry.hub.docker.com/library/hello-world:latest", false, false)]
+        public async Task Registry_Get_Manifest_With_Auth(string image, bool insecure, bool skipTlsVerify)
+        {
+            var registryName = ImageHelper.GetRegistryName(image);
+            var registryUrl = ImageHelper.GetRegistryBaseUrl(image, insecure);
+            var authHandler = new AuthenticationHandler(registryName, null, _registryLogger);
+            var registry = new Registry(registryUrl, _registryLogger, authHandler, skipTlsVerify);
+
+            var imageName = ImageHelper.GetImageName(image);
+            var imageRef = ImageHelper.GetImageReference(image);
             var manifest = await registry.GetManifest(imageName, imageRef);
             Assert.IsNotNull(manifest);
             Assert.IsNotNull(manifest.layers);
@@ -56,7 +85,7 @@ namespace Nibbler.Test
         [DataRow("http://localhost:5000", "hello-world", "sha256:fce289e99eb9bca977dae136fbe2a82b6b7d4c372474c9235adc1741675f587e")]
         public async Task Registry_Get_ImageFile(string registryUrl, string imageName, string digest)
         {
-            var registry = new Registry(new Uri(registryUrl), _registryLogger);
+            var registry = new Registry(new Uri(registryUrl), _registryLogger, null);
 
             var image = await registry.GetImageFile(imageName, digest);
             Console.WriteLine(image);
@@ -67,7 +96,7 @@ namespace Nibbler.Test
         [DataRow("http://localhost:5000", "hello-world", "sha256:fce289e99eb9bca977dae136fbe2a82b6b7d4c372474c9235adc1741675f587e")]
         public async Task Registry_Get_Image(string registryName, string imageName, string digest)
         {
-            var registry = new Registry(new Uri(registryName), _registryLogger);
+            var registry = new Registry(new Uri(registryName), _registryLogger, null);
 
             var image = await registry.GetImage(imageName, digest);
             Assert.IsNotNull(image);

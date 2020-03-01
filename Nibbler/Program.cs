@@ -6,11 +6,11 @@ using Nibbler.Utils;
 
 namespace Nibbler
 {
-    static class Program
+    public static class Program
     {
         public const string ProgramName = "nibbler";
 
-        static async Task<int> Main(string[] args)
+        public static async Task<int> Main(string[] args)
         {
             var app = new CommandLineApplication
             {
@@ -20,6 +20,7 @@ namespace Nibbler
             app.HelpOption();
             var cmd = new BuildCommand();
             cmd.AddOptions(app);
+            app.OnValidate(cmd.Validate);
             app.OnExecuteAsync(cmd.ExecuteAsync);
 
             return await app.ExecuteAsync(args);

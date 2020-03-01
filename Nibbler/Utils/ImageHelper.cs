@@ -65,54 +65,5 @@ namespace Nibbler.Utils
         {
             return new Uri($"{(insecure ? "http" : "https")}://{GetRegistryName(image)}");
         }
-
-        public static string GetDockerConfigAuth(string registry, string dockerConfigFile)
-        {
-            var configPath = dockerConfigFile;
-            if (string.IsNullOrEmpty(configPath))
-            {
-                var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-                configPath = $"{home}/.docker/config.json";
-            }
-
-            DockerConfig config;
-            try
-            {
-                var dockerConfigJson = File.ReadAllText(configPath);
-                config = JsonConvert.DeserializeObject<DockerConfig>(dockerConfigJson);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Could not load docker config \"{configPath}\"", ex);
-            }
-
-            if (config.auths != null && config.auths.TryGetValue(registry, out var auth))
-            {
-                if (auth?.auth != null)
-                {
-                    return $"Bearer {auth.auth}";
-                }
-                else if (auth?.username != null && auth?.password != null)
-                {
-                    var basicAuth = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{auth.username}:{auth.password}"));
-                    return $"Bearer {basicAuth}";
-                }
-            }
-
-            throw new Exception($"Could find credentials for {registry} in \"{configPath}\"");
-        }
-
-        private class DockerConfig
-        {
-            public Dictionary<string, DockerConfigAuth> auths { get; set; }
-        }
-
-        private class DockerConfigAuth
-        {
-            public string username { get; set; }
-            public string password { get; set; }
-            public string auth { get; set; }
-            public string email { get; set; }
-        }
     }
 }

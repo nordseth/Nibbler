@@ -13,33 +13,27 @@ namespace Nibbler
         private readonly string _baseImageName;
         private readonly string _destination;
         private readonly string _targetImageName;
-        private readonly IEnumerable<BuilderLayer> _addedLayers;
         private readonly Registry _registry;
+        private readonly IEnumerable<BuilderLayer> _addedLayers;
         private readonly ILogger _logger;
         private readonly int _chunckSize;
         private readonly int _retryUpload;
 
-        public Pusher(string baseImage, string destination, IEnumerable<BuilderLayer> addedLayers, Registry registry, ILogger logger)
+        public Pusher(string baseImage, string destination, Registry registry, IEnumerable<BuilderLayer> addedLayers, ILogger logger)
         {
             _baseImageName = ImageHelper.GetImageName(baseImage);
             _destination = destination;
             _targetImageName = ImageHelper.GetImageName(_destination);
-            _addedLayers = addedLayers;
             _registry = registry;
+            _addedLayers = addedLayers;
             _logger = logger;
             // set to 0 to diable chunckes
             _chunckSize = 0;
             _retryUpload = 3;
         }
 
-        public void ValidateDest()
-        {
-            var destRegistryUri = ImageHelper.GetRegistryBaseUrl(_destination, _registry.BaseUri.Scheme == "http");
-            if (_registry.BaseUri != destRegistryUri)
-            {
-                throw new Exception($"Source ({_registry.BaseUri.Authority}) and destination ({destRegistryUri.Authority}) registries must be the same.");
-            }
-        }
+        // This is a workaround for Openshift image streams, where layers look like they exsist but are only retrived on pull, not on mount.
+        public bool FakePullAndRetryMount { get; set; } = true;
 
         public async Task<bool> CheckConfigExists(ManifestV2 manifest)
         {
@@ -49,9 +43,9 @@ namespace Nibbler
             return configExists.HasValue;
         }
 
-        public async Task ValidateLayers(ManifestV2 manifest, bool tryMount, bool fakePullAndRetryMount)
+        public async Task<IEnumerable<ManifestV2Layer>> FindMissingLayers(ManifestV2 manifest, bool tryMount)
         {
-            var missingLayer = new List<string>();
+            var missingLayers = new List<ManifestV2Layer>();
             foreach (var layer in manifest.layers)
             {
                 var existsBlobSize = await _registry.BlobExists(_targetImageName, layer.digest);
@@ -64,17 +58,17 @@ namespace Nibbler
                     {
                         try
                         {
-                            await MountLayer(layer, fakePullAndRetryMount);
+                            await MountLayer(layer);
                             mounted = true;
                         }
                         catch
                         {
-                            missingLayer.Add(layer.digest);
+                            missingLayers.Add(layer);
                         }
                     }
                     else
                     {
-                        missingLayer.Add(layer.digest);
+                        missingLayers.Add(layer);
                     }
                 }
 
@@ -95,11 +89,11 @@ namespace Nibbler
                     }
                     else if (tryMount)
                     {
-                        logMsg = $"Error Missing! (tried to mount)";
+                        logMsg = $"Missing! (tried to mount)";
                     }
                     else
                     {
-                        logMsg = $"Error Missing!";
+                        logMsg = $"Missing!";
                     }
                 }
                 else
@@ -110,10 +104,7 @@ namespace Nibbler
                 _logger.LogDebug($"layer {layer.digest} ({layer.size}) - {logMsg}");
             }
 
-            if (missingLayer.Any())
-            {
-                throw new Exception($"Layers {string.Join(", ", missingLayer)} does not exsist in target repo");
-            }
+            return missingLayers;
         }
 
         public async Task PushConfig(ManifestV2Layer config, Func<System.IO.Stream> configStream)
@@ -122,7 +113,7 @@ namespace Nibbler
                 async () =>
                 {
                     var uploadUri = await GetUploadUri();
-                    _logger.LogDebug($"uploading config. (upload uri: {uploadUri})");
+                    _logger.LogDebug($"uploading config.");
 
                     using (var stream = configStream())
                     {
@@ -133,6 +124,36 @@ namespace Nibbler
                         else
                         {
                             await _registry.UploadBlob(uploadUri, config.digest, stream, config.size);
+                        }
+                    }
+                });
+        }
+
+        public async Task CopyLayers(Registry baseRegistry, string baseImageName, IEnumerable<ManifestV2Layer> missingLayers)
+        {
+            foreach (var layer in missingLayers)
+            {
+                await CopyLayer(layer, baseImageName, baseRegistry);
+            }
+        }
+
+        private async Task CopyLayer(ManifestV2Layer layer, string baseImageName, Registry baseRegistry)
+        {
+            await RetryHelper.Retry(_retryUpload, _logger,
+                async () =>
+                {
+                    var uploadUri = await GetUploadUri();
+                    _logger.LogDebug($"copy layer from {baseRegistry.BaseUri}{baseImageName} - {layer.digest}, {layer.size} bytes.");
+
+                    using (var stream = await baseRegistry.DownloadBlob(baseImageName, layer.digest))
+                    {
+                        if (_chunckSize > 0)
+                        {
+                            await _registry.UploadBlobChuncks(uploadUri, layer.digest, stream, _chunckSize);
+                        }
+                        else
+                        {
+                            await _registry.UploadBlob(uploadUri, layer.digest, stream, layer.size);
                         }
                     }
                 });
@@ -152,7 +173,7 @@ namespace Nibbler
                 async () =>
                 {
                     var uploadUri = await GetUploadUri();
-                    _logger.LogDebug($"uploading layer {layer.Digest}, {layer.Size} bytes. (upload uri: {uploadUri})");
+                    _logger.LogDebug($"uploading layer {layer.Digest}, {layer.Size} bytes.");
 
                     using (var stream = layerStream($"{layer.Name}.tar.gz"))
                     {
@@ -189,7 +210,7 @@ namespace Nibbler
                 });
         }
 
-        private async Task MountLayer(ManifestV2Layer layer, bool fakePullAndRetryMount)
+        private async Task MountLayer(ManifestV2Layer layer)
         {
             try
             {
@@ -197,7 +218,7 @@ namespace Nibbler
             }
             catch
             {
-                if (fakePullAndRetryMount)
+                if (FakePullAndRetryMount)
                 {
                     await FakePullAndMount(layer);
                 }
