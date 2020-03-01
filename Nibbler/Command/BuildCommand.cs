@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using McMaster.Extensions.CommandLineUtils;
+using McMaster.Extensions.CommandLineUtils.Abstractions;
 using Nibbler.Models;
 using Nibbler.Utils;
 
@@ -23,6 +25,7 @@ namespace Nibbler.Command
         }
 
         public CommandOption BaseImage { get; private set; }
+
         public CommandOption Destination { get; private set; }
 
         public CommandOption Add { get; private set; }
@@ -77,12 +80,10 @@ namespace Nibbler.Command
 
             DockerConfig = app.Option("--docker-config", "Specify docker config file for authentication with registry. (default: ~/.docker/config.json)", CommandOptionType.SingleOrNoValue);
 
-            var baseAndDestValidator = new RegistryBaseAndDestValidator();
-
-            Username = app.Option("--username", "Registry username (deprecated, use docker-config)", CommandOptionType.SingleValue, c => c.Validators.Add(baseAndDestValidator));
-            Password = app.Option("--password", "Registry password (deprecated, use docker-config)", CommandOptionType.SingleValue, c => c.Validators.Add(baseAndDestValidator));
-            Insecure = app.Option("--insecure", "Insecure registry (http). Only use if base image and destination is the same registry.", CommandOptionType.NoValue, c => c.Validators.Add(baseAndDestValidator));
-            SkipTlsVerify = app.Option("--skip-tls-verify", "Skip verifying registry TLS certificate. Only use if base image and destination is the same registry.", CommandOptionType.NoValue, c => c.Validators.Add(baseAndDestValidator));
+            Username = app.Option("--username", "Registry username (deprecated, use docker-config)", CommandOptionType.SingleValue);
+            Password = app.Option("--password", "Registry password (deprecated, use docker-config)", CommandOptionType.SingleValue);
+            Insecure = app.Option("--insecure", "Insecure registry (http). Only use if base image and destination is the same registry.", CommandOptionType.NoValue);
+            SkipTlsVerify = app.Option("--skip-tls-verify", "Skip verifying registry TLS certificate. Only use if base image and destination is the same registry.", CommandOptionType.NoValue);
 
             InsecurePull = app.Option("--insecure-pull", "Insecure base registry (http)", CommandOptionType.NoValue);
             SkipTlsVerifyPull = app.Option("--skip-tls-verify-pull", "Skip verifying base registry TLS certificate", CommandOptionType.NoValue);
@@ -92,6 +93,43 @@ namespace Nibbler.Command
 
             TempFolder = app.Option("--temp-folder", "Set temp folder (default: ./.nibbler)", CommandOptionType.SingleValue);
             DigestFile = app.Option("--digest-file", "Output image digest to file, optionally specify file", CommandOptionType.SingleOrNoValue);
+        }
+
+        public ValidationResult Validate(ValidationContext context)
+        {
+            if (Username.HasValue() || Password.HasValue() || Insecure.HasValue() || SkipTlsVerify.HasValue())
+            {
+                var srcReg = ImageHelper.GetRegistryName(BaseImage.Value());
+                var destReg = ImageHelper.GetRegistryName(Destination.Value());
+
+                if (srcReg != destReg)
+                {
+                    var fields = new List<string>();
+                    if (Username.HasValue())
+                    {
+                        fields.Add(Username.LongName);
+                    }
+
+                    if (Password.HasValue())
+                    {
+                        fields.Add(Password.LongName);
+                    }
+
+                    if (Insecure.HasValue())
+                    {
+                        fields.Add(Insecure.LongName);
+                    }
+
+                    if (SkipTlsVerify.HasValue())
+                    {
+                        fields.Add(SkipTlsVerify.LongName);
+                    }
+
+                    return new ValidationResult($"{string.Join(", ", fields)} can only be set if baseImage registry is the same as destination", fields);
+                }
+            }
+
+            return ValidationResult.Success;
         }
 
         public async Task<int> ExecuteAsync(CancellationToken cancellationToken)
@@ -218,7 +256,7 @@ namespace Nibbler.Command
 
             var destRegistry = new Registry(destUri, registryLogger, destRegAuthHandler, SkipTlsVerifyPush.HasValue());
 
-            registryLogger.LogDebug($"using {destUri} for pull{(SkipTlsVerifyPush.HasValue() ? ", skipTlsVerify" : "")}");
+            registryLogger.LogDebug($"using {destUri} for push{(SkipTlsVerifyPush.HasValue() ? ", skipTlsVerify" : "")}");
 
             return (baseRegistry, destRegistry);
         }
