@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Nibbler.Models;
+using Nibbler.Utils;
 
 namespace Nibbler.Test
 {
@@ -34,6 +35,34 @@ namespace Nibbler.Test
         {
             var registry = new Registry(new Uri(registryUrl), _registryLogger, null);
 
+            var manifest = await registry.GetManifest(imageName, imageRef);
+            Assert.IsNotNull(manifest);
+            Assert.IsNotNull(manifest.layers);
+            Assert.IsTrue(manifest.layers.Any());
+            Assert.IsNotNull(manifest.layers.First().digest);
+            Assert.IsNotNull(manifest.config);
+            Assert.IsNotNull(manifest.config.digest);
+            try
+            {
+                Assert.AreEqual(ImageV1.MimeType, manifest.config.mediaType);
+            }
+            catch
+            {
+                Assert.AreEqual(ImageV1.AltMimeType, manifest.config.mediaType);
+            }
+        }
+
+        [TestMethod]
+        [DataRow("registry.hub.docker.com/library/hello-world:latest", false, false)]
+        public async Task Registry_Get_Manifest_With_Auth(string image, bool insecure, bool skipTlsVerify)
+        {
+            var registryName = ImageHelper.GetRegistryName(image);
+            var registryUrl = ImageHelper.GetRegistryBaseUrl(image, insecure);
+            var authHandler = new AuthenticationHandler(registryName, null, _registryLogger);
+            var registry = new Registry(registryUrl, _registryLogger, authHandler, skipTlsVerify);
+
+            var imageName = ImageHelper.GetImageName(image);
+            var imageRef = ImageHelper.GetImageReference(image);
             var manifest = await registry.GetManifest(imageName, imageRef);
             Assert.IsNotNull(manifest);
             Assert.IsNotNull(manifest.layers);

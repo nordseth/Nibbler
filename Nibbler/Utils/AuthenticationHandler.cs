@@ -91,7 +91,12 @@ namespace Nibbler.Utils
             }
 
             var request = new HttpRequestMessage(HttpMethod.Get, $"{authParams["realm"]}?{queryString}");
-            request.Headers.Authorization = new AuthenticationHeaderValue("Basic", _credentialHelper.GetEncodedCredentials(_registry));
+            var tokenCredentials = _credentialHelper?.GetEncodedCredentials(_registry);
+            if (tokenCredentials != null)
+            {
+                request.Headers.Authorization = new AuthenticationHeaderValue("Basic", tokenCredentials);
+            }
+
             var response = await _tokenClient.SendAsync(request);
 
             var content = await response.Content.ReadAsStringAsync();
@@ -105,7 +110,7 @@ namespace Nibbler.Utils
 
         private bool TrySetBasicAuth()
         {
-            var credentials = _credentialHelper.GetEncodedCredentials(_registry);
+            var credentials = _credentialHelper?.GetEncodedCredentials(_registry);
 
             if (credentials != null)
             {

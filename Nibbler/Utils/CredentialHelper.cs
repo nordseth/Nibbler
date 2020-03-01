@@ -84,7 +84,7 @@ namespace Nibbler.Utils
                 return auth;
             }
 
-            throw new Exception($"Could find credentials for {registry} in \"{configPath}\"");
+            return null;
         }
 
         private static CredentialHelperResult GetCredentialFromHelper(string helper, string key)
