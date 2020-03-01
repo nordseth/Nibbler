@@ -470,7 +470,7 @@ namespace Nibbler.Command
 
             public static AddArgument Parse(string s, bool isFolder)
             {
-                var split = s.Split(':');
+                var split = s.Split(new[] { ':', ';' });
                 if (!isFolder && split.Length < 2)
                 {
                     throw new Exception($"Invalid add {s}");
