@@ -8,9 +8,9 @@ docker pull mcr.microsoft.com/dotnet/core/aspnet:3.1
 docker tag mcr.microsoft.com/dotnet/core/aspnet:3.1 localhost:5000/dotnet/core/aspnet:3.1
 docker push localhost:5000/dotnet/core/aspnet:3.1
 
-docker pull hello-world:latest
-docker tag hello-world:latest localhost:5000/hello-world:latest
-docker push localhost:5000/hello-world:latest
+#docker pull hello-world:latest
+#docker tag hello-world:latest localhost:5000/hello-world:latest
+#docker push localhost:5000/hello-world:latest
 
 rm -rf TestData
 mkdir TestData

@@ -106,7 +106,6 @@ namespace Nibbler.Utils
                     process.WaitForExit();
 
                     var resp = process.StandardOutput.ReadToEnd();
-                    Console.WriteLine(resp);
                     return JsonConvert.DeserializeObject<CredentialHelperResult>(resp);
                 }
             }
