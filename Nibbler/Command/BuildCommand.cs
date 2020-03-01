@@ -152,9 +152,13 @@ namespace Nibbler.Command
                     AddLayerToConfigAndManifest(layer, manifest, image);
                 }
 
-                var pusher = new Pusher(BaseImage.Value(), Destination.Value(), destRegistry, layersAdded, CreateLogger("PUSHR"));
+                var pusher = new Pusher(BaseImage.Value(), Destination.Value(), destRegistry, layersAdded, CreateLogger("PUSHR"))
+                {
+                    FakePullAndRetryMount = true,
+                };
+
                 bool configExists = await pusher.CheckConfigExists(manifest);
-                await pusher.ValidateLayers(manifest, !DryRun.HasValue() && destRegistry == baseRegistry, true);
+                var missingLayers = await pusher.FindMissingLayers(manifest, !DryRun.HasValue() && destRegistry == baseRegistry);
 
                 if (!DryRun.HasValue())
                 {
@@ -163,6 +167,7 @@ namespace Nibbler.Command
                         await pusher.PushConfig(manifest.config, () => GetJsonStream(image));
                     }
 
+                    await pusher.CopyLayers(baseRegistry, ImageHelper.GetImageName(BaseImage.Value()), missingLayers);
                     await pusher.PushLayers(f => File.OpenRead(Path.Combine(_tempFolderPath, f)));
                     await pusher.PushManifest(() => GetJsonStream(manifest));
                 }
@@ -274,12 +279,12 @@ namespace Nibbler.Command
 
         private void UpdateImageConfig(ImageV1 image)
         {
+            var config = image.config;
             var historyStrings = new List<string>();
 
             // do git labels before other labels, to enable users to overwrite them
             if (GitLabels.HasValue())
             {
-                image.config.Labels = image.config.Labels ?? new Dictionary<string, string>();
                 IDictionary<string, string> gitLabels = null;
                 try
                 {
@@ -294,7 +299,8 @@ namespace Nibbler.Command
                 {
                     foreach (var l in gitLabels)
                     {
-                        image.config.Labels[l.Key] = l.Value;
+                        config.Labels = config.Labels ?? new Dictionary<string, string>();
+                        config.Labels[l.Key] = l.Value;
                         historyStrings.Add($"--gitLabels {l.Key}={l.Value}");
                     }
                 }
@@ -302,51 +308,54 @@ namespace Nibbler.Command
 
             foreach (var label in Label.Values)
             {
-                image.config.Labels = image.config.Labels ?? new Dictionary<string, string>();
+                config.Labels = config.Labels ?? new Dictionary<string, string>();
                 var split = label.Split('=', 2);
                 if (split.Length != 2)
                 {
                     throw new Exception($"Invalid label {label}");
                 }
 
-                image.config.Labels[split[0]] = split[1];
+                config.Labels[split[0]] = split[1];
                 historyStrings.Add($"--label {split[0]}={split[1]}");
             }
 
             foreach (var var in Env.Values)
             {
-                image.config.Env = image.config.Env ?? new List<string>();
-                image.config.Env.Add(var);
+                config.Env = config.Env ?? new List<string>();
+                config.Env.Add(var);
                 historyStrings.Add($"--env {var}");
             }
 
             if (WorkDir.HasValue())
             {
-                image.config.WorkingDir = WorkDir.Value();
+                config.WorkingDir = WorkDir.Value();
                 historyStrings.Add($"--workdir {WorkDir.Value()}");
             }
 
             if (User.HasValue())
             {
-                image.config.User = User.Value();
+                config.User = User.Value();
                 historyStrings.Add($"--user {User.Value()}");
             }
 
             if (Cmd.HasValue())
             {
-                image.config.Cmd = SplitCmd(Cmd.Value()).ToList();
-                var cmdString = string.Join(", ", image.config.Cmd.Select(c => $"\"{c}\""));
+                config.Cmd = SplitCmd(Cmd.Value()).ToList();
+                var cmdString = string.Join(", ", config.Cmd.Select(c => $"\"{c}\""));
                 historyStrings.Add($"--cmd {cmdString}");
             }
 
             if (Entrypoint.HasValue())
             {
-                image.config.Entrypoint = SplitCmd(Entrypoint.Value()).ToList();
-                var epString = string.Join(", ", image.config.Entrypoint.Select(c => $"\"{c}\""));
+                config.Entrypoint = SplitCmd(Entrypoint.Value()).ToList();
+                var epString = string.Join(", ", config.Entrypoint.Select(c => $"\"{c}\""));
                 historyStrings.Add($"--entrypoint {epString}");
             }
 
-            image.history.Add(ImageV1History.Create(string.Join(", ", historyStrings), true));
+            if (historyStrings.Any())
+            {
+                image.history.Add(ImageV1History.Create(string.Join(", ", historyStrings), true));
+            }
 
             foreach (var h in historyStrings)
             {

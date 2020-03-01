@@ -165,6 +165,24 @@ namespace Nibbler.Test
             "-v" })]
         public async Task BuilderCommand_DigestFile(string[] args) => await Run(args);
 
+        [TestMethod]
+        [DataRow(new string[] {
+            "--base-image", "registry.hub.docker.com/library/hello-world:latest",
+            "--destination", "localhost:5000/hello-world:latest",
+            "--insecure-push",
+            "-v" })]
+        [DataRow(new string[] {
+            "--base-image", "registry.hub.docker.com/library/ubuntu:xenial",
+            "--destination", "localhost:5000/ubuntu:xenial",
+            "--insecure-push",
+            "-v" })]
+        [DataRow(new string[] {
+            "--base-image", "registry.hub.docker.com/library/ubuntu:bionic",
+            "--destination", "localhost:5000/ubuntu:bionic",
+            "--insecure-push",
+            "-v" })]
+        public async Task BuilderCommand_Copy_Image(string[] args) => await Run(args);
+
         public static async Task Run(string[] args)
         {
             int result = await Program.Main(args);
