@@ -214,6 +214,7 @@ namespace Nibbler.Command
         private (Registry src, Registry dest) CreateRegistries()
         {
             var registryLogger = CreateLogger("REGRY");
+            var credentialHelper = new CredentialHelper(DockerConfig.Value());
 
             var baseUri = ImageHelper.GetRegistryBaseUrl(BaseImage.Value(), Insecure.HasValue() || InsecurePull.HasValue());
             var destUri = ImageHelper.GetRegistryBaseUrl(Destination.Value(), Insecure.HasValue() || InsecurePush.HasValue());
@@ -222,13 +223,12 @@ namespace Nibbler.Command
             {
                 var authHandler = new AuthenticationHandler(
                     ImageHelper.GetRegistryName(BaseImage.Value()),
-                    DockerConfig.Value(),
-                    true,
+                    credentialHelper,
                     registryLogger);
 
                 if (Username.HasValue() && Password.HasValue())
                 {
-                    authHandler.SetUsernamePassword(Username.Value(), Password.Value());
+                    credentialHelper.OverrideUsernamePassword(Username.Value(), Password.Value());
                 }
 
                 bool skipTlsVerify = SkipTlsVerify.HasValue() || SkipTlsVerifyPull.HasValue() || SkipTlsVerifyPush.HasValue();
@@ -240,8 +240,7 @@ namespace Nibbler.Command
 
             var baseRegAuthHandler = new AuthenticationHandler(
                 ImageHelper.GetRegistryName(BaseImage.Value()),
-                DockerConfig.Value(),
-                false,
+                credentialHelper,
                 registryLogger);
 
             var baseRegistry = new Registry(baseUri, registryLogger, baseRegAuthHandler, SkipTlsVerifyPull.HasValue());
@@ -250,8 +249,7 @@ namespace Nibbler.Command
 
             var destRegAuthHandler = new AuthenticationHandler(
                 ImageHelper.GetRegistryName(Destination.Value()),
-                DockerConfig.Value(),
-                true,
+                credentialHelper,
                 registryLogger);
 
             var destRegistry = new Registry(destUri, registryLogger, destRegAuthHandler, SkipTlsVerifyPush.HasValue());

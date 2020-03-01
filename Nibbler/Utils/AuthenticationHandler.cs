@@ -14,28 +14,18 @@ namespace Nibbler.Utils
     public class AuthenticationHandler : DelegatingHandler
     {
         private readonly string _registry;
-        private readonly string _dockerConfig;
-        private readonly bool _push;
+        private readonly CredentialHelper _credentialHelper;
         private readonly ILogger _logger;
         private readonly HttpClient _tokenClient;
 
-        private string _username;
-        private string _password;
         private AuthenticationHeaderValue authorization;
 
-        public AuthenticationHandler(string registry, string dockerConfig, bool push, ILogger logger)
+        public AuthenticationHandler(string registry, CredentialHelper credentialHelper, ILogger logger)
         {
             _registry = registry;
-            _dockerConfig = dockerConfig;
-            _push = push;
+            _credentialHelper = credentialHelper;
             _logger = logger;
             _tokenClient = new HttpClient();
-        }
-
-        public void SetUsernamePassword(string username, string password)
-        {
-            _username = username;
-            _password = password;
         }
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
@@ -91,7 +81,7 @@ namespace Nibbler.Utils
             }
 
             var request = new HttpRequestMessage(HttpMethod.Get, $"{authParams["realm"]}?{queryString}");
-            request.Headers.Authorization = new AuthenticationHeaderValue("Basic", GetEncodedCredentials());
+            request.Headers.Authorization = new AuthenticationHeaderValue("Basic", _credentialHelper.GetEncodedCredentials(_registry));
             var response = await _tokenClient.SendAsync(request);
 
             var content = await response.Content.ReadAsStringAsync();
@@ -105,7 +95,7 @@ namespace Nibbler.Utils
 
         private bool TrySetBasicAuth()
         {
-            var credentials = GetEncodedCredentials();
+            var credentials = _credentialHelper.GetEncodedCredentials(_registry);
 
             if (credentials != null)
             {
@@ -115,69 +105,6 @@ namespace Nibbler.Utils
             }
 
             return false;
-        }
-
-        private string GetEncodedCredentials()
-        {
-            if (_username != null && _password != null)
-            {
-                return Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_username}:{_password}"));
-            }
-
-            var authConfig = GetDockerConfigAuth(_registry, _dockerConfig);
-
-            if (authConfig?.auth != null)
-            {
-                return authConfig.auth;
-            }
-
-            if (authConfig?.username != null && authConfig?.password != null)
-            {
-                return Convert.ToBase64String(Encoding.UTF8.GetBytes($"{authConfig.username}:{authConfig.password}"));
-            }
-
-            return null;
-        }
-
-        private static DockerConfigAuth GetDockerConfigAuth(string registry, string dockerConfigFile)
-        {
-            var configPath = dockerConfigFile;
-            if (string.IsNullOrEmpty(configPath))
-            {
-                var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-                configPath = $"{home}/.docker/config.json";
-            }
-
-            DockerConfig config;
-            try
-            {
-                var dockerConfigJson = File.ReadAllText(configPath);
-                config = JsonConvert.DeserializeObject<DockerConfig>(dockerConfigJson);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Could not load docker config \"{configPath}\"", ex);
-            }
-
-            if (config.auths != null && config.auths.TryGetValue(registry, out var auth))
-            {
-                return auth;
-            }
-
-            throw new Exception($"Could find credentials for {registry} in \"{configPath}\"");
-        }
-
-        private class DockerConfig
-        {
-            public Dictionary<string, DockerConfigAuth> auths { get; set; }
-        }
-
-        private class DockerConfigAuth
-        {
-            public string username { get; set; }
-            public string password { get; set; }
-            public string auth { get; set; }
-            public string email { get; set; }
         }
 
         private class TokenResponse

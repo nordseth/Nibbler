@@ -40,6 +40,5 @@ nibbler \
 - layers and image is created as "reproducible", that means dates in image config and in file system layers are always the same.
   - files added are always set with same modified date
 - uses docker-config.json or username and password as authentication.
-  - docker credential helpers are not supported
 - uses "./.nibbler" to store layers
   - folder is not cleaned up. Can be overwritten with "--temp-folder"
