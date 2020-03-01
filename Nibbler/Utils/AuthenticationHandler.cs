@@ -18,7 +18,8 @@ namespace Nibbler.Utils
         private readonly ILogger _logger;
         private readonly HttpClient _tokenClient;
 
-        private AuthenticationHeaderValue authorization;
+        private AuthenticationHeaderValue _authorization;
+        private string _scope;
 
         public AuthenticationHandler(string registry, CredentialHelper credentialHelper, ILogger logger)
         {
@@ -30,9 +31,9 @@ namespace Nibbler.Utils
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            if (authorization != null)
+            if (_authorization != null)
             {
-                request.Headers.Authorization = authorization;
+                request.Headers.Authorization = _authorization;
             }
 
             var response = await base.SendAsync(request, cancellationToken);
@@ -44,20 +45,21 @@ namespace Nibbler.Utils
 
             var wwwAuth = response.Headers.WwwAuthenticate.First();
             _logger.LogDebug($"Failed to authenticate {wwwAuth}");
-            if (authorization != null || !await TrySetAuthorization(wwwAuth))
+            if (!await TrySetAuthorization(wwwAuth))
             {
                 return response;
             }
             else
             {
-                // recurse, but with authorization set
+                // try again, but with authorization set 
+                // maybe we should have a check here to avoid endless recursion
                 return await SendAsync(request, cancellationToken);
             }
         }
 
         private async Task<bool> TrySetAuthorization(AuthenticationHeaderValue wwwAuth)
         {
-            if (wwwAuth.Scheme.Equals("Basic", StringComparison.OrdinalIgnoreCase))
+            if (_authorization == null && wwwAuth.Scheme.Equals("Basic", StringComparison.OrdinalIgnoreCase))
             {
                 return TrySetBasicAuth();
             }
@@ -73,11 +75,19 @@ namespace Nibbler.Utils
         private async Task<bool> TrySetOAuth(string parameter)
         {
             var authParams = AuthParamParser.Parse(parameter);
+            authParams.TryGetValue("scope", out var scope);
+
+            // don't update unless we are asked for higher access
+            if (_authorization != null && scope == _scope)
+            {
+                return false;
+            }
 
             var queryString = $"service={ authParams["service"]}";
-            if (authParams.TryGetValue("scope", out var scope))
+            if (scope != null)
             {
                 queryString += $"&scope={scope}";
+                _scope = scope;
             }
 
             var request = new HttpRequestMessage(HttpMethod.Get, $"{authParams["realm"]}?{queryString}");
@@ -88,7 +98,7 @@ namespace Nibbler.Utils
             response.EnsureSuccessStatusCode();
             var tokenResponse = JsonConvert.DeserializeObject<TokenResponse>(content);
 
-            authorization = new AuthenticationHeaderValue("Bearer", tokenResponse.token ?? tokenResponse.access_token);
+            _authorization = new AuthenticationHeaderValue("Bearer", tokenResponse.token ?? tokenResponse.access_token);
             _logger.LogDebug($"Using Bearer token for {_registry} ({queryString})");
             return true;
         }
@@ -99,7 +109,7 @@ namespace Nibbler.Utils
 
             if (credentials != null)
             {
-                authorization = new AuthenticationHeaderValue("Basic", credentials);
+                _authorization = new AuthenticationHeaderValue("Basic", credentials);
                 _logger.LogDebug($"Using Basic auth for {_registry}");
                 return true;
             }
