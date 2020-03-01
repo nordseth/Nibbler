@@ -176,35 +176,51 @@ namespace Nibbler.Command
         private (Registry src, Registry dest) CreateRegistries()
         {
             var registryLogger = CreateLogger("REGRY");
-            var baseUri = ImageHelper.GetRegistryBaseUrl(BaseImage.Value(), Insecure.HasValue());
-            var options = $"{(SkipTlsVerify.HasValue() ? ", skipTlsVerify" : "")}";
-            if (DockerConfig.HasValue())
+
+            var baseUri = ImageHelper.GetRegistryBaseUrl(BaseImage.Value(), Insecure.HasValue() || InsecurePull.HasValue());
+            var destUri = ImageHelper.GetRegistryBaseUrl(Destination.Value(), Insecure.HasValue() || InsecurePush.HasValue());
+
+            if (baseUri == destUri)
             {
-                registryLogger.LogDebug($"{baseUri}, useConf: {DockerConfig.Value()}{options}");
-            }
-            else if (!string.IsNullOrEmpty(Username.Value()) && !string.IsNullOrEmpty(Password.Value()))
-            {
-                registryLogger.LogDebug($"{baseUri}, u: {Username.HasValue()}, p: {Password.HasValue()}{options}");
-            }
-            else
-            {
-                registryLogger.LogDebug($"{baseUri}{options}");
+                var authHandler = new AuthenticationHandler(
+                    ImageHelper.GetRegistryName(BaseImage.Value()),
+                    DockerConfig.Value(),
+                    true,
+                    registryLogger);
+
+                if (Username.HasValue() && Password.HasValue())
+                {
+                    authHandler.SetUsernamePassword(Username.Value(), Password.Value());
+                }
+
+                bool skipTlsVerify = SkipTlsVerify.HasValue() || SkipTlsVerifyPull.HasValue() || SkipTlsVerifyPush.HasValue();
+                var registry = new Registry(baseUri, registryLogger, authHandler, skipTlsVerify);
+
+                registryLogger.LogDebug($"using {baseUri} for pull and push{(skipTlsVerify ? ", skipTlsVerify" : "")}");
+                return (registry, registry);
             }
 
-            var registry = new Registry(baseUri, registryLogger, SkipTlsVerify.HasValue());
+            var baseRegAuthHandler = new AuthenticationHandler(
+                ImageHelper.GetRegistryName(BaseImage.Value()),
+                DockerConfig.Value(),
+                false,
+                registryLogger);
 
-            if (DockerConfig.HasValue())
-            {
-                var auth = ImageHelper.GetDockerConfigAuth(ImageHelper.GetRegistryName(BaseImage.Value()), DockerConfig.Value());
-                registry.UseAuthorization(auth);
-            }
-            else if (!string.IsNullOrEmpty(Username.Value()) && !string.IsNullOrEmpty(Password.Value()))
-            {
-                var auth = $"Bearer {Convert.ToBase64String(Encoding.UTF8.GetBytes($"{Username.Value()}:{Password.Value()}"))}";
-                registry.UseAuthorization(auth);
-            }
+            var baseRegistry = new Registry(baseUri, registryLogger, baseRegAuthHandler, SkipTlsVerifyPull.HasValue());
 
-            return (registry, registry);
+            registryLogger.LogDebug($"using {baseUri} for pull{(SkipTlsVerifyPull.HasValue() ? ", skipTlsVerify" : "")}");
+
+            var destRegAuthHandler = new AuthenticationHandler(
+                ImageHelper.GetRegistryName(Destination.Value()),
+                DockerConfig.Value(),
+                true,
+                registryLogger);
+
+            var destRegistry = new Registry(destUri, registryLogger, destRegAuthHandler, SkipTlsVerifyPush.HasValue());
+
+            registryLogger.LogDebug($"using {destUri} for pull{(SkipTlsVerifyPush.HasValue() ? ", skipTlsVerify" : "")}");
+
+            return (baseRegistry, destRegistry);
         }
 
         public async Task<(ManifestV2, ImageV1)> LoadBaseImage(Registry registry)
