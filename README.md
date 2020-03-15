@@ -13,6 +13,18 @@ It does not need root or any other privileges, so is well suited for running in 
 
 Nibbler is beta software. When its not been tested enough, and its not been verified if more features are needed to make it usable.
 
+## Why Nibbler
+
+Why use Nibbler instead of other tools?
+
+Nibbler was created because only simple changes to images are needed when building in a secure environment. 
+Solutions based on Dockerfile (like [docker|https://docs.docker.com/engine/reference/commandline/build/], [Kaniko|https://github.com/GoogleContainerTools/kaniko] and partly [Buildah|https://github.com/containers/buildah]) are built around the Dockerfile and running operations inside the container that is being built.
+When running on a build server this functionality is not needed, the artifacts are already created and only need to be copied into a new layer in the image.
+Nibbler is inspired by tools like [Jib|https://github.com/GoogleContainerTools/jib]. But instead of being opinionated lets the user decide how to create the image.
+Bazel might be a alternative, but does a lot more than just creating images.
+
+The use case was building dotnet images, so its packaged as a dotnet tool. In the future it might be packaged as a stand alone executable.
+
 ## Usage
 
 ```
@@ -41,7 +53,7 @@ Options:
   --username              Registry username (deprecated, use docker-config)
   --password              Registry password (deprecated, use docker-config)
   --insecure              Insecure registry (http). Only use if base image and destination is the same registry.          
-  --skip-tls-verify       Skip verifying registry TLS certificate. Only use if base image and destination is the same                             registry.
+  --skip-tls-verify       Skip verifying registry TLS certificate. Only use if base image and destination is the same registry.
   --insecure-pull         Insecure base registry (http)
   --skip-tls-verify-pull  Skip verifying base registry TLS certificate
   --insecure-push         Insecure destination registry (http)
@@ -74,3 +86,4 @@ nibbler \
 - uses docker-config.json for authentication.
 - uses "./.nibbler" to store layers
   - folder is not cleaned up. Can be overwritten with "--temp-folder"
+  
