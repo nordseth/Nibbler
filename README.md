@@ -16,8 +16,38 @@ Nibbler is beta software. When its not been tested enough, and its not been veri
 ## Usage
 
 ```
-dotnet tool install -g Nibbler
-nibbler --help
+$ dotnet tool install --global Nibbler --version 1.1.0-beta.1
+$ nibbler --help
+Do simple changes to OCI images
+
+Usage: nibbler [options]
+
+Options:
+  -?|-h|--help            Show help information
+  --base-image            Set base image (required)
+  --destination           Destination to push the modified image (required)
+  --add                   Add contents of a folder to the image 'sourceFolder:destFolder[:ownerId:groupId:permissions]'   
+  --addFolder             Add a folder to the image 'destFolder[:ownerId:groupId:permissions]'
+  --label                 Add label to the image 'name=value'
+  --env                   Add a environment variable to the image 'name=value'
+  --git-labels            Add common git labels to image, optionally define the path to the git repo.
+  --workdir               Set the working directory in the image
+  --user                  Set the user in the image
+  --cmd                   Set the image cmd
+  --entrypoint            Set the image entrypoint
+  -v|--debug              Verbose output
+  --dry-run               Does not push, only shows what would happen (use with -v)
+  --docker-config         Specify docker config file for authentication with registry. (default: ~/.docker/config.json)   
+  --username              Registry username (deprecated, use docker-config)
+  --password              Registry password (deprecated, use docker-config)
+  --insecure              Insecure registry (http). Only use if base image and destination is the same registry.          
+  --skip-tls-verify       Skip verifying registry TLS certificate. Only use if base image and destination is the same                             registry.
+  --insecure-pull         Insecure base registry (http)
+  --skip-tls-verify-pull  Skip verifying base registry TLS certificate
+  --insecure-push         Insecure destination registry (http)
+  --skip-tls-verify-push  Skip verifying destination registry TLS certificate
+  --temp-folder           Set temp folder (default: ./.nibbler)
+  --digest-file           Output image digest to file, optionally specify file
 ```
 
 ## Example build script
@@ -41,6 +71,6 @@ nibbler \
   - https://github.com/opencontainers/image-spec/blob/master/config.md
 - layers and image is created as "reproducible", that means dates in image config and in file system layers are always the same.
   - files added are always set with same modified date
-- uses docker-config.json or username and password as authentication.
+- uses docker-config.json for authentication.
 - uses "./.nibbler" to store layers
   - folder is not cleaned up. Can be overwritten with "--temp-folder"
