@@ -18,9 +18,9 @@ Nibbler is beta software. When its not been tested enough, and its not been veri
 Why use Nibbler instead of other tools?
 
 Nibbler was created because only simple changes to images are needed when building in a secure environment. 
-Solutions based on Dockerfile (like [docker|https://docs.docker.com/engine/reference/commandline/build/], [Kaniko|https://github.com/GoogleContainerTools/kaniko] and partly [Buildah|https://github.com/containers/buildah]) are built around the Dockerfile and running operations inside the container that is being built.
+Solutions based on Dockerfile (like [docker](https://docs.docker.com/engine/reference/commandline/build/), [Kaniko  ](https://github.com/GoogleContainerTools/kaniko) and partly [Builda](https://github.com/containers/buildah)) are built around the Dockerfile and running operations inside the container that is being built.
 When running on a build server this functionality is not needed, the artifacts are already created and only need to be copied into a new layer in the image.
-Nibbler is inspired by tools like [Jib|https://github.com/GoogleContainerTools/jib]. But instead of being opinionated lets the user decide how to create the image.
+Nibbler is inspired by tools like [Jib](https://github.com/GoogleContainerTools/jib). But instead of being opinionated lets the user decide how to create the image.
 Bazel might be a alternative, but does a lot more than just creating images.
 
 The use case was building dotnet images, so its packaged as a dotnet tool. In the future it might be packaged as a stand alone executable.
