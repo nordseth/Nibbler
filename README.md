@@ -1,5 +1,7 @@
 # Nibbler
 
+[![NuGet (Nibbler)](https://img.shields.io/nuget/v/Nibbler)](https://www.nuget.org/packages/Nibbler/)
+
 Nibbler is a dotnet tool for doing simple changes to OCI images.
 The tool will read image meta data from a registry, change the meta data and add folders as new layers in the image.
 It can not read image layers or execute anything inside the image.
