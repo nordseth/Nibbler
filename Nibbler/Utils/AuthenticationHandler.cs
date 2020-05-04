@@ -83,14 +83,19 @@ namespace Nibbler.Utils
                 return false;
             }
 
-            var queryString = $"service={ authParams["service"]}";
+            var queryString = QueryString.Empty;
+            if (authParams.TryGetValue("service", out var service))
+            {
+                queryString = queryString.Add("service", service);
+            }
+
             if (scope != null)
             {
-                queryString += $"&scope={scope}";
+                queryString += queryString.Add("scope", scope);
                 _scope = scope;
             }
 
-            var request = new HttpRequestMessage(HttpMethod.Get, $"{authParams["realm"]}?{queryString}");
+            var request = new HttpRequestMessage(HttpMethod.Get, $"{authParams["realm"]}{queryString}");
             var tokenCredentials = _credentialHelper?.GetEncodedCredentials(_registry);
             if (tokenCredentials != null)
             {

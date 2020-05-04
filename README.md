@@ -28,7 +28,7 @@ The use case was building dotnet images, so its packaged as a dotnet tool. In th
 ## Usage
 
 ```
-$ dotnet tool install --global Nibbler --version 1.1.0-beta.1
+$ dotnet tool install --global Nibbler --version 1.1.0-beta.2
 $ nibbler --help
 Do simple changes to OCI images
 
