@@ -11,7 +11,7 @@ It does not need root or any other privileges, so is well suited for running in 
 
 ## Status
 
-Nibbler is beta software. When its not been tested enough, and its not been verified if more features are needed to make it usable.
+Nibbler is beta software. Its probably not feature complete or robust.
 
 ## Why Nibbler
 
@@ -28,7 +28,7 @@ The use case was building dotnet images, so its packaged as a dotnet tool. In th
 ## Usage
 
 ```
-$ dotnet tool install --global Nibbler --version 1.1.0-beta.2
+$ dotnet tool install --global Nibbler
 $ nibbler --help
 Do simple changes to OCI images
 
@@ -43,6 +43,7 @@ Options:
   --label                 Add label to the image 'name=value'
   --env                   Add a environment variable to the image 'name=value'
   --git-labels            Add common git labels to image, optionally define the path to the git repo.
+  --git-labels-prefix	  Specify the prefix of the git labels. (default: 'nibbler.git')
   --workdir               Set the working directory in the image
   --user                  Set the user in the image
   --cmd                   Set the image cmd
@@ -87,3 +88,8 @@ nibbler \
 - uses "./.nibbler" to store layers
   - folder is not cleaned up. Can be overwritten with "--temp-folder"
   
+## Work arounds
+
+For Docker Hub use "registry.hub.docker.com" as registry.
+If using a _library_ image, remember to include "library" in the url.
+If credentials for "registry.hub.docker.com" isn't found in docker config, Nibbler will fallback on "https://index.docker.io/v1/" as source for credentials.

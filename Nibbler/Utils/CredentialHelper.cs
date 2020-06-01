@@ -83,6 +83,10 @@ namespace Nibbler.Utils
 
                 return auth;
             }
+            else if (config.auths != null && registry == "registry.hub.docker.com")
+            {
+                return GetDockerConfigAuth("https://index.docker.io/v1/", dockerConfigFile);
+            }
 
             return null;
         }
