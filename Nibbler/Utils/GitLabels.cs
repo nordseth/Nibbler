@@ -14,7 +14,7 @@ namespace Nibbler.Utils
         //label nibbler.git.commit.author \"\$(git log -1 --pretty=%an) <\$(git log -1 --pretty=%ae)>"
         //label nibbler.git.commit.date \"\$(git log -1 --pretty=%ai)"
         //label nibbler.git.url \"\$GIT_REPO" 
-        public static IDictionary<string, string> GetLabels(string repoPath)
+        public static IDictionary<string, string> GetLabels(string repoPath, string prefix = "nibbler.git")
         {
             string gitRepoPath;
             if (!string.IsNullOrEmpty(repoPath))
@@ -32,12 +32,12 @@ namespace Nibbler.Utils
 
             var gitInfo = repo.GetGitInfo();
 
-            result.Add("nibbler.git.commit.id", gitInfo.CommitId);
-            result.Add("nibbler.git.commit.message", gitInfo.CommitMessage);
-            result.Add("nibbler.git.commit.author", gitInfo.CommitAuthor);
-            result.Add("nibbler.git.commit.date", gitInfo.CommitDate);
-            result.Add("nibbler.git.commit.ref", $"{gitInfo.Branch ?? Environment.GetEnvironmentVariable("GIT_BRANCH")}, {gitInfo.CommitDescription}");
-            result.Add("nibbler.git.url", gitInfo.OriginUrl);
+            result.Add($"{prefix}.commit.id", gitInfo.CommitId);
+            result.Add($"{prefix}.commit.message", gitInfo.CommitMessage);
+            result.Add($"{prefix}.commit.author", gitInfo.CommitAuthor);
+            result.Add($"{prefix}.commit.date", gitInfo.CommitDate);
+            result.Add($"{prefix}.commit.ref", $"{gitInfo.Branch ?? Environment.GetEnvironmentVariable("GIT_BRANCH")}, {gitInfo.CommitDescription}");
+            result.Add($"{prefix}.url", gitInfo.OriginUrl);
 
             return result;
         }

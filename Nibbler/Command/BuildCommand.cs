@@ -34,6 +34,7 @@ namespace Nibbler.Command
         public CommandOption Label { get; private set; }
         public CommandOption Env { get; private set; }
         public CommandOption GitLabels { get; private set; }
+        public CommandOption GitLabelsPrefix { get; private set; }
         public CommandOption WorkDir { get; private set; }
         public CommandOption User { get; private set; }
         public CommandOption Cmd { get; private set; }
@@ -69,6 +70,7 @@ namespace Nibbler.Command
             Label = app.Option("--label", "Add label to the image 'name=value'", CommandOptionType.MultipleValue);
             Env = app.Option("--env", "Add a environment variable to the image 'name=value'", CommandOptionType.MultipleValue);
             GitLabels = app.Option("--git-labels", "Add common git labels to image, optionally define the path to the git repo.", CommandOptionType.SingleOrNoValue);
+            GitLabelsPrefix = app.Option("--git-labels-prefix", "Specify the prefix of the git labels. (default: 'nibbler.git')", CommandOptionType.SingleValue);
             WorkDir = app.Option("--workdir", "Set the working directory in the image", CommandOptionType.SingleValue);
             User = app.Option("--user", "Set the user in the image", CommandOptionType.SingleValue);
             Cmd = app.Option("--cmd", "Set the image cmd", CommandOptionType.SingleValue);
@@ -288,7 +290,7 @@ namespace Nibbler.Command
                 IDictionary<string, string> gitLabels = null;
                 try
                 {
-                    gitLabels = Utils.GitLabels.GetLabels(GitLabels.Value());
+                    gitLabels = Utils.GitLabels.GetLabels(GitLabels.Value(), GitLabelsPrefix.Value());
                 }
                 catch (Exception ex)
                 {

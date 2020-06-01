@@ -67,7 +67,7 @@ Options:
 ```
 dotnet publish -o $PWD/artifacts
 nibbler \
-	--base-image my-registry.com/repo/baseimage:latest \
+	--base-image mcr.microsoft.com/dotnet/core/aspnet:3.1 \
 	--destination my-registy.com/repo/image:latest  \
 	--add "artifacts:/app" \
 	--workdir /app \
