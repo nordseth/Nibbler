@@ -9,6 +9,7 @@
     <RepositoryUrl>https://github.com/nordseth/Nibbler</RepositoryUrl>
     <PackageProjectUrl>https://github.com/nordseth/Nibbler</PackageProjectUrl>
     <Authors>Nordseth</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
   <ItemGroup>
