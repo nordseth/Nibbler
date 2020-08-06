@@ -22,7 +22,7 @@ namespace Nibbler.Models
         public const string MediaType = "application/vnd.oci.image.layer.v1.tar+gzip";
         public const string AltMediaType = "application/vnd.docker.image.rootfs.diff.tar.gzip";
 
-        public string mediaType { get; set; } = MediaType;
+        public string mediaType { get; set; } = AltMediaType;
         public long size { get; set; }
         public string digest { get; set; }
         public List<string> urls { get; set; }
