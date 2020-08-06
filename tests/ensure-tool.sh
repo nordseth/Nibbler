@@ -2,7 +2,7 @@
 set -e
 
 tool=nibbler
-version=1.0.0-rc.1
+version=1.4.0
 #echo "ensure tool: $tool, version $version"
 
 if [ -f $HOME/.dotnet/tools/$tool ]; then

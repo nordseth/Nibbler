@@ -35,10 +35,10 @@ dotnet build ../Nibbler -o ./tmp-nibbler-build -f netcoreapp3.1
 echo "-------- Run nibbler --------"
 
 dotnet ./tmp-nibbler-build/nibbler.dll \
-	--base-image $ip:$nodeport/$project/test-dotnet:3.1 \
+	--from-image $ip:$nodeport/$project/test-dotnet:3.1 \
 	--username developer \
 	--password $devtoken \
-	--destination $ip:$nodeport/$project/nibbler-test:latest \
+	--to-image $ip:$nodeport/$project/nibbler-test:latest \
 	--workdir /app \
 	--cmd "dotnet TestData.dll" \
 	--insecure \

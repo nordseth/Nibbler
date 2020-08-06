@@ -55,8 +55,8 @@ set -e
 dotnet tool install -g Nibbler --version 1.0.0-test.e2e --add-source /opt/app-root/workspace/nuget
 echo "-------- Nibbler tool installed --------"
 nibbler \
-	--base-image host.docker.internal:5000/dotnet/dotnet-31-runtime-centos7:latest \
-	--destination host.docker.internal:5000/nibbler-test:nibbler \
+	--from-image host.docker.internal:5000/dotnet/dotnet-31-runtime-centos7:latest \
+	--to-image host.docker.internal:5000/nibbler-test:nibbler \
 	--add "/opt/app-root/workspace/TestData/publish-docker:/opt/app-root/app" \
 	--workdir /opt/app-root/app \
 	--cmd "dotnet aspnetcore-new.dll" \

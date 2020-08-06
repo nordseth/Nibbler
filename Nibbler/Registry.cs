@@ -14,9 +14,10 @@ namespace Nibbler
     public class Registry
     {
         public Uri BaseUri { get; }
+        public HttpClient HttpClient { get; }
+        internal HttpMessageHandler Handler { get; }
 
         private readonly ILogger _logger;
-        private readonly HttpClient _client;
 
         public Registry(Uri baseUri, ILogger logger, DelegatingHandler authenticationHandler, bool skipTlsVerify = false)
         {
@@ -28,15 +29,15 @@ namespace Nibbler
                 primaryHandler.ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
             }
 
-            HttpMessageHandler handler = primaryHandler;
+            Handler = primaryHandler;
             if (authenticationHandler != null)
             {
-                authenticationHandler.InnerHandler = handler;
-                handler = authenticationHandler;
+                authenticationHandler.InnerHandler = Handler;
+                Handler = authenticationHandler;
             }
 
-            _client = new HttpClient(handler);
-            _client.BaseAddress = BaseUri;
+            HttpClient = new HttpClient(Handler);
+            HttpClient.BaseAddress = BaseUri;
         }
 
         public async Task<string> GetManifestFile(string name, string reference)
@@ -44,7 +45,7 @@ namespace Nibbler
             var request = new HttpRequestMessage(HttpMethod.Get, $"/v2/{name}/manifests/{reference}");
             request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(ManifestV2.MimeType));
 
-            var response = await _client.SendAsync(request);
+            var response = await HttpClient.SendAsync(request);
             await EnsureSuccessWithErrorContent(response);
             var content = await response.Content.ReadAsStringAsync();
 
@@ -61,7 +62,7 @@ namespace Nibbler
             var request = new HttpRequestMessage(HttpMethod.Get, $"/v2/{name}/blobs/{digest}");
             request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(ImageV1.MimeType));
 
-            var response = await _client.SendAsync(request);
+            var response = await HttpClient.SendAsync(request);
             await EnsureSuccessWithErrorContent(response);
             var byteContent = await response.Content.ReadAsByteArrayAsync();
             var calculatedDigest = FileHelper.Digest(byteContent);
@@ -79,7 +80,7 @@ namespace Nibbler
         public async Task<string> StartUpload(string name)
         {
             var request = new HttpRequestMessage(HttpMethod.Post, $"/v2/{name}/blobs/uploads/");
-            var response = await _client.SendAsync(request);
+            var response = await HttpClient.SendAsync(request);
             await EnsureSuccessWithErrorContent(response);
             return response.Headers.Location.ToString();
         }
@@ -87,7 +88,7 @@ namespace Nibbler
         public async Task<long?> BlobExists(string name, string digest)
         {
             var request = new HttpRequestMessage(HttpMethod.Head, $"/v2/{name}/blobs/{digest}");
-            var response = await _client.SendAsync(request);
+            var response = await HttpClient.SendAsync(request);
             if (response.IsSuccessStatusCode)
             {
                 return response.Content.Headers.ContentLength.Value;
@@ -101,7 +102,7 @@ namespace Nibbler
         public async Task<Stream> DownloadBlob(string name, string digest)
         {
             var request = new HttpRequestMessage(HttpMethod.Get, $"/v2/{name}/blobs/{digest}");
-            var response = await _client.SendAsync(request);
+            var response = await HttpClient.SendAsync(request);
             await EnsureSuccessWithErrorContent(response);
             return await response.Content.ReadAsStreamAsync();
         }
@@ -109,7 +110,7 @@ namespace Nibbler
         public async Task MountBlob(string name, string digest, string fromName)
         {
             var request = new HttpRequestMessage(HttpMethod.Post, $"/v2/{name}/blobs/uploads/?mount={digest}&from={fromName}");
-            var response = await _client.SendAsync(request);
+            var response = await HttpClient.SendAsync(request);
             await EnsureSuccessWithErrorContent(response);
         }
 
@@ -119,7 +120,7 @@ namespace Nibbler
             request.Content = new StreamContent(stream);
             request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
             request.Content.Headers.ContentLength = lenght;
-            var response = await _client.SendAsync(request);
+            var response = await HttpClient.SendAsync(request);
             await EnsureSuccessWithErrorContent(response);
         }
 
@@ -145,7 +146,7 @@ namespace Nibbler
                 request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
                 request.Content.Headers.ContentLength = read;
                 request.Content.Headers.TryAddWithoutValidation("Content-Range", $"{currentIndex}-{currentIndex + read - 1}");
-                var response = await _client.SendAsync(request);
+                var response = await HttpClient.SendAsync(request);
 
                 _logger.LogDebug($"uploaded {currentIndex}-{currentIndex + read - 1}{(request.Method == HttpMethod.Put ? " (last)" : "")} - {(int)response.StatusCode}");
 
@@ -164,7 +165,7 @@ namespace Nibbler
             var request = new HttpRequestMessage(HttpMethod.Put, $"/v2/{name}/manifests/{reference}");
             request.Content = new StringContent(FileHelper.JsonSerialize(manifest));
             request.Content.Headers.ContentType = new MediaTypeHeaderValue(ManifestV2.MimeType);
-            var response = await _client.SendAsync(request);
+            var response = await HttpClient.SendAsync(request);
             await EnsureSuccessWithErrorContent(response);
         }
 
@@ -173,7 +174,7 @@ namespace Nibbler
             var request = new HttpRequestMessage(HttpMethod.Put, $"/v2/{name}/manifests/{reference}");
             request.Content = new StreamContent(manifest);
             request.Content.Headers.ContentType = new MediaTypeHeaderValue(ManifestV2.MimeType);
-            var response = await _client.SendAsync(request);
+            var response = await HttpClient.SendAsync(request);
             await EnsureSuccessWithErrorContent(response);
         }
 

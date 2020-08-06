@@ -7,30 +7,22 @@ using Newtonsoft.Json;
 
 namespace Nibbler.Utils
 {
-    public class CredentialHelper
+    public interface IDockerConfigCredentials
     {
-        private string _username;
-        private string _password;
+        string GetEncodedCredentials(string registry);
+    }
+
+    public class DockerConfigCredentials : IDockerConfigCredentials
+    {
         private readonly string _dockerConfigFile;
 
-        public CredentialHelper(string dockerConfigFile)
+        public DockerConfigCredentials(string dockerConfigFile)
         {
             _dockerConfigFile = dockerConfigFile;
         }
 
-        public void OverrideUsernamePassword(string username, string password)
-        {
-            _username = username;
-            _password = password;
-        }
-
         public string GetEncodedCredentials(string registry)
         {
-            if (_username != null && _password != null)
-            {
-                return Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_username}:{_password}"));
-            }
-
             var authConfig = GetDockerConfigAuth(registry, _dockerConfigFile);
 
             if (authConfig?.auth != null)

@@ -14,19 +14,32 @@ namespace Nibbler.Utils
     public class AuthenticationHandler : DelegatingHandler
     {
         private readonly string _registry;
-        private readonly CredentialHelper _credentialHelper;
+        private readonly IDockerConfigCredentials _dockerConfigCredentials;
         private readonly ILogger _logger;
         private readonly HttpClient _tokenClient;
 
         private AuthenticationHeaderValue _authorization;
         private string _scope;
+        private string _username;
+        private string _password;
 
-        public AuthenticationHandler(string registry, CredentialHelper credentialHelper, ILogger logger)
+        public AuthenticationHandler(string registry, IDockerConfigCredentials dockerConfigCredentials, ILogger logger)
         {
             _registry = registry;
-            _credentialHelper = credentialHelper;
+            _dockerConfigCredentials = dockerConfigCredentials;
             _logger = logger;
             _tokenClient = new HttpClient();
+        }
+
+        public void SetCredentials(string username, string password)
+        {
+            _username = username;
+            _password = password;
+        }
+
+        internal bool HasCredentials()
+        {
+            return _username != null && _password != null;
         }
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
@@ -96,7 +109,17 @@ namespace Nibbler.Utils
             }
 
             var request = new HttpRequestMessage(HttpMethod.Get, $"{authParams["realm"]}{queryString}");
-            var tokenCredentials = _credentialHelper?.GetEncodedCredentials(_registry);
+
+            string tokenCredentials;
+            if (HasCredentials())
+            {
+                tokenCredentials = EncodeCredentials(_username, _password);
+            }
+            else
+            {
+                tokenCredentials = _dockerConfigCredentials?.GetEncodedCredentials(_registry);
+            }
+
             if (tokenCredentials != null)
             {
                 request.Headers.Authorization = new AuthenticationHeaderValue("Basic", tokenCredentials);
@@ -115,7 +138,15 @@ namespace Nibbler.Utils
 
         private bool TrySetBasicAuth()
         {
-            var credentials = _credentialHelper?.GetEncodedCredentials(_registry);
+            string credentials;
+            if (HasCredentials())
+            {
+                credentials = EncodeCredentials(_username, _password);
+            }
+            else
+            {
+                credentials = _dockerConfigCredentials?.GetEncodedCredentials(_registry);
+            }
 
             if (credentials != null)
             {
@@ -125,6 +156,11 @@ namespace Nibbler.Utils
             }
 
             return false;
+        }
+
+        public static string EncodeCredentials(string username, string password)
+        {
+            return Convert.ToBase64String(Encoding.UTF8.GetBytes($"{username}:{password}"));
         }
 
         private class TokenResponse

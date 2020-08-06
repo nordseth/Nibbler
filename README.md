@@ -30,35 +30,41 @@ The use case was building dotnet images, so its packaged as a dotnet tool. In th
 ```
 $ dotnet tool install --global Nibbler
 $ nibbler --help
+Nibbler v1.x.x
 Do simple changes to OCI images
 
 Usage: nibbler [options]
 
 Options:
   -?|-h|--help            Show help information
-  --base-image            Set base image (required)
-  --destination           Destination to push the modified image (required)
-  --add                   Add contents of a folder to the image 'sourceFolder:destFolder[:ownerId:groupId:permissions]'   
+  --from-image            Set from image (required)
+  --from-insecure         Insecure from registry (http)
+  --from-skip-tls-verify  Skip verifying from registry TLS certificate
+  --from-username         From registry username
+  --from-password         From registry password
+  --to-image              To image (required)
+  --to-insecure           Insecure to registry (http)
+  --to-skip-tls-verify    Skip verifying to registry TLS certificate
+  --to-username           To registry username
+  --to-password           To registry password
+  --add                   Add contents of a folder to the image 'sourceFolder:destFolder[:ownerId:groupId:permissions]'
   --addFolder             Add a folder to the image 'destFolder[:ownerId:groupId:permissions]'
   --label                 Add label to the image 'name=value'
   --env                   Add a environment variable to the image 'name=value'
   --git-labels            Add common git labels to image, optionally define the path to the git repo.
-  --git-labels-prefix	  Specify the prefix of the git labels. (default: 'nibbler.git')
+  --git-labels-prefix     Specify the prefix of the git labels. (default: 'nibbler.git')
   --workdir               Set the working directory in the image
   --user                  Set the user in the image
   --cmd                   Set the image cmd
   --entrypoint            Set the image entrypoint
   -v|--debug              Verbose output
   --dry-run               Does not push, only shows what would happen (use with -v)
-  --docker-config         Specify docker config file for authentication with registry. (default: ~/.docker/config.json)   
-  --username              Registry username (deprecated, use docker-config)
-  --password              Registry password (deprecated, use docker-config)
-  --insecure              Insecure registry (http). Only use if base image and destination is the same registry.          
-  --skip-tls-verify       Skip verifying registry TLS certificate. Only use if base image and destination is the same registry.
-  --insecure-pull         Insecure base registry (http)
-  --skip-tls-verify-pull  Skip verifying base registry TLS certificate
-  --insecure-push         Insecure destination registry (http)
-  --skip-tls-verify-push  Skip verifying destination registry TLS certificate
+  --docker-config         Specify docker config file for authentication with registry. (default: ~/.docker/config.json)
+  --username              Registry username (deprecated)
+  --password              Registry password (deprecated)
+  --insecure              Insecure registry (http). Only use if base image and destination is the same registry.
+  --skip-tls-verify       Skip verifying registry TLS certificate. Only use if base image and destination is the same
+                          registry.
   --temp-folder           Set temp folder (default: ./.nibbler)
   --digest-file           Output image digest to file, optionally specify file
 ```
@@ -68,8 +74,8 @@ Options:
 ```
 dotnet publish -o $PWD/artifacts
 nibbler \
-	--base-image mcr.microsoft.com/dotnet/core/aspnet:3.1 \
-	--destination my-registy.com/repo/image:latest  \
+	--from-image mcr.microsoft.com/dotnet/core/aspnet:3.1 \
+	--to-image my-registy.com/repo/image:latest  \
 	--add "artifacts:/app" \
 	--workdir /app \
 	--entrypoint "dotnet MyApp.dll" 

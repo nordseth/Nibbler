@@ -31,6 +31,16 @@ namespace Nibbler.Test
             "--destination", "localhost:5000/test/nibbler-test:unittest",
             "--insecure",
             "-v"})]
+        [DataRow(new string[] {
+            "--base-image", "localhost:5000/dotnet/core/aspnet:3.1",
+            "--destination", "localhost:5000/test/nibbler-test:unittest",
+            "--insecure",
+            "--debug"})]
+        [DataRow(new string[] {
+            "--from-image", "localhost:5000/dotnet/core/aspnet:3.1",
+            "--to-image", "localhost:5000/test/nibbler-test:unittest",
+            "--insecure",
+            "-v"})]
         public async Task BuilderCommand_Minimal_Args(string[] args) => await Run(args);
 
         [TestMethod]

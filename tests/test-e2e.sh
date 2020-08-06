@@ -36,8 +36,8 @@ dotnet tool install -g Nibbler --version 1.0.0-test.e2e --add-source /nuget
 
 echo "-------- Build image with Nibbler --------"
 nibbler \
-	--base-image host.docker.internal:5000/dotnet/core/aspnet:$dotnetRuntimeTag \
-	--destination host.docker.internal:5000/$targetImage:$dotnetVersion \
+	--from-image host.docker.internal:5000/dotnet/core/aspnet:$dotnetRuntimeTag \
+	--to-image host.docker.internal:5000/$targetImage:$dotnetVersion \
 	--add "publish:/app" \
 	--addFolder "/app:1001:1001:777" \
 	--git-labels \
