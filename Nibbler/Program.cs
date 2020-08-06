@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 using System.Threading.Tasks;
 using McMaster.Extensions.CommandLineUtils;
 using Nibbler.Command;
@@ -12,6 +13,7 @@ namespace Nibbler
 
         public static async Task<int> Main(string[] args)
         {
+            Console.WriteLine($"Nibbler v{GetVersion()}");
             var app = new CommandLineApplication
             {
                 Name = ProgramName,
@@ -24,6 +26,13 @@ namespace Nibbler
             app.OnExecuteAsync(cmd.ExecuteAsync);
 
             return await app.ExecuteAsync(args);
+        }
+
+        private static string GetVersion()
+        {
+            var assembly = Assembly.GetExecutingAssembly();
+            var assemblyInfoVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
+            return assemblyInfoVersion?.InformationalVersion ?? "0.0.0";
         }
     }
 }
