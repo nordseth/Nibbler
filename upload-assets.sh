@@ -3,6 +3,7 @@ set -e
 
 FOLDER=assets
 PROJECT=Nibbler
+COMMAND=nibbler
 COMMIT=$(git rev-parse HEAD)
 VERSION=$(minver --tag-prefix v -v error)
 TAGCOMMIT=$(git rev-list -n 1 v$VERSION)
@@ -61,12 +62,12 @@ echo "Uploading $FILE_NUGET to $VERSION"
 RESP_NUGET_FILE=$(curl --data-binary @"$FOLDER/$FILE_NUGET" -sH "$AUTH" -H "$ACCEPT" -H "$CONTENT_TYPE_NUGET" "$GH_UPLOAD?name=$FILE_NUGET")
 
 CONTENT_TYPE_WIN="Content-Type: application/zip"
-FILE_WIN="$PROJECT.${VERSION}_win-x64.zip"
+FILE_WIN="$COMMAND.${VERSION}_win-x64.zip"
 echo "Uploading $FILE_WIN to $VERSION"
 RESP_WIN_FILE=$(curl --data-binary @"$FOLDER/$FILE_WIN" -sH "$AUTH" -H "$ACCEPT" -H "$CONTENT_TYPE_WIN" "$GH_UPLOAD?name=$FILE_WIN")
 
 CONTENT_TYPE_LINUX="Content-Type: application/gzip"
-FILE_LINUX="$PROJECT.${VERSION}_linux-x64.tar.gz"
+FILE_LINUX="$COMMAND.${VERSION}_linux-x64.tar.gz"
 echo "Uploading $FILE_LINUX to $VERSION"
 RESP_LINUX_FILE=$(curl --data-binary @"$FOLDER/$FILE_LINUX" -sH "$AUTH" -H "$ACCEPT" -H "$CONTENT_TYPE_LINUX" "$GH_UPLOAD?name=$FILE_LINUX")
 
