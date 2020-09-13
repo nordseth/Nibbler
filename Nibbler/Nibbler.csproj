@@ -2,7 +2,8 @@
 
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
-		<TargetFrameworks>netcoreapp2.1;netcoreapp3.1</TargetFrameworks>
+		<TargetFramework>netcoreapp2.1</TargetFramework>
+		<RollForward>major</RollForward>
 		<PackAsTool>true</PackAsTool>
 		<ToolCommandName>nibbler</ToolCommandName>
 		<RepositoryUrl>https://github.com/nordseth/Nibbler</RepositoryUrl>
@@ -10,7 +11,7 @@
 		<Authors>Nordseth</Authors>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<MinVerTagPrefix>v</MinVerTagPrefix>
-    <MinVerAutoIncrement>minor</MinVerAutoIncrement>
+		<MinVerAutoIncrement>minor</MinVerAutoIncrement>
 	</PropertyGroup>
 
 	<ItemGroup>
