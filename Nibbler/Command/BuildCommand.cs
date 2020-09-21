@@ -284,7 +284,7 @@ namespace Nibbler.Command
             var imageName = ImageHelper.GetImageName(GetFromImage());
             var imageRef = ImageHelper.GetImageReference(GetFromImage());
 
-            _logger.LogDebug($"--baseImage {registry.BaseUri}, {imageName}, {imageRef}");
+            _logger.LogDebug($"--from-image {registry.BaseUri}, {imageName}, {imageRef}");
 
             var manifest = await registry.GetManifest(imageName, imageRef);
             var image = await registry.GetImage(imageName, manifest.config.digest);
@@ -446,7 +446,6 @@ namespace Nibbler.Command
                 description.Append($"--addFolder {arg.Dest} {arg.OwnerId} {arg.GroupId} {arg.Mode.AsOctalString()} ");
                 archive.CreateFolderEntry(arg.Dest, arg.OwnerId, arg.GroupId, arg.Mode);
             }
-
 
             var (digest, diffId) = archive.WriteFileAndCalcDigests();
             var layer = new BuilderLayer
