@@ -7,6 +7,7 @@ namespace Nibbler.LinuxFileUtils
     public class FileInfo
     {
         public int Mode { get; set; }
+        public bool IsLink { get; set; }
         public int OwnerId { get; set; }
         public int GroupId { get; set; }
         public DateTime LastModTime { get; set; }

@@ -112,8 +112,8 @@ namespace Nibbler
                 {
                     tarStream.PutNextEntry(i.Value.Item2);
 
-                    // directories have null in source file
-                    if (i.Value.Item1 != null)
+                    // directories have null in source file, also exclude links
+                    if (i.Value.Item1 != null && i.Value.Item2.TarHeader.TypeFlag != TarHeader.LF_SYMLINK)
                     {
                         using (var fileStream = File.OpenRead(i.Value.Item1))
                         {
@@ -191,6 +191,13 @@ namespace Nibbler
             entry.UserName = null;
             entry.GroupId = info.GroupId;
             entry.GroupName = null;
+
+            if (info.IsLink)
+            {
+                entry.TarHeader.TypeFlag = TarHeader.LF_SYMLINK;
+                entry.Size = 0;
+                entry.TarHeader.LinkName = LinuxFileUtils.LinuxFileInfo.Readlink(fileInfo.FullName);
+            }
         }
 
         private static Stream GetHashStream(Stream outStream, HashAlgorithm hasher)
