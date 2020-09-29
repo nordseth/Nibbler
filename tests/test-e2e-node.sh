@@ -30,9 +30,14 @@ set -e
 export PATH="\$PATH:/root/.dotnet/tools"
 
 echo "-------- Build node app --------"
-cp -r src ./app
+mkdir app
 cd app
+cp ../src/package.json .
+cp ../src/*.js .
 npm install
+# create some symlinks
+ln -s package.json link-to-file
+ln -s node_modules link-to-folder
 
 echo "-------- Install Nibbler --------"
 dotnet tool install -g Nibbler --version ${NIBBLER_VERSION} --add-source /nuget

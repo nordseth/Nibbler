@@ -27,34 +27,133 @@ namespace Nibbler
 
         public void CreateEntries(string source, string dest, int? owner, int? group, int? mode)
         {
+            CreateEntries(source, dest, ModifyEntry);
+
+            void ModifyEntry(TarEntry entry)
+            {
+                if (owner.HasValue)
+                {
+                    entry.UserId = owner.Value;
+                    entry.UserName = String.Empty;
+                }
+
+                if (group.HasValue)
+                {
+                    entry.GroupId = group.Value;
+                    entry.GroupName = String.Empty;
+                }
+
+                if (mode.HasValue)
+                {
+                    // 100xxx
+                    int maskedMode = 32768 + (mode.Value & 0b_0001_1111_1111);
+                    entry.TarHeader.Mode = maskedMode;
+                }
+
+                if (_reproducable)
+                {
+                    entry.ModTime = new DateTime(2000, 1, 1);
+                }
+            }
+        }
+
+        private void CreateEntries(string source, string dest, Action<TarEntry> modifyEntry)
+        {
             foreach (var path in Directory.EnumerateFiles(source))
             {
-                var fileInfo = new FileInfo(path);
-
-                var tarName = Path.Combine(dest, fileInfo.Name);
-                tarName = tarName.Replace('\\', '/');
-                var entry = TarEntry.CreateTarEntry(tarName);
-                entry.Size = fileInfo.Length;
-
-                // entry.TarHeader.Mode = isDir ? 1003 : 33216;
-                // not sure about the mode?
-
-                FillEntry(entry, fileInfo, owner, group, mode);
-
-                Entries[tarName] = (path, entry);
+                CreateFileEntry(path, dest, modifyEntry);
             }
 
             foreach (var path in Directory.EnumerateDirectories(source))
             {
-                var dirInfo = new DirectoryInfo(path);
-                var tarName = Path.Combine(dest, dirInfo.Name);
+                CreateFolderEntry(path, dest, modifyEntry);
+            }
+        }
 
-                // needs to end with "/" to be a dir
-                //var entry = TarEntry.CreateTarEntry(tarName);
-                //entry.Size = 0;
-                // _entries.Add((path, entry));
+        private void CreateFileEntry(string path, string dest, Action<TarEntry> modifyEntry)
+        {
+            var fileInfo = new FileInfo(path);
 
-                CreateEntries(path, Path.Combine(dest, dirInfo.Name), owner, group, mode);
+            var tarName = Path.Combine(dest, fileInfo.Name);
+            tarName = tarName.Replace('\\', '/');
+            var entry = TarEntry.CreateTarEntry(tarName);
+            entry.Size = fileInfo.Length;
+
+            if (_isLinux)
+            {
+                FillLinuxFileInfo(entry, fileInfo);
+            }
+            else
+            {
+                entry.ModTime = fileInfo.LastWriteTime;
+                entry.TarHeader.Mode = Convert.ToInt32("100755", 8);
+            }
+
+            modifyEntry(entry);
+
+            Entries[tarName] = (path, entry);
+        }
+
+        private void CreateFolderEntry(string path, string dest, Action<TarEntry> modifyEntry)
+        {
+            var dirInfo = new DirectoryInfo(path);
+
+            // not creating entries in tar for directories, just iterating over the contents
+            // unless its a symlink...
+            if (_isLinux)
+            {
+                var info = LinuxFileUtils.LinuxFileInfo.LStat(dirInfo.FullName);
+                if (info.IsLink)
+                {
+                    CreateSymlinkFolder(path, Path.Combine(dest, dirInfo.Name), dirInfo.FullName, info, modifyEntry);
+                    return;
+                }
+            }
+
+            CreateEntries(path, Path.Combine(dest, dirInfo.Name), modifyEntry);
+        }
+
+        private void CreateSymlinkFolder(string path, string tarName, string fullName, LinuxFileUtils.FileInfo info, Action<TarEntry> modifyEntry)
+        {
+            tarName = tarName.Replace('\\', '/');
+            var entry = TarEntry.CreateTarEntry(tarName);
+
+            entry.ModTime = info.LastModTime;
+            // 100xxx
+            int maskedMode = 32768 + (info.Mode & 0b_0001_1111_1111);
+            entry.TarHeader.Mode = maskedMode;
+            entry.UserId = info.OwnerId;
+            entry.UserName = null;
+            entry.GroupId = info.GroupId;
+            entry.GroupName = null;
+
+            entry.TarHeader.TypeFlag = TarHeader.LF_SYMLINK;
+            entry.Size = 0;
+            entry.TarHeader.LinkName = LinuxFileUtils.LinuxFileInfo.Readlink(fullName);
+
+            modifyEntry(entry);
+
+            Entries[tarName] = (path, entry);
+        }
+
+        // ref: https://github.com/mono/mono/tree/master/mcs/class/Mono.Posix/Mono.Unix
+        private void FillLinuxFileInfo(TarEntry entry, FileInfo fileInfo)
+        {
+            var info = LinuxFileUtils.LinuxFileInfo.LStat(fileInfo.FullName);
+            entry.ModTime = info.LastModTime;
+            // 100xxx
+            int maskedMode = 32768 + (info.Mode & 0b_0001_1111_1111);
+            entry.TarHeader.Mode = maskedMode;
+            entry.UserId = info.OwnerId;
+            entry.UserName = null;
+            entry.GroupId = info.GroupId;
+            entry.GroupName = null;
+
+            if (info.IsLink)
+            {
+                entry.TarHeader.TypeFlag = TarHeader.LF_SYMLINK;
+                entry.Size = 0;
+                entry.TarHeader.LinkName = LinuxFileUtils.LinuxFileInfo.Readlink(fileInfo.FullName);
             }
         }
 
@@ -139,65 +238,17 @@ namespace Nibbler
 
         public static string PrintEntry(TarEntry e)
         {
-            return $"{e.ModTime} {Convert.ToString(e.TarHeader.Mode, 8)} {e.UserId}/{e.UserName} {e.GroupId}/{e.GroupName} {e.Size} bytes - {e.Name} {e.File}{(e.IsDirectory ? " - D" : "")}";
-        }
-
-        private void FillEntry(TarEntry entry, FileInfo fileInfo, int? ownerId, int? groupId, int? mode)
-        {
-            if (_isLinux)
+            string desc = null;
+            if (e.IsDirectory)
             {
-                FillLinuxFileInfo(entry, fileInfo);
-            }
-            else
+                desc = " - D";
+            } 
+            else if (e.TarHeader.TypeFlag == TarHeader.LF_SYMLINK)
             {
-                entry.ModTime = fileInfo.LastWriteTime;
-                entry.TarHeader.Mode = Convert.ToInt32("100755", 8);
+                desc = $" - L -> {e.TarHeader.LinkName}";
             }
 
-            if (ownerId.HasValue)
-            {
-                entry.UserId = ownerId.Value;
-                entry.UserName = String.Empty;
-            }
-
-            if (groupId.HasValue)
-            {
-                entry.GroupId = groupId.Value;
-                entry.GroupName = String.Empty;
-            }
-
-            if (mode.HasValue)
-            {
-                // 100xxx
-                int maskedMode = 32768 + (mode.Value & 0b_0001_1111_1111);
-                entry.TarHeader.Mode = maskedMode;
-            }
-
-            if (_reproducable)
-            {
-                entry.ModTime = new DateTime(2000, 1, 1);
-            }
-        }
-
-        // ref: https://github.com/mono/mono/tree/master/mcs/class/Mono.Posix/Mono.Unix
-        private void FillLinuxFileInfo(TarEntry entry, FileInfo fileInfo)
-        {
-            var info = LinuxFileUtils.LinuxFileInfo.LStat(fileInfo.FullName);
-            entry.ModTime = info.LastModTime;
-            // 100xxx
-            int maskedMode = 32768 + (info.Mode & 0b_0001_1111_1111);
-            entry.TarHeader.Mode = maskedMode;
-            entry.UserId = info.OwnerId;
-            entry.UserName = null;
-            entry.GroupId = info.GroupId;
-            entry.GroupName = null;
-
-            if (info.IsLink)
-            {
-                entry.TarHeader.TypeFlag = TarHeader.LF_SYMLINK;
-                entry.Size = 0;
-                entry.TarHeader.LinkName = LinuxFileUtils.LinuxFileInfo.Readlink(fileInfo.FullName);
-            }
+            return $"{e.ModTime} {Convert.ToString(e.TarHeader.Mode, 8)} {e.UserId}/{e.UserName} {e.GroupId}/{e.GroupName} {e.Size} bytes - {e.Name} {e.File}{desc}";
         }
 
         private static Stream GetHashStream(Stream outStream, HashAlgorithm hasher)
