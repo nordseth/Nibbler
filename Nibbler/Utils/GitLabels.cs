@@ -8,13 +8,15 @@ namespace Nibbler.Utils
 {
     public static class GitLabels
     {
+        public const string DefaultLabelsPrefix = "nibbler.git";
+
         //label nibbler.git.commit.id \"\$(git --no-pager show -s --format=%h)"
         //label nibbler.git.commit.message \"\$(git --no-pager show -s --format=%B)"
         //label nibbler.git.commit.ref \"\$GIT_BRANCH, \$(git describe --always)"
         //label nibbler.git.commit.author \"\$(git log -1 --pretty=%an) <\$(git log -1 --pretty=%ae)>"
         //label nibbler.git.commit.date \"\$(git log -1 --pretty=%ai)"
         //label nibbler.git.url \"\$GIT_REPO" 
-        public static IDictionary<string, string> GetLabels(string repoPath, string prefix = "nibbler.git")
+        public static IDictionary<string, string> GetLabels(string repoPath, string prefix = DefaultLabelsPrefix)
         {
             string gitRepoPath;
             if (!string.IsNullOrEmpty(repoPath))
@@ -24,6 +26,11 @@ namespace Nibbler.Utils
             else
             {
                 gitRepoPath = System.IO.Directory.GetCurrentDirectory();
+            }
+
+            if (string.IsNullOrEmpty(prefix))
+            {
+                prefix = DefaultLabelsPrefix;
             }
 
             var repo = new Repo(gitRepoPath);
