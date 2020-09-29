@@ -201,9 +201,15 @@ namespace Nibbler
                 async () =>
                 {
                     var destImageRef = ImageHelper.GetImageReference(_destination);
+                    if (string.IsNullOrEmpty( destImageRef))
+                    {
+                        destImageRef = "latest";
+                        _logger.LogWarning($"no to image tag specified, will use \"latest\"");
+                    }
+
                     using (var stream = manifestStream())
                     {
-                        _logger.LogDebug($"uploading manifest");
+                        _logger.LogDebug($"uploading manifest {_targetImageName}:{destImageRef}");
 
                         await _registry.UploadManifest(_targetImageName, destImageRef, stream);
                     }
