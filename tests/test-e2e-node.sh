@@ -32,8 +32,7 @@ export PATH="\$PATH:/root/.dotnet/tools"
 echo "-------- Build node app --------"
 mkdir app
 cd app
-cp ../src/package.json .
-cp ../src/*.js .
+cp ../src/package.json ../src/*.js .
 npm install
 # create some symlinks
 ln -s package.json link-to-file

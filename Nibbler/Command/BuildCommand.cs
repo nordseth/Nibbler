@@ -427,7 +427,7 @@ namespace Nibbler.Command
         {
             var description = new StringBuilder();
             EnsureTempFolder();
-            var archive = new Archive(Path.Combine(_tempFolderPath, $"{layerName}.tar.gz"), true);
+            var archive = new Archive(Path.Combine(_tempFolderPath, $"{layerName}.tar.gz"), true, new[] { _tempFolderPath }, _logger);
 
             foreach (var a in adds)
             {

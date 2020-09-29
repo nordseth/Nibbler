@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using ICSharpCode.SharpZipLib.GZip;
@@ -13,12 +14,16 @@ namespace Nibbler
     {
         private readonly string _outfile;
         private readonly bool _reproducable;
+        private readonly IEnumerable<string> _ignorePaths;
+        private readonly ILogger _logger;
         private readonly bool _isLinux;
 
-        public Archive(string outfile, bool reproducable)
+        public Archive(string outfile, bool reproducable, IEnumerable<string> ignorePaths, ILogger logger)
         {
             _outfile = outfile;
             _reproducable = reproducable;
+            _ignorePaths = ignorePaths ?? Enumerable.Empty<string>();
+            _logger = logger;
 
             _isLinux = System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux);
         }
@@ -59,14 +64,24 @@ namespace Nibbler
 
         private void CreateEntries(string source, string dest, Action<TarEntry> modifyEntry)
         {
-            foreach (var path in Directory.EnumerateFiles(source))
+            foreach (var path in Directory.EnumerateFileSystemEntries(source))
             {
-                CreateFileEntry(path, dest, modifyEntry);
-            }
-
-            foreach (var path in Directory.EnumerateDirectories(source))
-            {
-                CreateFolderEntry(path, dest, modifyEntry);
+                if (_ignorePaths.Any(p => p == path))
+                {
+                    _logger.LogWarning($"Ignoring path \"{path}\" in layer");
+                }
+                else
+                {
+                    var attr = File.GetAttributes(path);
+                    if (attr.HasFlag(FileAttributes.Directory))
+                    {
+                        CreateFolderEntry(path, dest, modifyEntry);
+                    }
+                    else
+                    {
+                        CreateFileEntry(path, dest, modifyEntry);
+                    }
+                }
             }
         }
 
@@ -242,7 +257,7 @@ namespace Nibbler
             if (e.IsDirectory)
             {
                 desc = " - D";
-            } 
+            }
             else if (e.TarHeader.TypeFlag == TarHeader.LF_SYMLINK)
             {
                 desc = $" - L -> {e.TarHeader.LinkName}";
