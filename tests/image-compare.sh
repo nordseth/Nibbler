@@ -12,7 +12,7 @@ docker push localhost:5000/dotnet/dotnet-31-runtime-centos7:latest
 
 echo "-------- Build artifacts --------"
 
-# warning: when running on windows the "dotnet-build.sh" might be mounted with wrong line endings
+echo "warning: when running on windows the file dotnet-build.sh might be mounted with wrong line endings"
 docker run --rm \
 	--name dotnet-build \
 	-v /$PWD:/opt/app-root/workspace \
@@ -47,12 +47,13 @@ docker run -d --rm -p 8080:8080 --name docker-test-app nibbler-test:docker
 echo "-------- Nibbler build --------"
 
 echo "-------- Create Nibbler nuget --------"
-dotnet pack ../Nibbler -o ./nuget -p:PackageVersion=1.0.0-test.e2e
+dotnet pack ../Nibbler -o ./nuget 
+NIBBLER_VERSION=$(minver -t v -v w)
 
 cat << EOF | docker run -i --rm -v /$PWD:/opt/app-root/workspace registry.centos.org/dotnet/dotnet-31-centos7:latest bash
 set -e
 
-dotnet tool install -g Nibbler --version 1.0.0-test.e2e --add-source /opt/app-root/workspace/nuget
+dotnet tool install -g Nibbler --version ${NIBBLER_VERSION} --add-source /opt/app-root/workspace/nuget
 echo "-------- Nibbler tool installed --------"
 nibbler \
 	--from-image host.docker.internal:5000/dotnet/dotnet-31-runtime-centos7:latest \

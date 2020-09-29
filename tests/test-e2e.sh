@@ -13,7 +13,8 @@ docker tag mcr.microsoft.com/dotnet/core/aspnet:$dotnetRuntimeTag localhost:5000
 docker push localhost:5000/dotnet/core/aspnet:$dotnetRuntimeTag
 
 echo "-------- Create Nibbler nuget --------"
-dotnet pack ../Nibbler -o ./nuget -p:PackageVersion=1.0.0-test.e2e
+dotnet pack ../Nibbler -o ./nuget
+NIBBLER_VERSION=$(minver -t v -v w)
 
 echo "-------- Run build in docker image --------"
 
@@ -32,7 +33,7 @@ dotnet build --no-restore
 dotnet publish -o ./publish --no-build
 
 echo "-------- Install Nibbler --------"
-dotnet tool install -g Nibbler --version 1.0.0-test.e2e --add-source /nuget
+dotnet tool install -g Nibbler --version ${NIBBLER_VERSION} --add-source /nuget
 
 echo "-------- Build image with Nibbler --------"
 nibbler \
