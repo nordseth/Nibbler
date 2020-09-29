@@ -1,6 +1,12 @@
 #!/bin/bash
 set -e
 
+###################################
+# Script build 3 images with kaniko, docker and nibbler
+# Containers are stared.
+# Used with ImageCompareTest to look at image differences
+###################################
+
 echo "-------- Prepair images --------"
 
 docker pull gcr.io/kaniko-project/executor:latest

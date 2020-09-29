@@ -1,8 +1,12 @@
 #!/bin/bash
 set -e
 
+###################################
+# Script for testing openshift image registry authentication
+# uses minishift, see 
 # https://docs.okd.io/latest/minishift/getting-started/installing.html
 # https://github.com/minishift/minishift/releases
+###################################
 
 project=myproject
 

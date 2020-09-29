@@ -1,6 +1,11 @@
 #!/bin/bash
 set -e
 
+###################################
+# Script used by image-compare.sh
+# to build artifacts inside docker
+###################################
+
 echo "-------- dotnet-build.sh: download repo --------"
 
 curl -L https://github.com/nordseth/aspnetcore-new/archive/3.1.tar.gz -o ../src.tar.gz

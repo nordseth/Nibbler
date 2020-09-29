@@ -1,6 +1,12 @@
 #!/bin/bash
 set -e
 
+###################################
+# Script that does end to end testing of
+# building a dotnet project in a container, creating a image with Nibbler and running it
+# uses git to clone https://github.com/nordseth/aspnetcore-new as source
+###################################
+
 dotnetVersion=3.1
 dotnetRuntimeTag=$dotnetVersion
 dotnetSdkTag=$dotnetVersion

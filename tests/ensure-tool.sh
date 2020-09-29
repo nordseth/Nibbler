@@ -1,6 +1,12 @@
 #!/bin/bash
 set -e
 
+###################################
+# Script to ensure that correct Nibbler version is installed
+# As there no easy way of doing this with dotnet cli
+# Not currently used.
+###################################
+
 tool=nibbler
 version=1.4.0
 #echo "ensure tool: $tool, version $version"
