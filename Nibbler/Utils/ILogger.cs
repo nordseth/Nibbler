@@ -6,8 +6,10 @@ namespace Nibbler.Utils
 {
     public interface ILogger
     {
-        bool Enabled { get; }
-        void SetEnable(bool enabled);
+        bool DebugEnabled { get; }
+        bool WarningEnabled { get; }
+        void SetDebugEnable(bool enabled);
+        void SetWarningEnable(bool enabled);
 
         void LogDebug(Exception ex, string message);
         void LogDebug(string message);

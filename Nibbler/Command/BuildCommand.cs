@@ -121,20 +121,21 @@ namespace Nibbler.Command
 
         public ValidationResult Validate(ValidationContext context)
         {
+            var validationErrors = new List<(string, IEnumerable<string>)>();
+
             if (!FromImage.HasValue() && !FromImageAlias.HasValue())
             {
-                return new ValidationResult($"The --from-image field is required.", new[] { FromImage.LongName });
+                validationErrors.Add(($"--{FromImage.LongName} is required.", new[] { FromImage.LongName }));
             }
 
             if (!ToImage.HasValue() && !ToImageAlias.HasValue())
             {
-                return new ValidationResult($"The --to-image field is required.", new[] { ToImage.LongName });
+                validationErrors.Add(($"--{ToImage.LongName} is required.", new[] { ToImage.LongName }));
             }
 
-            WarnDeprecated();
-
 #pragma warning disable CS0612 // Type or member is obsolete
-            if (Username.HasValue() || Password.HasValue() || Insecure.HasValue() || SkipTlsVerify.HasValue())
+            if (!validationErrors.Any() && 
+                (Username.HasValue() || Password.HasValue() || Insecure.HasValue() || SkipTlsVerify.HasValue()))
             {
 
                 var srcReg = ImageHelper.GetRegistryName(GetFromImage());
@@ -163,10 +164,19 @@ namespace Nibbler.Command
                         fields.Add(SkipTlsVerify.LongName);
                     }
 
-                    return new ValidationResult($"{string.Join(", ", fields)} can only be set if baseImage registry is the same as destination", fields);
+                    validationErrors.Add(($"{string.Join(", ", fields)} can only be set if baseImage registry is the same as destination", fields));
                 }
             }
 #pragma warning restore CS0612 // Type or member is obsolete
+
+            WarnDeprecated();
+
+            if (validationErrors.Any())
+            {
+                return new ValidationResult(
+                    string.Join(", ", validationErrors.Select(e => e.Item1)),
+                    validationErrors.SelectMany(e => e.Item2));
+            }
 
             return ValidationResult.Success;
         }
@@ -189,7 +199,7 @@ namespace Nibbler.Command
         public async Task<int> ExecuteAsync(CancellationToken cancellationToken)
         {
             var sw = System.Diagnostics.Stopwatch.StartNew();
-            _logger.SetEnable(Verbose.HasValue());
+            _logger.SetDebugEnable(Verbose.HasValue());
 
             try
             {

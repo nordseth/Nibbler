@@ -10,7 +10,9 @@ namespace Nibbler.Test
         private static ILogger _instance = new NullLogger();
         public static ILogger Instance => _instance;
 
-        public bool Enabled => false;
+        public bool DebugEnabled => false;
+
+        public bool WarningEnabled => false;
 
         public void LogDebug(Exception ex, string message)
         {
@@ -24,7 +26,11 @@ namespace Nibbler.Test
         {
         }
 
-        public void SetEnable(bool enabled)
+        public void SetDebugEnable(bool enabled)
+        {
+        }
+
+        public void SetWarningEnable(bool enabled)
         {
         }
     }

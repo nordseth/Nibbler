@@ -26,6 +26,27 @@ namespace Nibbler.Test
         }
 
         [TestMethod]
+        public async Task BuildCommand_Error_Unrecognized_Args()
+        {
+            int result = await Program.Main(new string[] { "--from-image", "x", "--to-image", "x", "--asd" });
+            Assert.AreEqual(2, result);
+        }
+
+        [TestMethod]
+        public async Task BuildCommand_Error_Invalid_Args()
+        {
+            int result = await Program.Main(new string[] { "--from-image" });
+            Assert.AreEqual(3, result);
+        }
+
+        [TestMethod]
+        public async Task BuildCommand_Warning_Deprecated()
+        {
+            int result = await Program.Main(new string[] { "--from-image", "x", "--to-image", "x", "--username", "y" });
+            Assert.AreEqual(1, result);
+        }
+
+        [TestMethod]
         [DataRow(new string[] {
             "--base-image", "localhost:5000/dotnet/core/aspnet:3.1",
             "--destination", "localhost:5000/test/nibbler-test:unittest",
@@ -146,7 +167,7 @@ namespace Nibbler.Test
             "--insecure",
             "-v" })]
         public async Task BuilderCommand_Env(string[] args) => await Run(args);
-    
+
         [TestMethod]
         [DataRow(new string[] {
             "--base-image", "localhost:5000/dotnet/core/aspnet:3.1",
@@ -165,7 +186,7 @@ namespace Nibbler.Test
             "--insecure",
             "-v" })]
         public async Task BuilderCommand_GitLabels(string[] args) => await Run(args);
-      
+
         [TestMethod]
         [DataRow(new string[] {
             "--base-image", "localhost:5000/dotnet/core/aspnet:3.1",

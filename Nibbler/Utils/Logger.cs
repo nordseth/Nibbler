@@ -6,23 +6,30 @@ namespace Nibbler.Utils
 {
     public class Logger : ILogger
     {
-        public Logger(string name, bool enabled)
+        public Logger(string name, bool debugEnable)
         {
             Name = name;
-            Enabled = enabled;
+            DebugEnabled = debugEnable;
+            WarningEnabled = true;
         }
 
         public string Name { get; }
-        public bool Enabled { get; private set; }
+        public bool DebugEnabled { get; private set; }
+        public bool WarningEnabled { get; private set; }
 
-        public void SetEnable(bool enabled)
+        public void SetDebugEnable(bool enabled)
         {
-            Enabled = enabled;
+            DebugEnabled = enabled;
+        }
+
+        public void SetWarningEnable(bool enabled)
+        {
+            WarningEnabled = enabled;
         }
 
         public void LogDebug(Exception ex, string message)
         {
-            if (Enabled)
+            if (DebugEnabled)
             {
                 Console.WriteLine($"[{Name}] {message}: {ex}");
             }
@@ -30,7 +37,7 @@ namespace Nibbler.Utils
 
         public void LogDebug(string message)
         {
-            if (Enabled)
+            if (DebugEnabled)
             {
                 Console.WriteLine($"[{Name}] {message}");
             }
@@ -38,7 +45,7 @@ namespace Nibbler.Utils
 
         public void LogWarning(string message)
         {
-            if (Enabled)
+            if (WarningEnabled)
             {
                 Console.WriteLine($"[{Name}] [WARN] {message}");
             }

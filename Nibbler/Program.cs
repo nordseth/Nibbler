@@ -25,7 +25,20 @@ namespace Nibbler
             app.OnValidate(cmd.Validate);
             app.OnExecuteAsync(cmd.ExecuteAsync);
 
-            return await app.ExecuteAsync(args);
+            try
+            {
+                return await app.ExecuteAsync(args);
+            }
+            catch (UnrecognizedCommandParsingException uex)
+            {
+                Console.Error.WriteLine(uex.Message);
+                return 2;
+            }
+            catch (CommandParsingException pex)
+            {
+                Console.Error.WriteLine(pex.Message);
+                return 3;
+            }
         }
 
         private static string GetVersion()
