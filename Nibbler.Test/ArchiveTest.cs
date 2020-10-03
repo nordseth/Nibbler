@@ -30,7 +30,7 @@ namespace Nibbler.Test
         [DataRow(@"../../../../tests/TestData/publish/", "/app")]
         public void Archive_Enumerate(string source, string dest)
         {
-            var tar = new Archive(null, false);
+            var tar = new Archive(null, false, null, null);
             tar.CreateEntries(source, dest, null, null, null);
 
             foreach (var e in tar.Entries)
@@ -46,7 +46,7 @@ namespace Nibbler.Test
             var layer = Path.Combine(tempFolder, "nibbler-test2.tar.gz");
 
             Console.WriteLine($"layer: {layer}");
-            var tar = new Archive(layer, true);
+            var tar = new Archive(layer, true, null, null);
             tar.CreateEntries(source, dest, null, null, null);
             var (gzipDigest, tarDigest) = tar.WriteFileAndCalcDigests();
 

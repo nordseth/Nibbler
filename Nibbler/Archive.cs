@@ -68,7 +68,7 @@ namespace Nibbler
             {
                 if (_ignorePaths.Any(p => p == path))
                 {
-                    _logger.LogWarning($"Ignoring path \"{path}\" in layer");
+                    _logger?.LogWarning($"Ignoring path \"{path}\" in layer");
                 }
                 else
                 {
