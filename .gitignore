@@ -343,6 +343,7 @@ healthchecksdb
 /tests/minishift-dev.conf
 /tests/minishift.conf
 /tests/tmp-nibbler-build
+/tests/tmp-node-test
 
 ## added
 /assets/
