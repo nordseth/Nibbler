@@ -59,7 +59,9 @@ namespace Nibbler.Command
 
         public CommandOption DockerConfig { get; private set; }
 
+        [Obsolete]
         public CommandOption Username { get; private set; }
+        [Obsolete]
         public CommandOption Password { get; private set; }
         public CommandOption Insecure { get; private set; }
         public CommandOption SkipTlsVerify { get; private set; }
@@ -106,8 +108,10 @@ namespace Nibbler.Command
 
             DockerConfig = app.Option("--docker-config", "Specify docker config file for authentication with registry. (default: ~/.docker/config.json)", CommandOptionType.SingleOrNoValue);
 
+#pragma warning disable CS0612 // Type or member is obsolete
             Username = app.Option("--username", "Registry username (deprecated)", CommandOptionType.SingleValue);
             Password = app.Option("--password", "Registry password (deprecated)", CommandOptionType.SingleValue);
+#pragma warning restore CS0612 // Type or member is obsolete
             Insecure = app.Option("--insecure", "Insecure registry (http). Only use if base image and destination is the same registry.", CommandOptionType.NoValue);
             SkipTlsVerify = app.Option("--skip-tls-verify", "Skip verifying registry TLS certificate. Only use if base image and destination is the same registry.", CommandOptionType.NoValue);
 
@@ -127,8 +131,12 @@ namespace Nibbler.Command
                 return new ValidationResult($"The --to-image field is required.", new[] { ToImage.LongName });
             }
 
+            WarnDeprecated();
+
+#pragma warning disable CS0612 // Type or member is obsolete
             if (Username.HasValue() || Password.HasValue() || Insecure.HasValue() || SkipTlsVerify.HasValue())
             {
+
                 var srcReg = ImageHelper.GetRegistryName(GetFromImage());
                 var destReg = ImageHelper.GetRegistryName(GetToImage());
 
@@ -158,9 +166,25 @@ namespace Nibbler.Command
                     return new ValidationResult($"{string.Join(", ", fields)} can only be set if baseImage registry is the same as destination", fields);
                 }
             }
+#pragma warning restore CS0612 // Type or member is obsolete
 
             return ValidationResult.Success;
         }
+
+#pragma warning disable CS0612 // Type or member is obsolete
+        private void WarnDeprecated()
+        {
+            if (Username.HasValue())
+            {
+                _logger.LogWarning($"--{Username.LongName} is deprecated and will be removed in a future version");
+            }
+
+            if (Password.HasValue())
+            {
+                _logger.LogWarning($"--{Password.LongName} is obsolete and will be removed in a future version");
+            }
+        }
+#pragma warning restore CS0612 // Type or member is obsolete
 
         public async Task<int> ExecuteAsync(CancellationToken cancellationToken)
         {
@@ -303,10 +327,12 @@ namespace Nibbler.Command
             {
                 toRegAuthHandler.SetCredentials(ToUsername.Value(), ToPassword.Value());
             }
+#pragma warning disable CS0612 // Type or member is obsolete
             else if (sameAsFrom && Username.HasValue() && Password.HasValue())
             {
                 toRegAuthHandler.SetCredentials(Username.Value(), Password.Value());
             }
+#pragma warning restore CS0612 // Type or member is obsolete
 
             return toRegAuthHandler;
         }
@@ -322,10 +348,12 @@ namespace Nibbler.Command
             {
                 fromRegAuthHandler.SetCredentials(FromUsername.Value(), FromPassword.Value());
             }
+#pragma warning disable CS0612 // Type or member is obsolete
             else if (sameAsTo && Username.HasValue() && Password.HasValue())
             {
                 fromRegAuthHandler.SetCredentials(Username.Value(), Password.Value());
             }
+#pragma warning restore CS0612 // Type or member is obsolete
 
             return fromRegAuthHandler;
         }
