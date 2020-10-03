@@ -15,6 +15,7 @@ echo "-------- Prepair images --------"
 docker pull $NODE_IMAGE
 docker tag $NODE_IMAGE localhost:5000/$NODE_IMAGE
 docker push localhost:5000/$NODE_IMAGE
+docker image rm localhost:5000/$NODE_IMAGE
 
 echo "-------- Create node builder image --------"
 docker build -t $BUILDER_IMAGE -f Dockerfile.nodebuilder .

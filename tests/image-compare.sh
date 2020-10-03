@@ -15,6 +15,7 @@ docker pull registry.centos.org/dotnet/dotnet-31-centos7:latest
 docker pull registry.centos.org/dotnet/dotnet-31-runtime-centos7:latest
 docker tag registry.centos.org/dotnet/dotnet-31-runtime-centos7:latest localhost:5000/dotnet/dotnet-31-runtime-centos7:latest
 docker push localhost:5000/dotnet/dotnet-31-runtime-centos7:latest
+docker image rm localhost:5000/dotnet/dotnet-31-runtime-centos7:latest
 
 echo "-------- Build artifacts --------"
 

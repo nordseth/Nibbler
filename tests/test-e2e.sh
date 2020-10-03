@@ -17,6 +17,7 @@ docker pull mcr.microsoft.com/dotnet/core/sdk:$dotnetSdkTag
 docker pull mcr.microsoft.com/dotnet/core/aspnet:$dotnetRuntimeTag
 docker tag mcr.microsoft.com/dotnet/core/aspnet:$dotnetRuntimeTag localhost:5000/dotnet/core/aspnet:$dotnetRuntimeTag
 docker push localhost:5000/dotnet/core/aspnet:$dotnetRuntimeTag
+docker image rm localhost:5000/dotnet/core/aspnet:$dotnetRuntimeTag
 
 echo "-------- Create Nibbler nuget --------"
 dotnet pack ../Nibbler -o ./nuget
