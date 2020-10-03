@@ -2,8 +2,10 @@
 
 [![NuGet (Nibbler)](https://img.shields.io/nuget/v/Nibbler)](https://www.nuget.org/packages/Nibbler/)
 
-Nibbler is a dotnet tool for doing simple changes to OCI images.
-The tool will read image meta data from a registry, change the meta data and add folders as new layers in the image.
+Nibbler is a tool for doing simple changes to OCI images, often called docker images. 
+It is publised as a dotnet tool and as an executable where dotnet sdk is not installed.
+
+The tool reads image meta data from a registry, makes changes to meta data and can add folders as new layers in the image.
 It can not read image layers or execute anything inside the image.
 
 Typical use case is adding build artifacts to create a new image from a existing base image created with another tool.
@@ -11,19 +13,23 @@ It does not need root or any other privileges, so is well suited for running in 
 
 ## Status
 
-Nibbler is beta software. Its probably not feature complete or robust.
+Nibbler should not be considered stable, but it is used for building production images.
+Missing feature as mostly better error handling and messages.
+The test set is limited, especially around authentication methods used with different image registries.
 
 ## Why Nibbler
 
 Why use Nibbler instead of other tools?
 
-Nibbler was created because only simple changes to images are needed when building in a secure environment. 
+Nibbler was created because no tool could do simple changes to images in a secure environemnt. 
+
 Solutions based on Dockerfile (like [docker](https://docs.docker.com/engine/reference/commandline/build/), [Kaniko  ](https://github.com/GoogleContainerTools/kaniko) and partly [Builda](https://github.com/containers/buildah)) are built around the Dockerfile and running operations inside the container that is being built.
 When running on a build server this functionality is not needed, the artifacts are already created and only need to be copied into a new layer in the image.
-Nibbler is inspired by tools like [Jib](https://github.com/GoogleContainerTools/jib). But instead of being opinionated lets the user decide how to create the image.
+Nibbler is inspired by tools like [Jib](https://github.com/GoogleContainerTools/jib). But its less opinionated and lets the user decide how to create the image.
 Bazel might be a alternative, but does a lot more than just creating images.
 
-The use case was building dotnet images, so its packaged as a dotnet tool. In the future it might be packaged as a stand alone executable.
+Nibbler was created for building dotnet images, as such it is publised as as a dotnet cli tool. But its also made available an executable.
+Nibbler is language agnostic, and can be used for creating images for other platforms, like node and go.
 
 ## Usage
 
