@@ -40,41 +40,24 @@ namespace Nibbler
             HttpClient.BaseAddress = BaseUri;
         }
 
-        public async Task<string> GetManifestFile(string name, string reference)
+        public async Task<HttpContent> GetManifest(string name, string reference)
         {
             var request = new HttpRequestMessage(HttpMethod.Get, $"/v2/{name}/manifests/{reference}");
             request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(ManifestV2.MimeType));
 
             var response = await HttpClient.SendAsync(request);
             await EnsureSuccessWithErrorContent(response);
-            var content = await response.Content.ReadAsStringAsync();
-
-            return content;
+            return response.Content;
         }
 
-        public async Task<ManifestV2> GetManifest(string name, string reference)
-        {
-            return JsonConvert.DeserializeObject<ManifestV2>(await GetManifestFile(name, reference));
-        }
-
-        public async Task<(string content, string digest)> GetImageFile(string name, string digest)
+        public async Task<HttpContent> GetImageConfig(string name, string digest)
         {
             var request = new HttpRequestMessage(HttpMethod.Get, $"/v2/{name}/blobs/{digest}");
             request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(ImageV1.MimeType));
 
             var response = await HttpClient.SendAsync(request);
             await EnsureSuccessWithErrorContent(response);
-            var byteContent = await response.Content.ReadAsByteArrayAsync();
-            var calculatedDigest = FileHelper.Digest(byteContent);
-            var content = Encoding.UTF8.GetString(byteContent);
-
-            return (content, calculatedDigest);
-        }
-
-        public async Task<ImageV1> GetImage(string name, string digest)
-        {
-            var (json, _) = await GetImageFile(name, digest);
-            return JsonConvert.DeserializeObject<ImageV1>(json);
+            return response.Content;
         }
 
         public async Task<string> StartUpload(string name)

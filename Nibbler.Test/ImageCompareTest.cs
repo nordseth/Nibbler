@@ -23,15 +23,15 @@ namespace Nibbler.Test
         {
             var registry = new Registry(ImageHelper.GetRegistryBaseUrl(image, insecure), new Logger("REGISTRY", true), null);
 
-            var manifest = await registry.GetManifest(ImageHelper.GetImageName(image), ImageHelper.GetImageReference(image));
+            var loadedImage = new Image(registry, ImageHelper.GetImageName(image), ImageHelper.GetImageReference(image));
+            await loadedImage.LoadMetadata();
             //Console.WriteLine("-------------");
             //Console.WriteLine(JsonConvert.SerializeObject(manifest, Formatting.Indented));
 
-            var imageConfig = await registry.GetImage(ImageHelper.GetImageName(image), manifest.config.digest);
             //Console.WriteLine("-------------");
             //Console.WriteLine(JsonConvert.SerializeObject(imageConfig, Formatting.Indented));
 
-            var layer = await registry.DownloadBlob(ImageHelper.GetImageName(image), manifest.layers.Last().digest);
+            var layer = await registry.DownloadBlob(ImageHelper.GetImageName(image), loadedImage.Manifest.layers.Last().digest);
 
             using var gzipStream = new GZipInputStream(layer);
             using var tarStream = new TarInputStream(gzipStream, null);

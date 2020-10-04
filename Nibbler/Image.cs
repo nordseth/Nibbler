@@ -4,6 +4,7 @@ using Nibbler.Utils;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
@@ -23,42 +24,62 @@ namespace Nibbler
 
         public string Name { get; }
         public string Ref { get; }
-        public string ManifestFile { get; private set; }
-        private ManifestV2 Manifest { get; set; }
-        public string ConfigFile { get; private set; }
+        
+        public byte[] ManifestBytes { get; private set; }
+        public string ManifestDigest { get; private set; }
+        public ManifestV2 Manifest { get; private set; }
+
+        public byte[] ConfigBytes { get; private set; }
         public ImageV1 Config { get; private set; }
+
+        private List<BuilderLayer> _layersAdded = new List<BuilderLayer>();
+        public IEnumerable<BuilderLayer> LayersAdded => _layersAdded.AsReadOnly();
+
         public bool ManifestUpdated { get; set; }
 
         public async Task LoadMetadata()
         {
-            ManifestFile = await _registry.GetManifestFile(Name, Ref);
-            Manifest = JsonConvert.DeserializeObject<ManifestV2>(ManifestFile);
-            var imageFileResult = await _registry.GetImageFile(Name, Manifest.config.digest);
-            ConfigFile = imageFileResult.content;
-            Config = JsonConvert.DeserializeObject<ImageV1>(ConfigFile);
+            var manifestContent = await _registry.GetManifest(Name, Ref);
+            ManifestBytes = await manifestContent.ReadAsByteArrayAsync();
+            ManifestDigest = FileHelper.Digest(ManifestBytes);
+            var manifestJson = await manifestContent.ReadAsStringAsync();
+            Manifest = JsonConvert.DeserializeObject<ManifestV2>(manifestJson);
+
+            var imageConfigContent = await _registry.GetImageConfig(Name, Manifest.config.digest);
+            ConfigBytes = await imageConfigContent.ReadAsByteArrayAsync();
+            var configJson = await imageConfigContent.ReadAsStringAsync();
+            Config = JsonConvert.DeserializeObject<ImageV1>(configJson);
+
             ManifestUpdated = false;
         }
 
-        public void UpdateConfigInManifest()
+        public void ConfigUpdated()
         {
-            var (imageBytes, imageDigest) = ToJson(Config);
-            Manifest.config.digest = imageDigest;
-            Manifest.config.size = imageBytes.Length;
+            var (configBytes, configDigest) = ToJson(Config);
+            ConfigBytes = configBytes;
+            Manifest.config.digest = configDigest;
+            Manifest.config.size = configBytes.Length;
+
+            var (manifestBytes, manifestDigest) = ToJson(Manifest);
+            ManifestDigest = manifestDigest;
+            ManifestBytes = manifestBytes;
             ManifestUpdated = true;
         }
 
-        public void AddLayerToConfigAndManifest(BuilderLayer layer)
+        public void AddLayer(BuilderLayer layer)
         {
+            _layersAdded.Add(layer);
+
             Config.rootfs.diff_ids.Add(layer.DiffId);
             Config.history.Add(ImageV1History.Create(layer.Description, null));
 
-            UpdateConfigInManifest();
             Manifest.layers.Add(new ManifestV2Layer
             {
                 digest = layer.Digest,
                 size = layer.Size,
             });
-            ManifestUpdated = true;
+
+            ConfigUpdated();
         }
 
         private (byte[], string) ToJson<T>(T obj)
@@ -67,12 +88,6 @@ namespace Nibbler
             var bytes = Encoding.UTF8.GetBytes(content);
             var digest = FileHelper.Digest(bytes);
             return (bytes, digest);
-        }
-
-        private Stream GetJsonStream<T>(T obj)
-        {
-            var (bytes, _) = ToJson(obj);
-            return new MemoryStream(bytes);
         }
     }
 }

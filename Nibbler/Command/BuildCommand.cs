@@ -158,25 +158,24 @@ namespace Nibbler.Command
                 var (baseRegistry, destRegistry) = CreateRegistries();
                 var image = await LoadBaseImage(baseRegistry);
                 var imageUpdated = UpdateImageConfig(image.Config);
+                
+                if (imageUpdated)
+                {
+                    image.ConfigUpdated();
+                }
 
-                var layersAdded = new List<BuilderLayer>();
-                if (!imageUpdated)
+                if (Add.HasValue() || AddFolder.HasValue())
+                {
+                    var layer = CreateLayer(Add.Values, AddFolder.Values, $"layer{image.LayersAdded.Count():00}");
+                    image.AddLayer(layer);
+                }
+
+                if (!image.ManifestUpdated)
                 {
                     _logger.LogDebug("No changes to image, will copy image.");
                 }
-                else
-                {
-                    image.UpdateConfigInManifest();
 
-                    if (Add.HasValue())
-                    {
-                        var layer = CreateLayer(Add.Values, AddFolder.Values, $"layer{layersAdded.Count():00}");
-                        layersAdded.Add(layer);
-                        image.AddLayerToConfigAndManifest(layer);
-                    }
-                }
-
-                var pusher = new Pusher(FromImage.Value(), ToImage.Value(), destRegistry, layersAdded, CreateLogger("PUSHR"))
+                var pusher = new Pusher(FromImage.Value(), ToImage.Value(), destRegistry, image.LayersAdded, CreateLogger("PUSHR"))
                 {
                     FakePullAndRetryMount = true,
                 };
@@ -184,47 +183,19 @@ namespace Nibbler.Command
                 bool configExists = await pusher.CheckConfigExists(image.Manifest);
                 var missingLayers = await pusher.FindMissingLayers(image.Manifest, !DryRun.HasValue() && destRegistry == baseRegistry);
 
-                string manifestDigest = null;
                 if (!DryRun.HasValue())
                 {
                     if (!configExists)
                     {
-                        if (imageUpdated)
-                        {
-                            await pusher.PushConfig(image.Manifest.config, () => GetJsonStream(image));
-                        }
-                        else
-                        {
-                            // assumes UTF8, same as when we read the image config
-                            await pusher.PushConfig(image.Manifest.config, () => new MemoryStream(Encoding.UTF8.GetBytes(image.ConfigFile)));
-                        }
+                        await pusher.PushConfig(image.Manifest.config, () => new MemoryStream(image.ConfigBytes));
                     }
 
                     await pusher.CopyLayers(baseRegistry, ImageHelper.GetImageName(FromImage.Value()), missingLayers);
                     await pusher.PushLayers(f => File.OpenRead(Path.Combine(_tempFolderPath, f)));
-                    if (imageUpdated)
-                    {
-                        await pusher.PushManifest(() => GetJsonStream(image.Manifest));
-                        using (var manifestStream = GetJsonStream(manifest))
-                        {
-                            manifestDigest = FileHelper.Digest(manifestStream);
-                        }
-                    }
-                    else
-                    {
-                        manifestDigest = "";
-                    }
+                    await pusher.PushManifest(() => new MemoryStream(image.ManifestBytes));
                 }
 
-                if (manifestDigest == null)
-                {
-                    using (var manifestStream = GetJsonStream(manifest))
-                    {
-                        manifestDigest = FileHelper.Digest(manifestStream);
-                    }
-                }
-
-                _logger.LogDebug($"Image digest: {manifestDigest}");
+                _logger.LogDebug($"Image digest: {image.ManifestDigest}");
 
                 if (DigestFile.HasValue())
                 {
@@ -239,11 +210,11 @@ namespace Nibbler.Command
                         digestFilepath = Path.Combine(_tempFolderPath, ManifestDigestFileName);
                     }
 
-                    File.WriteAllText(digestFilepath, manifestDigest);
+                    File.WriteAllText(digestFilepath, image.ManifestDigest);
                 }
 
                 _logger.LogDebug($"completed in {sw.ElapsedMilliseconds} ms");
-                Console.WriteLine(manifestDigest);
+                Console.WriteLine(image.ManifestDigest);
 
                 return 0;
             }
@@ -294,6 +265,8 @@ namespace Nibbler.Command
 
             var image = new Image(registry, imageName, imageRef);
             await image.LoadMetadata();
+
+            _logger.LogDebug($"Loaded image mata data for image digest: {image.ManifestDigest}");
 
             return image;
         }
@@ -429,7 +402,7 @@ namespace Nibbler.Command
             EnsureTempFolder();
             var archive = new Archive(Path.Combine(_tempFolderPath, $"{layerName}.tar.gz"), true, new[] { _tempFolderPath }, _logger);
 
-            foreach (var a in adds)
+            foreach (var a in adds ?? Enumerable.Empty<string>())
             {
                 var arg = AddArgument.Parse(a, false);
                 _logger.LogDebug($"--add {arg.Source} {arg.Dest} {arg.OwnerId} {arg.GroupId} {arg.Mode.AsOctalString()}");

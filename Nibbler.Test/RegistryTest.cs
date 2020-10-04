@@ -25,8 +25,9 @@ namespace Nibbler.Test
         {
             var registry = new Registry(new Uri(registryUrl), _registryLogger, null);
 
-            var manifest = await registry.GetManifestFile(imageName, imageRef);
-            Console.WriteLine(manifest);
+            var manifestContent = await registry.GetManifest(imageName, imageRef);
+            var manifestJson = await manifestContent.ReadAsStringAsync();
+            Console.WriteLine(manifestJson);
         }
 
         [TestMethod]
@@ -36,7 +37,10 @@ namespace Nibbler.Test
         {
             var registry = new Registry(new Uri(registryUrl), _registryLogger, null);
 
-            var manifest = await registry.GetManifest(imageName, imageRef);
+            var manifestContent = await registry.GetManifest(imageName, imageRef);
+            var manifestJson = await manifestContent.ReadAsStringAsync();
+            var manifest = JsonConvert.DeserializeObject<ManifestV2>(manifestJson);
+
             Assert.IsNotNull(manifest);
             Assert.IsNotNull(manifest.layers);
             Assert.IsTrue(manifest.layers.Any());
@@ -64,8 +68,9 @@ namespace Nibbler.Test
 
             var imageName = ImageHelper.GetImageName(image);
             var imageRef = ImageHelper.GetImageReference(image);
-            var manifestFile = await registry.GetManifestFile(imageName, imageRef);
-            var manifest = JsonConvert.DeserializeObject<ManifestV2>(manifestFile);
+            var manifestContent = await registry.GetManifest(imageName, imageRef);
+            var manifestJson = await manifestContent.ReadAsStringAsync();
+            var manifest = JsonConvert.DeserializeObject<ManifestV2>(manifestJson);
             Assert.IsNotNull(manifest);
             Assert.IsNotNull(manifest.layers);
             Assert.IsTrue(manifest.layers.Any());
@@ -81,7 +86,7 @@ namespace Nibbler.Test
                 Assert.AreEqual(ImageV1.AltMimeType, manifest.config.mediaType);
             }
 
-            Console.WriteLine(manifestFile);
+            Console.WriteLine(manifestJson);
         }
 
         [TestMethod]
@@ -90,8 +95,9 @@ namespace Nibbler.Test
         {
             var registry = new Registry(new Uri(registryUrl), _registryLogger, null);
 
-            var image = await registry.GetImageFile(imageName, digest);
-            Console.WriteLine(image.content);
+            var imageContent = await registry.GetImageConfig(imageName, digest);
+            var imageJson = await imageContent.ReadAsStringAsync();
+            Console.WriteLine(imageJson);
         }
 
         [TestMethod]
@@ -102,8 +108,9 @@ namespace Nibbler.Test
             var authHandler = new AuthenticationHandler(registryName, null, _registryLogger);
             var registry = new Registry(registryUrl, _registryLogger, authHandler, skipTlsVerify);
 
-            var imageFile = await registry.GetImageFile(imageName, digest);
-            Console.WriteLine(imageFile.content);
+            var imageContent = await registry.GetImageConfig(imageName, digest);
+            var imageJson = await imageContent.ReadAsStringAsync();
+            Console.WriteLine(imageJson);
         }
 
         [TestMethod]
@@ -112,7 +119,9 @@ namespace Nibbler.Test
         {
             var registry = new Registry(new Uri(registryName), _registryLogger, null);
 
-            var image = await registry.GetImage(imageName, digest);
+            var imageContent = await registry.GetImageConfig(imageName, digest);
+            var imageJson = await imageContent.ReadAsStringAsync();
+            var image = JsonConvert.DeserializeObject<ImageV1>(imageJson);
             Assert.IsNotNull(image);
             Assert.IsNotNull(image.config);
             Assert.IsNotNull(image.rootfs);

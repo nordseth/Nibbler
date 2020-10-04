@@ -134,6 +134,15 @@ namespace Nibbler.Test
         [DataRow(new string[] {
             "--from-image", "localhost:5000/dotnet/aspnet:5.0",
             "--to-image", "localhost:5000/test/nibbler-test:unittest",
+            "--addFolder", @"/app:1001:0:777",
+            "--insecure",
+            "-v" })]
+        public async Task BuilderCommand_AddFolder(string[] args) => await Run(args);
+
+        [TestMethod]
+        [DataRow(new string[] {
+            "--from-image", "localhost:5000/dotnet/aspnet:5.0",
+            "--to-image", "localhost:5000/test/nibbler-test:unittest",
             "--workdir", "/root",
             "--insecure",
             "-v" })]

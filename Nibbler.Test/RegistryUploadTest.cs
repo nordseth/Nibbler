@@ -24,10 +24,11 @@ namespace Nibbler.Test
         public async Task Digest_Compare(string registryUrl, string imageName, string imageTag)
         {
             var source = new Registry(new Uri(registryUrl), _registryLogger, null);
-            var manifest = await source.GetManifest(imageName, imageTag);
-            var (json, digest) = await source.GetImageFile(imageName, manifest.config.digest);
+            var image = new Image(source, imageName, imageTag);
+            await image.LoadMetadata();
+            var calcedImageDigest = FileHelper.Digest(image.ConfigBytes);
 
-            Assert.AreEqual(manifest.config.digest.ToLowerInvariant(), digest.ToLowerInvariant());
+            Assert.AreEqual(image.Manifest.config.digest.ToLowerInvariant(), calcedImageDigest.ToLowerInvariant());
         }
 
         [TestMethod]
@@ -35,20 +36,20 @@ namespace Nibbler.Test
         public async Task Registry_Upload(string sourceRegistryUrl, string imageName, string imageTag, string destRegistryUrl)
         {
             var source = new Registry(new Uri(sourceRegistryUrl), _registryLogger, null);
-            var manifest = await source.GetManifest(imageName, imageTag);
-            var image = await source.GetImage(imageName, manifest.config.digest);
+            var image = new Image(source, imageName, imageTag);
+            await image.LoadMetadata();
 
             var dest = new Registry(new Uri(destRegistryUrl), _registryLogger, null);
             var uploadUri = await dest.StartUpload(imageName);
             Console.WriteLine($"uploadUri: {uploadUri}");
 
-            await CopyBlobIfNeeded(imageName, source, dest, uploadUri, manifest.config);
-            foreach (var l in manifest.layers)
+            await CopyBlobIfNeeded(imageName, source, dest, uploadUri, image.Manifest.config);
+            foreach (var l in image.Manifest.layers)
             {
                 await CopyBlobIfNeeded(imageName, source, dest, uploadUri, l);
             }
 
-            await dest.UploadManifest(imageName, imageTag, manifest);
+            await dest.UploadManifest(imageName, imageTag, image.Manifest);
         }
 
         [TestMethod]
