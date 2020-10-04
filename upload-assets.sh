@@ -5,7 +5,7 @@ FOLDER=assets
 PROJECT=Nibbler
 COMMAND=nibbler
 COMMIT=$(git rev-parse HEAD)
-VERSION=$(minver --tag-prefix v -v error)
+VERSION=$(minver -t v -v e)
 TAGCOMMIT=$(git rev-list -n 1 v$VERSION)
 
 ## validate COMMIT and TAGCOMMIT are equal

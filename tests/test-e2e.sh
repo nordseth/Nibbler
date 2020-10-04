@@ -21,7 +21,7 @@ docker image rm localhost:5000/dotnet/core/aspnet:$dotnetRuntimeTag
 
 echo "-------- Create Nibbler nuget --------"
 dotnet pack ../Nibbler -o ./nuget
-NIBBLER_VERSION=$(minver -t v -v w)
+NIBBLER_VERSION=$(minver -t v -v e)
 
 echo "-------- Run build in docker image --------"
 

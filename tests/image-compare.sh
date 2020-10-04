@@ -55,7 +55,7 @@ echo "-------- Nibbler build --------"
 
 echo "-------- Create Nibbler nuget --------"
 dotnet pack ../Nibbler -o ./nuget 
-NIBBLER_VERSION=$(minver -t v -v w)
+NIBBLER_VERSION=$(minver -t v -v e)
 
 cat << EOF | docker run -i --rm -v /$PWD:/opt/app-root/workspace registry.centos.org/dotnet/dotnet-31-centos7:latest bash
 set -e

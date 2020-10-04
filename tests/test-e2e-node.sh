@@ -22,7 +22,7 @@ docker build -t $BUILDER_IMAGE -f Dockerfile.nodebuilder .
 
 echo "-------- Create Nibbler nuget --------"
 dotnet pack ../Nibbler -o ./nuget
-NIBBLER_VERSION=$(minver -t v -v w)
+NIBBLER_VERSION=$(minver -t v -v e)
 
 echo "-------- Run build in docker image --------"
 

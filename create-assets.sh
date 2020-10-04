@@ -6,7 +6,7 @@ FRAMEWORK=netcoreapp3.1
 CONFIGURATION=Release
 PROJECT=Nibbler
 COMMAND=nibbler
-VERSION=$(minver --tag-prefix v -v error)
+VERSION=$(minver -t v -v e)
 FOLDER=assets
 
 dotnet pack $PROJECT -o $FOLDER
