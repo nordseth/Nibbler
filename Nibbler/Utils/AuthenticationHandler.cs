@@ -104,7 +104,7 @@ namespace Nibbler.Utils
 
             if (scope != null)
             {
-                queryString += queryString.Add("scope", scope);
+                queryString = queryString.Add("scope", scope);
                 _scope = scope;
             }
 
