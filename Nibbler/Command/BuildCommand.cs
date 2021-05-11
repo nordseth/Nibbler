@@ -25,20 +25,14 @@ namespace Nibbler.Command
         }
 
         public CommandOption FromImage { get; private set; }
-        public CommandOption FromImageAlias { get; private set; }
         public CommandOption FromInsecure { get; private set; }
-        public CommandOption FromInsecureAlias { get; private set; }
         public CommandOption FromSkipTlsVerify { get; private set; }
-        public CommandOption FromSkipTlsVerifyAlias { get; private set; }
         public CommandOption FromUsername { get; private set; }
         public CommandOption FromPassword { get; private set; }
 
         public CommandOption ToImage { get; private set; }
-        public CommandOption ToImageAlias { get; private set; }
         public CommandOption ToInsecure { get; private set; }
-        public CommandOption ToInsecureAlias { get; private set; }
         public CommandOption ToSkipTlsVerify { get; private set; }
-        public CommandOption ToSkipTlsVerifyAlias { get; private set; }
         public CommandOption ToUsername { get; private set; }
         public CommandOption ToPassword { get; private set; }
 
@@ -59,10 +53,6 @@ namespace Nibbler.Command
 
         public CommandOption DockerConfig { get; private set; }
 
-        [Obsolete]
-        public CommandOption Username { get; private set; }
-        [Obsolete]
-        public CommandOption Password { get; private set; }
         public CommandOption Insecure { get; private set; }
         public CommandOption SkipTlsVerify { get; private set; }
 
@@ -73,20 +63,14 @@ namespace Nibbler.Command
         {
             // from and to registries. From and to image are required arguments
             FromImage = app.Option("--from-image", "Set from image (required)", CommandOptionType.SingleValue);
-            FromImageAlias = app.Option("--base-image", "Alias for --from-image (deprecated)", CommandOptionType.SingleValue, o => o.ShowInHelpText = false);
             FromInsecure = app.Option("--from-insecure", "Insecure from registry (http)", CommandOptionType.NoValue);
-            FromInsecureAlias = app.Option("--insecure-pull", "Alias for --from-insecure (deprecated)", CommandOptionType.NoValue, o => o.ShowInHelpText = false);
             FromSkipTlsVerify = app.Option("--from-skip-tls-verify", "Skip verifying from registry TLS certificate", CommandOptionType.NoValue);
-            FromSkipTlsVerifyAlias = app.Option("--skip-tls-verify-pull", "Alias for --from-skip-tls-verify (deprecated)", CommandOptionType.NoValue, o => o.ShowInHelpText = false);
             FromUsername = app.Option("--from-username", "From registry username", CommandOptionType.SingleValue);
             FromPassword = app.Option("--from-password", "From registry password", CommandOptionType.SingleValue);
 
             ToImage = app.Option("--to-image", "To image (required)", CommandOptionType.SingleValue);
-            ToImageAlias = app.Option("--destination", "Alias for --to-image (deprecated)", CommandOptionType.SingleValue, o => o.ShowInHelpText = false);
             ToInsecure = app.Option("--to-insecure", "Insecure to registry (http)", CommandOptionType.NoValue);
-            ToInsecureAlias = app.Option("--insecure-push", "Alias for --to-insecure (deprecated)", CommandOptionType.NoValue, o => o.ShowInHelpText = false);
             ToSkipTlsVerify = app.Option("--to-skip-tls-verify", "Skip verifying to registry TLS certificate", CommandOptionType.NoValue);
-            ToSkipTlsVerifyAlias = app.Option("--skip-tls-verify-push", "Alias for --to-skip-tls-verify (deprecated)", CommandOptionType.NoValue, o => o.ShowInHelpText = false);
             ToUsername = app.Option("--to-username", "To registry username", CommandOptionType.SingleValue);
             ToPassword = app.Option("--to-password", "To registry password", CommandOptionType.SingleValue);
 
@@ -108,10 +92,6 @@ namespace Nibbler.Command
 
             DockerConfig = app.Option("--docker-config", "Specify docker config file for authentication with registry. (default: ~/.docker/config.json)", CommandOptionType.SingleOrNoValue);
 
-#pragma warning disable CS0612 // Type or member is obsolete
-            Username = app.Option("--username", "Registry username (deprecated)", CommandOptionType.SingleValue);
-            Password = app.Option("--password", "Registry password (deprecated)", CommandOptionType.SingleValue);
-#pragma warning restore CS0612 // Type or member is obsolete
             Insecure = app.Option("--insecure", "Insecure registry (http). Only use if base image and destination is the same registry.", CommandOptionType.NoValue);
             SkipTlsVerify = app.Option("--skip-tls-verify", "Skip verifying registry TLS certificate. Only use if base image and destination is the same registry.", CommandOptionType.NoValue);
 
@@ -123,36 +103,26 @@ namespace Nibbler.Command
         {
             var validationErrors = new List<(string, IEnumerable<string>)>();
 
-            if (!FromImage.HasValue() && !FromImageAlias.HasValue())
+            if (!FromImage.HasValue())
             {
                 validationErrors.Add(($"--{FromImage.LongName} is required.", new[] { FromImage.LongName }));
             }
 
-            if (!ToImage.HasValue() && !ToImageAlias.HasValue())
+            if (!ToImage.HasValue())
             {
                 validationErrors.Add(($"--{ToImage.LongName} is required.", new[] { ToImage.LongName }));
             }
 
-#pragma warning disable CS0612 // Type or member is obsolete
             if (!validationErrors.Any() && 
-                (Username.HasValue() || Password.HasValue() || Insecure.HasValue() || SkipTlsVerify.HasValue()))
+                (Insecure.HasValue() || SkipTlsVerify.HasValue()))
             {
 
-                var srcReg = ImageHelper.GetRegistryName(GetFromImage());
-                var destReg = ImageHelper.GetRegistryName(GetToImage());
+                var srcReg = ImageHelper.GetRegistryName(FromImage.Value());
+                var destReg = ImageHelper.GetRegistryName(ToImage.Value());
 
                 if (srcReg != destReg)
                 {
                     var fields = new List<string>();
-                    if (Username.HasValue())
-                    {
-                        fields.Add(Username.LongName);
-                    }
-
-                    if (Password.HasValue())
-                    {
-                        fields.Add(Password.LongName);
-                    }
 
                     if (Insecure.HasValue())
                     {
@@ -167,9 +137,6 @@ namespace Nibbler.Command
                     validationErrors.Add(($"{string.Join(", ", fields)} can only be set if baseImage registry is the same as destination", fields));
                 }
             }
-#pragma warning restore CS0612 // Type or member is obsolete
-
-            WarnDeprecated();
 
             if (validationErrors.Any())
             {
@@ -180,21 +147,6 @@ namespace Nibbler.Command
 
             return ValidationResult.Success;
         }
-
-#pragma warning disable CS0612 // Type or member is obsolete
-        private void WarnDeprecated()
-        {
-            if (Username.HasValue())
-            {
-                _logger.LogWarning($"--{Username.LongName} is deprecated and will be removed in a future version");
-            }
-
-            if (Password.HasValue())
-            {
-                _logger.LogWarning($"--{Password.LongName} is obsolete and will be removed in a future version");
-            }
-        }
-#pragma warning restore CS0612 // Type or member is obsolete
 
         public async Task<int> ExecuteAsync(CancellationToken cancellationToken)
         {
@@ -216,7 +168,7 @@ namespace Nibbler.Command
                     AddLayerToConfigAndManifest(layer, manifest, image);
                 }
 
-                var pusher = new Pusher(GetFromImage(), GetToImage(), destRegistry, layersAdded, CreateLogger("PUSHR"))
+                var pusher = new Pusher(FromImage.Value(), ToImage.Value(), destRegistry, layersAdded, CreateLogger("PUSHR"))
                 {
                     FakePullAndRetryMount = true,
                 };
@@ -231,7 +183,7 @@ namespace Nibbler.Command
                         await pusher.PushConfig(manifest.config, () => GetJsonStream(image));
                     }
 
-                    await pusher.CopyLayers(baseRegistry, ImageHelper.GetImageName(GetFromImage()), missingLayers);
+                    await pusher.CopyLayers(baseRegistry, ImageHelper.GetImageName(FromImage.Value()), missingLayers);
                     await pusher.PushLayers(f => File.OpenRead(Path.Combine(_tempFolderPath, f)));
                     await pusher.PushManifest(() => GetJsonStream(manifest));
                 }
@@ -275,16 +227,6 @@ namespace Nibbler.Command
             }
         }
 
-        private string GetFromImage()
-        {
-            return FromImage.HasValue() ? FromImage.Value() : FromImageAlias.Value();
-        }
-
-        private string GetToImage()
-        {
-            return ToImage.HasValue() ? ToImage.Value() : ToImageAlias.Value();
-        }
-
         private ILogger CreateLogger(string name)
         {
             return new Logger(name, Verbose.HasValue());
@@ -295,17 +237,17 @@ namespace Nibbler.Command
             var registryLogger = CreateLogger("REGRY");
             var dockerConfigCredentials = new DockerConfigCredentials(DockerConfig.Value());
 
-            var fromUri = ImageHelper.GetRegistryBaseUrl(GetFromImage(), Insecure.HasValue() || FromInsecure.HasValue() || FromInsecureAlias.HasValue());
-            var toUri = ImageHelper.GetRegistryBaseUrl(GetToImage(), Insecure.HasValue() || ToInsecure.HasValue() || ToInsecureAlias.HasValue());
+            var fromUri = ImageHelper.GetRegistryBaseUrl(FromImage.Value(), Insecure.HasValue() || FromInsecure.HasValue());
+            var toUri = ImageHelper.GetRegistryBaseUrl(ToImage.Value(), Insecure.HasValue() || ToInsecure.HasValue());
 
             var fromRegAuthHandler = CreateFromRegistryAuthHandler(registryLogger, dockerConfigCredentials, fromUri == toUri);
-            var fromSkipTlsVerify = FromSkipTlsVerify.HasValue() || FromSkipTlsVerifyAlias.HasValue() || (fromUri == toUri && SkipTlsVerify.HasValue());
+            var fromSkipTlsVerify = FromSkipTlsVerify.HasValue() || (fromUri == toUri && SkipTlsVerify.HasValue());
             var fromRegistry = new Registry(fromUri, registryLogger, fromRegAuthHandler, fromSkipTlsVerify);
 
             registryLogger.LogDebug($"using {fromUri} for pull{(fromSkipTlsVerify ? ", skipTlsVerify" : "")}");
 
             var toRegAuthHandler = CreateToRegistryAuthHandler(registryLogger, dockerConfigCredentials, fromUri == toUri);
-            var toSkipTlsVerify = ToSkipTlsVerify.HasValue() || ToSkipTlsVerifyAlias.HasValue() || (fromUri == toUri && SkipTlsVerify.HasValue());
+            var toSkipTlsVerify = ToSkipTlsVerify.HasValue() || (fromUri == toUri && SkipTlsVerify.HasValue());
             var toRegistry = new Registry(toUri, registryLogger, toRegAuthHandler, toSkipTlsVerify);
 
             registryLogger.LogDebug($"using {toUri} for push{(toSkipTlsVerify ? ", skipTlsVerify" : "")}");
@@ -315,8 +257,8 @@ namespace Nibbler.Command
 
         public async Task<(ManifestV2, ImageV1)> LoadBaseImage(Registry registry)
         {
-            var imageName = ImageHelper.GetImageName(GetFromImage());
-            var imageRef = ImageHelper.GetImageReference(GetFromImage());
+            var imageName = ImageHelper.GetImageName(FromImage.Value());
+            var imageRef = ImageHelper.GetImageReference(FromImage.Value());
 
             _logger.LogDebug($"--from-image {registry.BaseUri}, {imageName}, {imageRef}");
 
@@ -329,7 +271,7 @@ namespace Nibbler.Command
         private AuthenticationHandler CreateToRegistryAuthHandler(ILogger registryLogger, DockerConfigCredentials dockerConfigCredentials, bool sameAsFrom)
         {
             var toRegAuthHandler = new AuthenticationHandler(
-                ImageHelper.GetRegistryName(GetToImage()),
+                ImageHelper.GetRegistryName(ToImage.Value()),
                 dockerConfigCredentials,
                 registryLogger);
 
@@ -337,12 +279,6 @@ namespace Nibbler.Command
             {
                 toRegAuthHandler.SetCredentials(ToUsername.Value(), ToPassword.Value());
             }
-#pragma warning disable CS0612 // Type or member is obsolete
-            else if (sameAsFrom && Username.HasValue() && Password.HasValue())
-            {
-                toRegAuthHandler.SetCredentials(Username.Value(), Password.Value());
-            }
-#pragma warning restore CS0612 // Type or member is obsolete
 
             return toRegAuthHandler;
         }
@@ -350,7 +286,7 @@ namespace Nibbler.Command
         private AuthenticationHandler CreateFromRegistryAuthHandler(ILogger registryLogger, DockerConfigCredentials dockerConfigCredentials, bool sameAsTo)
         {
             var fromRegAuthHandler = new AuthenticationHandler(
-                ImageHelper.GetRegistryName(GetFromImage()),
+                ImageHelper.GetRegistryName(FromImage.Value()),
                 dockerConfigCredentials,
                 registryLogger);
 
@@ -358,12 +294,6 @@ namespace Nibbler.Command
             {
                 fromRegAuthHandler.SetCredentials(FromUsername.Value(), FromPassword.Value());
             }
-#pragma warning disable CS0612 // Type or member is obsolete
-            else if (sameAsTo && Username.HasValue() && Password.HasValue())
-            {
-                fromRegAuthHandler.SetCredentials(Username.Value(), Password.Value());
-            }
-#pragma warning restore CS0612 // Type or member is obsolete
 
             return fromRegAuthHandler;
         }

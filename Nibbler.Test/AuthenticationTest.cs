@@ -83,7 +83,6 @@ namespace Nibbler.Test
 
         [TestMethod]
         [DataRow("--from-image|docker.io|--to-image|docker.io", false, false)]
-        [DataRow("--from-image|docker.io|--to-image|docker.io|--username|a|--password|b", true, true)]
         [DataRow("--from-image|docker.io|--to-image|docker.io|--from-username|a|--from-password|b", true, false)]
         [DataRow("--from-image|docker.io|--to-image|docker.io|--to-username|a|--to-password|b", false, true)]
         public async Task Selects_Correct_Credentials(string args, bool fromCreds, bool toCreds)
