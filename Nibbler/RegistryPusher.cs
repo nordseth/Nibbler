@@ -8,7 +8,7 @@ using Nibbler.Utils;
 
 namespace Nibbler
 {
-    public class RegistryPusher
+    public class RegistryPusher : IImageDestination
     {
         private readonly string _destination;
         private readonly string _targetImageName;

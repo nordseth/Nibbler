@@ -223,6 +223,16 @@ namespace Nibbler.Test
             "-v" })]
         public async Task BuilderCommand_Copy_Image(string[] args) => await Run(args);
 
+        [TestMethod]
+        [DataRow(new string[] {
+            "--from-image", "localhost:5000/dotnet/aspnet:5.0",
+            "--from-insecure",
+            "--to-file", "../../../../tests/TestData/test-image",
+            "--add", @"../../../../tests/TestData/publish/:/app",
+            "-v" })]
+        public async Task BuilderCommand_Add_Write_To_File(string[] args) => await Run(args);
+
+
         public static async Task Run(string[] args)
         {
             int result = await Program.Main(args);

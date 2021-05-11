@@ -243,7 +243,6 @@ namespace Nibbler.Command
         {
             if (FromImage.HasValue())
             {
-                var registryLogger = CreateLogger("FROM-REG");
                 return RegistryImageSource.Create(
                     FromImage.Value(),
                     FromUsername.Value(),
@@ -251,15 +250,15 @@ namespace Nibbler.Command
                     Insecure.HasValue() || FromInsecure.HasValue(),
                     FromSkipTlsVerify.HasValue() || SkipTlsVerify.HasValue(),
                     DockerConfig.Value(),
-                    registryLogger);
+                    CreateLogger("FROM-REG"));
             }
             else
             {
-                throw new NotImplementedException("Only from image is supported");
+                return new FileImageSource(FromFile.Value(), CreateLogger("FILE"));
             }
         }
 
-        internal RegistryPusher CreateImageDest(IEnumerable<BuilderLayer> addedLayers)
+        internal IImageDestination CreateImageDest(IEnumerable<BuilderLayer> addedLayers)
         {
             if (ToImage.HasValue())
             {
@@ -287,7 +286,7 @@ namespace Nibbler.Command
             }
             else
             {
-                throw new NotImplementedException("Only to image is supported");
+                return new FileImageDestination(ToFile.Value(), addedLayers, CreateLogger("FILE"));
             }
         }
 
