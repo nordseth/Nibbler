@@ -13,18 +13,6 @@ namespace Nibbler
 {
     public class Image
     {
-        private Registry _registry;
-
-        public Image(Registry registry, string name, string @ref)
-        {
-            _registry = registry;
-            Name = name;
-            Ref = @ref;
-        }
-
-        public string Name { get; }
-        public string Ref { get; }
-        
         public byte[] ManifestBytes { get; private set; }
         public string ManifestDigest { get; private set; }
         public ManifestV2 Manifest { get; private set; }
@@ -37,20 +25,22 @@ namespace Nibbler
 
         public bool ManifestUpdated { get; set; }
 
-        public async Task LoadMetadata()
+        public static async Task<Image> LoadMetadata(IContents manifestContent, Func<string, Task<IContents>> getConfig)
         {
-            var manifestContent = await _registry.GetManifest(Name, Ref);
-            ManifestBytes = await manifestContent.ReadAsByteArrayAsync();
-            ManifestDigest = FileHelper.Digest(ManifestBytes);
-            var manifestJson = await manifestContent.ReadAsStringAsync();
-            Manifest = JsonConvert.DeserializeObject<ManifestV2>(manifestJson);
+            var image = new Image();
 
-            var imageConfigContent = await _registry.GetImageConfig(Name, Manifest.config.digest);
-            ConfigBytes = await imageConfigContent.ReadAsByteArrayAsync();
-            var configJson = await imageConfigContent.ReadAsStringAsync();
-            Config = JsonConvert.DeserializeObject<ImageV1>(configJson);
+            image.ManifestBytes = await manifestContent.ReadBytesAsync();
+            image.ManifestDigest = FileHelper.Digest(image.ManifestBytes);
+            var manifestJson = await manifestContent.ReadStringAsync();
+            image.Manifest = JsonConvert.DeserializeObject<ManifestV2>(manifestJson);
 
-            ManifestUpdated = false;
+            var imageConfigContent = await getConfig(image.Manifest.config.digest);
+            image.ConfigBytes = await imageConfigContent.ReadBytesAsync();
+            var configJson = await imageConfigContent.ReadStringAsync();
+            image.Config = JsonConvert.DeserializeObject<ImageV1>(configJson);
+
+            image.ManifestUpdated = false;
+            return image;
         }
 
         public void ConfigUpdated()

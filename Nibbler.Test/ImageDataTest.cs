@@ -10,11 +10,11 @@ using System.Threading.Tasks;
 namespace Nibbler.Test
 {
     [TestClass]
-    public class ImageTest
+    public class ImageDataTest
     {
         private readonly Utils.Logger _registryLogger;
 
-        public ImageTest()
+        public ImageDataTest()
         {
             _registryLogger = new Utils.Logger("REGISTRY", true);
         }
@@ -24,12 +24,9 @@ namespace Nibbler.Test
         public async Task Image_LoadMetadata(string registryUrl, string imageName, string imageRef)
         {
             var registry = new Registry(new Uri(registryUrl), _registryLogger, null);
+            var imageSource = new RegistryImageSource(imageName, imageRef, registry, _registryLogger);
 
-            var image = new Image(registry, imageName, imageRef);
-            Assert.AreEqual(imageName, image.Name);
-            Assert.AreEqual(imageRef, image.Ref);
-
-            await image.LoadMetadata();
+            var image = await imageSource.LoadImageMetadata();
 
             Assert.IsNotNull(image.ManifestBytes);
             Assert.IsNotNull(image.ManifestDigest);
@@ -48,9 +45,9 @@ namespace Nibbler.Test
         public async Task Image_UpdateImage(string registryUrl, string imageName, string imageRef)
         {
             var registry = new Registry(new Uri(registryUrl), _registryLogger, null);
+            var imageSource = new RegistryImageSource(imageName, imageRef, registry, _registryLogger);
 
-            var image = new Image(registry, imageName, imageRef);
-            await image.LoadMetadata();
+            var image = await imageSource.LoadImageMetadata();
 
             var originalConfigBytes = image.ConfigBytes;
             var originalManifestBytes = image.ManifestBytes;
@@ -77,9 +74,9 @@ namespace Nibbler.Test
             int size = 2;
 
             var registry = new Registry(new Uri(registryUrl), _registryLogger, null);
+            var imageSource = new RegistryImageSource(imageName, imageRef, registry, _registryLogger);
 
-            var image = new Image(registry, imageName, imageRef);
-            await image.LoadMetadata();
+            var image = await imageSource.LoadImageMetadata();
             int originalHistoryCount = image.Config.history.Count();
 
             var layer = new BuilderLayer { Description = desc, DiffId = diffId, Digest = digest, Name = "test", Size = size };

@@ -23,9 +23,10 @@ namespace Nibbler.Test
         [DataRow("https://mcr.microsoft.com", "dotnet/aspnet", "5.0")]
         public async Task Digest_Compare(string registryUrl, string imageName, string imageTag)
         {
-            var source = new Registry(new Uri(registryUrl), _registryLogger, null);
-            var image = new Image(source, imageName, imageTag);
-            await image.LoadMetadata();
+            var registry = new Registry(new Uri(registryUrl), _registryLogger, null);
+            var imageSource = new RegistryImageSource(imageName, imageTag, registry, _registryLogger);
+
+            var image = await imageSource.LoadImageMetadata();
             var calcedImageDigest = FileHelper.Digest(image.ConfigBytes);
 
             Assert.AreEqual(image.Manifest.config.digest.ToLowerInvariant(), calcedImageDigest.ToLowerInvariant());
@@ -35,18 +36,19 @@ namespace Nibbler.Test
         [DataRow("https://mcr.microsoft.com", "dotnet/aspnet", "5.0", "http://localhost:5000")]
         public async Task Registry_Upload(string sourceRegistryUrl, string imageName, string imageTag, string destRegistryUrl)
         {
-            var source = new Registry(new Uri(sourceRegistryUrl), _registryLogger, null);
-            var image = new Image(source, imageName, imageTag);
-            await image.LoadMetadata();
+            var registry = new Registry(new Uri(sourceRegistryUrl), _registryLogger, null);
+            var imageSource = new RegistryImageSource(imageName, imageTag, registry, _registryLogger);
+
+            var image = await imageSource.LoadImageMetadata();
 
             var dest = new Registry(new Uri(destRegistryUrl), _registryLogger, null);
             var uploadUri = await dest.StartUpload(imageName);
             Console.WriteLine($"uploadUri: {uploadUri}");
 
-            await CopyBlobIfNeeded(imageName, source, dest, uploadUri, image.Manifest.config);
+            await CopyBlobIfNeeded(imageName, registry, dest, uploadUri, image.Manifest.config);
             foreach (var l in image.Manifest.layers)
             {
-                await CopyBlobIfNeeded(imageName, source, dest, uploadUri, l);
+                await CopyBlobIfNeeded(imageName, registry, dest, uploadUri, l);
             }
 
             await dest.UploadManifest(imageName, imageTag, image.Manifest);
