@@ -48,17 +48,17 @@ namespace Nibbler.Test
 
         [TestMethod]
         [DataRow(new string[] {
-            "--base-image", "localhost:5000/dotnet/core/aspnet:3.1",
+            "--base-image", "localhost:5000/dotnet/aspnet:5.0",
             "--destination", "localhost:5000/test/nibbler-test:unittest",
             "--insecure",
             "-v"})]
         [DataRow(new string[] {
-            "--base-image", "localhost:5000/dotnet/core/aspnet:3.1",
+            "--base-image", "localhost:5000/dotnet/aspnet:5.0",
             "--destination", "localhost:5000/test/nibbler-test:unittest",
             "--insecure",
             "--debug"})]
         [DataRow(new string[] {
-            "--from-image", "localhost:5000/dotnet/core/aspnet:3.1",
+            "--from-image", "localhost:5000/dotnet/aspnet:5.0",
             "--to-image", "localhost:5000/test/nibbler-test:unittest",
             "--insecure",
             "-v"})]
@@ -66,7 +66,7 @@ namespace Nibbler.Test
 
         [TestMethod]
         [DataRow(new string[] {
-            "--base-image", "localhost:5000/dotnet/core/aspnet:3.1",
+            "--base-image", "localhost:5000/dotnet/aspnet:5.0",
             "--destination", "localhost:5000/test/nibbler-test:unittest",
             "--add", @"../../../../tests/TestData/publish/:/app",
             "--insecure",
@@ -75,7 +75,7 @@ namespace Nibbler.Test
 
         [TestMethod]
         [DataRow(new string[] {
-            "--base-image", "localhost:5000/dotnet/core/aspnet:3.1",
+            "--base-image", "localhost:5000/dotnet/aspnet:5.0",
             "--destination", "localhost:5000/test/nibbler-test:unittest",
             "--add", @"../../../../tests/TestData/publish/:/app:1001",
             "--insecure",
@@ -84,7 +84,7 @@ namespace Nibbler.Test
 
         [TestMethod]
         [DataRow(new string[] {
-            "--base-image", "localhost:5000/dotnet/core/aspnet:3.1",
+            "--base-image", "localhost:5000/dotnet/aspnet:5.0",
             "--destination", "localhost:5000/test/nibbler-test:unittest",
             "--add", @"../../../../tests/TestData/publish/:/app:1001:1001",
             "--insecure",
@@ -93,7 +93,7 @@ namespace Nibbler.Test
 
         [TestMethod]
         [DataRow(new string[] {
-            "--base-image", "localhost:5000/dotnet/core/aspnet:3.1",
+            "--base-image", "localhost:5000/dotnet/aspnet:5.0",
             "--destination", "localhost:5000/test/nibbler-test:unittest",
             "--add", @"../../../../tests/TestData/publish/:/app:1001:0:777",
             "--insecure",
@@ -102,7 +102,7 @@ namespace Nibbler.Test
 
         [TestMethod]
         [DataRow(new string[] {
-            "--base-image", "localhost:5000/dotnet/core/aspnet:3.1",
+            "--base-image", "localhost:5000/dotnet/aspnet:5.0",
             "--destination", "localhost:5000/test/nibbler-test:unittest",
             "--add", @"../../../../tests/TestData/publish/:/app:::777",
             "--insecure",
@@ -111,7 +111,7 @@ namespace Nibbler.Test
 
         [TestMethod]
         [DataRow(new string[] {
-            "--base-image", "localhost:5000/dotnet/core/aspnet:3.1",
+            "--base-image", "localhost:5000/dotnet/aspnet:5.0",
             "--destination", "localhost:5000/test/nibbler-test:unittest",
             "--add", @"../../../../tests/TestData/publish/:/app",
             "--add", @"../../../../tests/TestData/publish/:/app",
@@ -122,7 +122,7 @@ namespace Nibbler.Test
 
         [TestMethod]
         [DataRow(new string[] {
-            "--base-image", "localhost:5000/dotnet/core/aspnet:3.1",
+            "--base-image", "localhost:5000/dotnet/aspnet:5.0",
             "--destination", "localhost:5000/test/nibbler-test:unittest",
             "--add", @"../../../../tests/TestData/publish/:/app",
             "--addFolder", @"/app:1001:0:777",
@@ -132,7 +132,7 @@ namespace Nibbler.Test
 
         [TestMethod]
         [DataRow(new string[] {
-            "--base-image", "localhost:5000/dotnet/core/aspnet:3.1",
+            "--base-image", "localhost:5000/dotnet/aspnet:5.0",
             "--destination", "localhost:5000/test/nibbler-test:unittest",
             "--workdir", "/root",
             "--insecure",
@@ -141,7 +141,7 @@ namespace Nibbler.Test
 
         [TestMethod]
         [DataRow(new string[] {
-            "--base-image", "localhost:5000/dotnet/core/aspnet:3.1",
+            "--base-image", "localhost:5000/dotnet/aspnet:5.0",
             "--destination", "localhost:5000/test/nibbler-test:unittest",
             "--label", "test1=test2",
             "--label", "test4=test4",
@@ -151,7 +151,7 @@ namespace Nibbler.Test
 
         [TestMethod]
         [DataRow(new string[] {
-            "--base-image", "localhost:5000/dotnet/core/aspnet:3.1",
+            "--base-image", "localhost:5000/dotnet/aspnet:5.0",
             "--destination", "localhost:5000/test/nibbler-test:unittest",
             "--user", "1000",
             "--insecure",
@@ -160,7 +160,7 @@ namespace Nibbler.Test
 
         [TestMethod]
         [DataRow(new string[] {
-            "--base-image", "localhost:5000/dotnet/core/aspnet:3.1",
+            "--base-image", "localhost:5000/dotnet/aspnet:5.0",
             "--destination", "localhost:5000/test/nibbler-test:unittest",
             "--env", "ENV_VAR_1=test2",
             "--env", "ENV_VAR_2=test4",
@@ -170,7 +170,7 @@ namespace Nibbler.Test
 
         [TestMethod]
         [DataRow(new string[] {
-            "--base-image", "localhost:5000/dotnet/core/aspnet:3.1",
+            "--base-image", "localhost:5000/dotnet/aspnet:5.0",
             "--destination", "localhost:5000/test/nibbler-test:unittest",
             "--cmd", "dotnet TestData.dll",
             "--entrypoint", "dotnet TestData.dll",
@@ -180,7 +180,7 @@ namespace Nibbler.Test
 
         [TestMethod]
         [DataRow(new string[] {
-            "--base-image", "localhost:5000/dotnet/core/aspnet:3.1",
+            "--base-image", "localhost:5000/dotnet/aspnet:5.0",
             "--destination", "localhost:5000/test/nibbler-test:unittest",
             "--git-labels=../../../../",
             "--insecure",
@@ -189,7 +189,7 @@ namespace Nibbler.Test
 
         [TestMethod]
         [DataRow(new string[] {
-            "--base-image", "localhost:5000/dotnet/core/aspnet:3.1",
+            "--base-image", "localhost:5000/dotnet/aspnet:5.0",
             "--destination", "localhost:5000/test/nibbler-test:unittest",
             "--digest-file",
             "--insecure",

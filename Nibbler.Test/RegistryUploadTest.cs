@@ -20,7 +20,7 @@ namespace Nibbler.Test
         }
 
         [TestMethod]
-        [DataRow("https://mcr.microsoft.com", "dotnet/core/aspnet", "3.1")]
+        [DataRow("https://mcr.microsoft.com", "dotnet/aspnet", "5.0")]
         public async Task Digest_Compare(string registryUrl, string imageName, string imageTag)
         {
             var source = new Registry(new Uri(registryUrl), _registryLogger, null);
@@ -31,7 +31,7 @@ namespace Nibbler.Test
         }
 
         [TestMethod]
-        [DataRow("https://mcr.microsoft.com", "dotnet/core/aspnet", "3.1", "http://localhost:5000")]
+        [DataRow("https://mcr.microsoft.com", "dotnet/aspnet", "5.0", "http://localhost:5000")]
         public async Task Registry_Upload(string sourceRegistryUrl, string imageName, string imageTag, string destRegistryUrl)
         {
             var source = new Registry(new Uri(sourceRegistryUrl), _registryLogger, null);

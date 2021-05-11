@@ -21,9 +21,5 @@ to verify goto http://localhost:8080
 docker stop registry
 rm -r ./TestData
 docker image rm registry:2
-docker image rm mcr.microsoft.com/dotnet/core/aspnet:3.1
-docker image rm localhost:5000/dotnet/core/aspnet:3.1
-docker image rm hello-world:latest
-docker image rm localhost:5000/hello-world:latest
-docker image rm localhost:5000/test/nibbler-test:latest
+docker image rm mcr.microsoft.com/dotnet/aspnet:5.0
 ```

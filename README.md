@@ -80,7 +80,7 @@ Options:
 ```
 dotnet publish -o $PWD/artifacts
 nibbler \
-	--from-image mcr.microsoft.com/dotnet/core/aspnet:3.1 \
+	--from-image mcr.microsoft.com/dotnet/aspnet:5.0 \
 	--to-image my-registy.com/repo/image:latest  \
 	--add "artifacts:/app" \
 	--workdir /app \

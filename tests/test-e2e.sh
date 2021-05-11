@@ -7,17 +7,17 @@ set -e
 # uses git to clone https://github.com/nordseth/aspnetcore-new as source
 ###################################
 
-dotnetVersion=3.1
+dotnetVersion=5.0
 dotnetRuntimeTag=$dotnetVersion
 dotnetSdkTag=$dotnetVersion
 targetImage=nibbler-test
 
 echo "-------- Prepair images --------"
-docker pull mcr.microsoft.com/dotnet/core/sdk:$dotnetSdkTag
-docker pull mcr.microsoft.com/dotnet/core/aspnet:$dotnetRuntimeTag
-docker tag mcr.microsoft.com/dotnet/core/aspnet:$dotnetRuntimeTag localhost:5000/dotnet/core/aspnet:$dotnetRuntimeTag
-docker push localhost:5000/dotnet/core/aspnet:$dotnetRuntimeTag
-docker image rm localhost:5000/dotnet/core/aspnet:$dotnetRuntimeTag
+docker pull mcr.microsoft.com/dotnet/sdk:$dotnetSdkTag
+docker pull mcr.microsoft.com/dotnet/aspnet:$dotnetRuntimeTag
+docker tag mcr.microsoft.com/dotnet/aspnet:$dotnetRuntimeTag localhost:5000/dotnet/aspnet:$dotnetRuntimeTag
+docker push localhost:5000/dotnet/aspnet:$dotnetRuntimeTag
+docker image rm localhost:5000/dotnet/aspnet:$dotnetRuntimeTag
 
 echo "-------- Create Nibbler nuget --------"
 dotnet pack ../Nibbler -o ./nuget
@@ -25,7 +25,7 @@ NIBBLER_VERSION=$(minver -t v -v e)
 
 echo "-------- Run build in docker image --------"
 
-cat << EOF | docker run -i --rm -v /$PWD/nuget:/nuget mcr.microsoft.com/dotnet/core/sdk:$dotnetSdkTag bash
+cat << EOF | docker run -i --rm -v /$PWD/nuget:/nuget mcr.microsoft.com/dotnet/sdk:$dotnetSdkTag bash
 set -e
 export PATH="\$PATH:/root/.dotnet/tools"
 
@@ -44,7 +44,7 @@ dotnet tool install -g Nibbler --version ${NIBBLER_VERSION} --add-source /nuget
 
 echo "-------- Build image with Nibbler --------"
 nibbler \
-	--from-image host.docker.internal:5000/dotnet/core/aspnet:$dotnetRuntimeTag \
+	--from-image host.docker.internal:5000/dotnet/aspnet:$dotnetRuntimeTag \
 	--to-image host.docker.internal:5000/$targetImage:$dotnetVersion \
 	--add "publish:/app" \
 	--addFolder "/app:1001:1001:777" \

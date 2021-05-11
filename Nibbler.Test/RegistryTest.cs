@@ -18,7 +18,7 @@ namespace Nibbler.Test
         }
 
         [TestMethod]
-        [DataRow("https://mcr.microsoft.com", "dotnet/core/aspnet", "3.1")]
+        [DataRow("https://mcr.microsoft.com", "dotnet/aspnet", "5.0")]
         [DataRow("http://localhost:5000", "hello-world", "latest")]
         public async Task Registry_Get_ManifestFile(string registryUrl, string imageName, string imageRef)
         {
@@ -29,7 +29,7 @@ namespace Nibbler.Test
         }
 
         [TestMethod]
-        [DataRow("https://mcr.microsoft.com", "dotnet/core/aspnet", "3.1")]
+        [DataRow("https://mcr.microsoft.com", "dotnet/aspnet", "5.0")]
         [DataRow("http://localhost:5000", "hello-world", "latest")]
         public async Task Registry_Get_Manifest(string registryUrl, string imageName, string imageRef)
         {
@@ -82,7 +82,6 @@ namespace Nibbler.Test
 
         [TestMethod]
         [DataRow("https://mcr.microsoft.com", "dotnet/core/aspnet", "sha256:930743cb4e197dc01a680b604464724ad1344a07b395e9871482ef05dbd25950")]
-        //[DataRow("http://localhost:5000", "hello-world", "sha256:fce289e99eb9bca977dae136fbe2a82b6b7d4c372474c9235adc1741675f587e")]
         public async Task Registry_Get_ImageFile(string registryUrl, string imageName, string digest)
         {
             var registry = new Registry(new Uri(registryUrl), _registryLogger, null);
@@ -93,7 +92,6 @@ namespace Nibbler.Test
 
         [TestMethod]
         [DataRow("https://mcr.microsoft.com", "dotnet/core/aspnet", "sha256:930743cb4e197dc01a680b604464724ad1344a07b395e9871482ef05dbd25950")]
-        //[DataRow("http://localhost:5000", "hello-world", "sha256:fce289e99eb9bca977dae136fbe2a82b6b7d4c372474c9235adc1741675f587e")]
         public async Task Registry_Get_Image(string registryName, string imageName, string digest)
         {
             var registry = new Registry(new Uri(registryName), _registryLogger, null);
