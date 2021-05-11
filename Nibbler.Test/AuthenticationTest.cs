@@ -95,11 +95,17 @@ namespace Nibbler.Test
             var splitArgs = args.Split('|');
             var result = await app.ExecuteAsync(splitArgs);
 
-            var (from, to) = cmd.CreateRegistries();
-            var fromAuthHandler = from.Handler as AuthenticationHandler;
+            var regImageSrc = cmd.CreateImageSource() as RegistryImageSource;
+            Assert.IsNotNull(regImageSrc);
+
+            var fromAuthHandler = regImageSrc.Registry.Handler as AuthenticationHandler;
             Assert.IsNotNull(fromAuthHandler);
             Assert.AreEqual(fromCreds, fromAuthHandler.HasCredentials());
-            var toAuthHandler = to.Handler as AuthenticationHandler;
+
+            var regImageDest = cmd.CreateImageDest(null) as RegistryPusher;
+            Assert.IsNotNull(regImageDest);
+
+            var toAuthHandler = regImageDest.Registry.Handler as AuthenticationHandler;
             Assert.IsNotNull(toAuthHandler);
             Assert.AreEqual(toCreds, toAuthHandler.HasCredentials());
         }

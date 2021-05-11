@@ -36,6 +36,9 @@ namespace Nibbler.Command
         public CommandOption ToUsername { get; private set; }
         public CommandOption ToPassword { get; private set; }
 
+        public CommandOption FromFile { get; private set; }
+        public CommandOption ToFile { get; private set; }
+
         public CommandOption Add { get; private set; }
         public CommandOption AddFolder { get; private set; }
 
@@ -74,6 +77,10 @@ namespace Nibbler.Command
             ToUsername = app.Option("--to-username", "To registry username", CommandOptionType.SingleValue);
             ToPassword = app.Option("--to-password", "To registry password", CommandOptionType.SingleValue);
 
+            // alternative to --from-image and --to-image
+            FromFile = app.Option("--from-file", "Read from image from file (alternative to --from-image)", CommandOptionType.SingleValue);
+            ToFile = app.Option("--to-file", "Write image to file (alternative to --to-image)", CommandOptionType.SingleValue);
+
             // "commands"
             Add = app.Option("--add", "Add contents of a folder to the image 'sourceFolder:destFolder[:ownerId:groupId:permissions]'", CommandOptionType.MultipleValue);
             AddFolder = app.Option("--addFolder", "Add a folder to the image 'destFolder[:ownerId:groupId:permissions]'", CommandOptionType.MultipleValue);
@@ -103,17 +110,17 @@ namespace Nibbler.Command
         {
             var validationErrors = new List<(string, IEnumerable<string>)>();
 
-            if (!FromImage.HasValue())
+            if (!FromImage.HasValue() && !FromFile.HasValue())
             {
-                validationErrors.Add(($"--{FromImage.LongName} is required.", new[] { FromImage.LongName }));
+                validationErrors.Add(($"--{FromImage.LongName} or --{FromFile.LongName} is required.", new[] { FromImage.LongName, FromFile.LongName }));
             }
 
-            if (!ToImage.HasValue())
+            if (!ToImage.HasValue() && !ToFile.HasValue())
             {
-                validationErrors.Add(($"--{ToImage.LongName} is required.", new[] { ToImage.LongName }));
+                validationErrors.Add(($"--{ToImage.LongName} or --{ToFile.LongName}  is required.", new[] { ToImage.LongName, ToFile.LongName }));
             }
 
-            if (!validationErrors.Any() && 
+            if (!validationErrors.Any() &&
                 (Insecure.HasValue() || SkipTlsVerify.HasValue()))
             {
 
@@ -134,7 +141,7 @@ namespace Nibbler.Command
                         fields.Add(SkipTlsVerify.LongName);
                     }
 
-                    validationErrors.Add(($"{string.Join(", ", fields)} can only be set if baseImage registry is the same as destination", fields));
+                    validationErrors.Add(($"{string.Join(", ", fields)} can only be set if from image registry is the same as destination (to)", fields));
                 }
             }
 
@@ -144,6 +151,8 @@ namespace Nibbler.Command
                     string.Join(", ", validationErrors.Select(e => e.Item1)),
                     validationErrors.SelectMany(e => e.Item2));
             }
+
+            // todo: if --from-file or --to-file is set, print warning if other From* or To* args are used, as they are ignored
 
             return ValidationResult.Success;
         }
@@ -155,10 +164,10 @@ namespace Nibbler.Command
 
             try
             {
-                var (baseRegistry, destRegistry) = CreateRegistries();
-                var image = await LoadBaseImage(baseRegistry);
+                var imageSource = CreateImageSource();
+                var image = await imageSource.LoadImage();
                 var imageUpdated = UpdateImageConfig(image.Config);
-                
+
                 if (imageUpdated)
                 {
                     image.ConfigUpdated();
@@ -175,13 +184,10 @@ namespace Nibbler.Command
                     _logger.LogDebug("No changes to image, will copy image.");
                 }
 
-                var pusher = new Pusher(FromImage.Value(), ToImage.Value(), destRegistry, image.LayersAdded, CreateLogger("PUSHR"))
-                {
-                    FakePullAndRetryMount = true,
-                };
+                var pusher = CreateImageDest(image.LayersAdded);
 
                 bool configExists = await pusher.CheckConfigExists(image.Manifest);
-                var missingLayers = await pusher.FindMissingLayers(image.Manifest, !DryRun.HasValue() && destRegistry == baseRegistry);
+                var missingLayers = await pusher.FindMissingLayers(image.Manifest);
 
                 if (!DryRun.HasValue())
                 {
@@ -190,7 +196,7 @@ namespace Nibbler.Command
                         await pusher.PushConfig(image.Manifest.config, () => new MemoryStream(image.ConfigBytes));
                     }
 
-                    await pusher.CopyLayers(baseRegistry, ImageHelper.GetImageName(FromImage.Value()), missingLayers);
+                    await pusher.CopyLayers(imageSource, missingLayers);
                     await pusher.PushLayers(f => File.OpenRead(Path.Combine(_tempFolderPath, f)));
                     await pusher.PushManifest(() => new MemoryStream(image.ManifestBytes));
                 }
@@ -233,72 +239,56 @@ namespace Nibbler.Command
             return new Logger(name, Verbose.HasValue());
         }
 
-        internal (Registry from, Registry to) CreateRegistries()
+        internal IImageSource CreateImageSource()
         {
-            var registryLogger = CreateLogger("REGRY");
-            var dockerConfigCredentials = new DockerConfigCredentials(DockerConfig.Value());
-
-            var fromUri = ImageHelper.GetRegistryBaseUrl(FromImage.Value(), Insecure.HasValue() || FromInsecure.HasValue());
-            var toUri = ImageHelper.GetRegistryBaseUrl(ToImage.Value(), Insecure.HasValue() || ToInsecure.HasValue());
-
-            var fromRegAuthHandler = CreateFromRegistryAuthHandler(registryLogger, dockerConfigCredentials, fromUri == toUri);
-            var fromSkipTlsVerify = FromSkipTlsVerify.HasValue() || (fromUri == toUri && SkipTlsVerify.HasValue());
-            var fromRegistry = new Registry(fromUri, registryLogger, fromRegAuthHandler, fromSkipTlsVerify);
-
-            registryLogger.LogDebug($"using {fromUri} for pull{(fromSkipTlsVerify ? ", skipTlsVerify" : "")}");
-
-            var toRegAuthHandler = CreateToRegistryAuthHandler(registryLogger, dockerConfigCredentials, fromUri == toUri);
-            var toSkipTlsVerify = ToSkipTlsVerify.HasValue() || (fromUri == toUri && SkipTlsVerify.HasValue());
-            var toRegistry = new Registry(toUri, registryLogger, toRegAuthHandler, toSkipTlsVerify);
-
-            registryLogger.LogDebug($"using {toUri} for push{(toSkipTlsVerify ? ", skipTlsVerify" : "")}");
-
-            return (fromRegistry, toRegistry);
-        }
-
-        public async Task<Image> LoadBaseImage(Registry registry)
-        {
-            var imageName = ImageHelper.GetImageName(FromImage.Value());
-            var imageRef = ImageHelper.GetImageReference(FromImage.Value());
-
-            _logger.LogDebug($"--from-image {registry.BaseUri}, {imageName}, {imageRef}");
-
-            var image = new Image(registry, imageName, imageRef);
-            await image.LoadMetadata();
-
-            _logger.LogDebug($"Loaded image mata data for image digest: {image.ManifestDigest}");
-
-            return image;
-        }
-
-        private AuthenticationHandler CreateToRegistryAuthHandler(ILogger registryLogger, DockerConfigCredentials dockerConfigCredentials, bool sameAsFrom)
-        {
-            var toRegAuthHandler = new AuthenticationHandler(
-                ImageHelper.GetRegistryName(ToImage.Value()),
-                dockerConfigCredentials,
-                registryLogger);
-
-            if (ToUsername.HasValue() && ToPassword.HasValue())
+            if (FromImage.HasValue())
             {
-                toRegAuthHandler.SetCredentials(ToUsername.Value(), ToPassword.Value());
+                var registryLogger = CreateLogger("FROM-REG");
+                return RegistryImageSource.Create(
+                    FromImage.Value(),
+                    FromUsername.Value(),
+                    FromPassword.Value(),
+                    Insecure.HasValue() || FromInsecure.HasValue(),
+                    FromSkipTlsVerify.HasValue() || SkipTlsVerify.HasValue(),
+                    DockerConfig.Value(),
+                    registryLogger);
             }
-
-            return toRegAuthHandler;
+            else
+            {
+                throw new NotImplementedException("Only from image is supported");
+            }
         }
 
-        private AuthenticationHandler CreateFromRegistryAuthHandler(ILogger registryLogger, DockerConfigCredentials dockerConfigCredentials, bool sameAsTo)
+        internal RegistryPusher CreateImageDest(IEnumerable<BuilderLayer> addedLayers)
         {
-            var fromRegAuthHandler = new AuthenticationHandler(
-                ImageHelper.GetRegistryName(FromImage.Value()),
-                dockerConfigCredentials,
-                registryLogger);
-
-            if (FromUsername.HasValue() && FromPassword.HasValue())
+            if (ToImage.HasValue())
             {
-                fromRegAuthHandler.SetCredentials(FromUsername.Value(), FromPassword.Value());
-            }
+                var logger = CreateLogger("TO-REG");
 
-            return fromRegAuthHandler;
+                var toUri = ImageHelper.GetRegistryBaseUrl(ToImage.Value(), Insecure.HasValue() || ToInsecure.HasValue());
+
+                var dockerConfigCredentials = new DockerConfigCredentials(DockerConfig.Value());
+                var toRegAuthHandler = new AuthenticationHandler(
+                    ImageHelper.GetRegistryName(ToImage.Value()),
+                    dockerConfigCredentials,
+                    logger);
+
+                if (ToUsername.HasValue() && ToPassword.HasValue())
+                {
+                    toRegAuthHandler.SetCredentials(ToUsername.Value(), ToPassword.Value());
+                }
+
+                var toSkipTlsVerify = ToSkipTlsVerify.HasValue() || SkipTlsVerify.HasValue();
+                var toRegistry = new Registry(toUri, logger, toRegAuthHandler, toSkipTlsVerify);
+
+                logger.LogDebug($"using {toUri} for push{(toSkipTlsVerify ? ", skipTlsVerify" : "")}");
+
+                return new RegistryPusher(ToImage.Value(), toRegistry, addedLayers, logger);
+            }
+            else
+            {
+                throw new NotImplementedException("Only to image is supported");
+            }
         }
 
         private bool UpdateImageConfig(ImageV1 image)

@@ -11,7 +11,7 @@ using Nibbler.Utils;
 
 namespace Nibbler
 {
-    public class Registry
+    public class Registry 
     {
         public Uri BaseUri { get; }
         public HttpClient HttpClient { get; }
