@@ -220,7 +220,7 @@ namespace Nibbler
             using (var gzipDigestStream = GetHashStream(outStream, gzipDigest))
             using (var gzipStream = GetGZipStream(gzipDigestStream))
             using (var tarDigestStream = GetHashStream(gzipStream, tarDigest))
-            using (var tarStream = new TarOutputStream(tarDigestStream))
+            using (var tarStream = new TarOutputStream(tarDigestStream, null))
             {
                 foreach (var i in Entries)
                 {

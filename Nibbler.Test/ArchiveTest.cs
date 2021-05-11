@@ -17,7 +17,7 @@ namespace Nibbler.Test
         {
             using var fs = new FileStream(archive, FileMode.Open, FileAccess.Read);
             using var gzipStream = new GZipInputStream(fs);
-            using var tarStream = new TarInputStream(gzipStream);
+            using var tarStream = new TarInputStream(gzipStream, null);
 
             TarEntry tarEntry;
             while ((tarEntry = tarStream.GetNextEntry()) != null)

@@ -34,7 +34,7 @@ namespace Nibbler.Test
             var layer = await registry.DownloadBlob(ImageHelper.GetImageName(image), manifest.layers.Last().digest);
 
             using var gzipStream = new GZipInputStream(layer);
-            using var tarStream = new TarInputStream(gzipStream);
+            using var tarStream = new TarInputStream(gzipStream, null);
             //Console.WriteLine("-------------");
 
             var tarEntries = new List<TarEntry>();
