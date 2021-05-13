@@ -28,17 +28,35 @@ namespace Nibbler
 
         public Task<Stream> GetBlob(string digest)
         {
-            throw new NotImplementedException();
+            var filename = FileHelper.DigestToFilename(digest);
+            var file = File.OpenRead(Path.Combine(_path, filename));
+            return Task.FromResult<Stream>(file);
         }
 
-        public Task<Image> LoadImage()
+        public async Task<Image> LoadImage()
         {
-            throw new NotImplementedException();
+            if (!Directory.Exists(_path))
+            {
+                throw new Exception($"error image {_path} not found!");
+            }
+
+            var manifestBytes = await File.ReadAllBytesAsync(Path.Combine(_path, FileImageDestination.ManifestFileName));
+
+            var image = await Image.LoadMetadata(new ByteContentWrapper(manifestBytes, Encoding.UTF8), GetBlobContent);
+
+            _logger.LogDebug($"Loaded image mata data from file {_path} with image digest: {image.ManifestDigest}");
+            
+            return image;
         }
 
-        private static string FixFilename(string digest)
+        private async Task<IContents> GetBlobContent(string digest)
         {
-            return digest.Replace(":", "_");
+            using (var blob = await GetBlob(digest))
+            using (var ms = new MemoryStream())
+            {
+                blob.CopyTo(ms);
+                return new ByteContentWrapper(ms.ToArray(), Encoding.UTF8);
+            }
         }
     }
 }

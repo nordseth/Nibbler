@@ -229,8 +229,56 @@ namespace Nibbler.Test
             "--from-insecure",
             "--to-file", "../../../../tests/TestData/test-image",
             "--add", @"../../../../tests/TestData/publish/:/app",
-            "-v" })]
-        public async Task BuilderCommand_Add_Write_To_File(string[] args) => await Run(args);
+            "-v" },
+            "../../../../tests/TestData/test-image")]
+        public async Task BuilderCommand_Add_Write_To_File(string[] args, string folder)
+        {
+            Assert.IsFalse(System.IO.Directory.Exists(folder));
+            await Run(args);
+            Assert.IsTrue(System.IO.Directory.Exists(folder));
+            System.IO.Directory.Delete(folder, true);
+        }
+
+        [TestMethod]
+        [DataRow(
+            new string[] {
+                "--from-image", "localhost:5000/dotnet/aspnet:5.0",
+                "--from-insecure",
+                "--to-file", "../../../../tests/TestData/test-image-1",
+                "-v" 
+            },
+            new string[] {
+                "--from-file", "../../../../tests/TestData/test-image-1",
+                "--to-file", "../../../../tests/TestData/test-image-2",
+                "--add", @"../../../../tests/TestData/publish/:/app",
+                "-v"
+            },
+            new string[] {
+                "--from-file", "../../../../tests/TestData/test-image-2",
+                "--to-image", "localhost:5000/test/nibbler-test:unittest",
+                "--to-insecure",
+                "-v"
+            },
+            new string[] {
+                "../../../../tests/TestData/test-image-1",
+                "../../../../tests/TestData/test-image-2"
+            })]
+        public async Task BuilderCommand_Add_Via_File(string[] args1, string[] args2, string[] args3, string[] folders)
+        {
+            foreach (var folder in folders)
+            {
+                Assert.IsFalse(System.IO.Directory.Exists(folder));
+            }
+
+            await Run(args1);
+            await Run(args2);
+            await Run(args3);
+
+            foreach (var folder in folders)
+            {
+                System.IO.Directory.Delete(folder, true);
+            }
+        }
 
 
         public static async Task Run(string[] args)

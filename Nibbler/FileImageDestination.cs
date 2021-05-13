@@ -19,7 +19,7 @@ namespace Nibbler
     /// </summary>
     public class FileImageDestination : IImageDestination
     {
-        private const string ManifestFileName = "manifest.json";
+        public const string ManifestFileName = "manifest.json";
 
         private readonly string _path;
         private readonly IEnumerable<BuilderLayer> _addedLayers;
@@ -68,7 +68,7 @@ namespace Nibbler
         public async Task PushConfig(ManifestV2Layer config, Func<Stream> configStream)
         {
             CheckFolder();
-            string filename = FixFilename(config.digest);
+            string filename = FileHelper.DigestToFilename(config.digest);
 
             using (var stream = configStream())
             using (var configFile = File.Open(Path.Combine(_path, filename), FileMode.CreateNew))
@@ -85,7 +85,7 @@ namespace Nibbler
 
             foreach (var layer in missingLayers)
             {
-                string filename = FixFilename(layer.digest);
+                string filename = FileHelper.DigestToFilename(layer.digest);
 
                 using (var stream = await imageSource.GetBlob(layer.digest))
                 using (var layerFile = File.Open(Path.Combine(_path, filename), FileMode.CreateNew))
@@ -103,7 +103,7 @@ namespace Nibbler
 
             foreach (var layer in _addedLayers)
             {
-                string filename = FixFilename(layer.Digest);
+                string filename = FileHelper.DigestToFilename(layer.Digest);
 
                 using (var stream = layerStream($"{layer.Name}.tar.gz"))
                 using (var layerFile = File.Open(Path.Combine(_path, filename), FileMode.CreateNew))
@@ -113,11 +113,6 @@ namespace Nibbler
 
                 _logger.LogDebug($"Wrote layer {layer.Digest}");
             }
-        }
-
-        private static string FixFilename(string digest)
-        {
-            return digest.Replace(":", "_");
         }
 
         private void CheckFolder()

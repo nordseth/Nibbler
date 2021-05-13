@@ -55,5 +55,10 @@ namespace Nibbler.Utils
                 return null;
             }
         }
+
+        public static string DigestToFilename(string digest)
+        {
+            return digest.Replace(":", "_");
+        }
     }
 }
