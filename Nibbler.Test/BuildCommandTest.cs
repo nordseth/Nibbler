@@ -40,21 +40,21 @@ namespace Nibbler.Test
         }
 
         [TestMethod]
-        public async Task BuildCommand_Warning_Deprecated()
+        public async Task BuildCommand_Deprecated_Error_Unrecognized_Args()
         {
             int result = await Program.Main(new string[] { "--from-image", "x", "--to-image", "x", "--username", "y" });
-            Assert.AreEqual(1, result);
+            Assert.AreEqual(2, result);
         }
 
         [TestMethod]
         [DataRow(new string[] {
-            "--base-image", "localhost:5000/dotnet/aspnet:5.0",
-            "--destination", "localhost:5000/test/nibbler-test:unittest",
+            "--from-image", "localhost:5000/dotnet/aspnet:5.0",
+            "--to-image", "localhost:5000/test/nibbler-test:unittest",
             "--insecure",
             "-v"})]
         [DataRow(new string[] {
-            "--base-image", "localhost:5000/dotnet/aspnet:5.0",
-            "--destination", "localhost:5000/test/nibbler-test:unittest",
+            "--from-image", "localhost:5000/dotnet/aspnet:5.0",
+            "--to-image", "localhost:5000/test/nibbler-test:unittest",
             "--insecure",
             "--debug"})]
         [DataRow(new string[] {
@@ -66,8 +66,8 @@ namespace Nibbler.Test
 
         [TestMethod]
         [DataRow(new string[] {
-            "--base-image", "localhost:5000/dotnet/aspnet:5.0",
-            "--destination", "localhost:5000/test/nibbler-test:unittest",
+            "--from-image", "localhost:5000/dotnet/aspnet:5.0",
+            "--to-image", "localhost:5000/test/nibbler-test:unittest",
             "--add", @"../../../../tests/TestData/publish/:/app",
             "--insecure",
             "-v" })]
@@ -75,8 +75,8 @@ namespace Nibbler.Test
 
         [TestMethod]
         [DataRow(new string[] {
-            "--base-image", "localhost:5000/dotnet/aspnet:5.0",
-            "--destination", "localhost:5000/test/nibbler-test:unittest",
+            "--from-image", "localhost:5000/dotnet/aspnet:5.0",
+            "--to-image", "localhost:5000/test/nibbler-test:unittest",
             "--add", @"../../../../tests/TestData/publish/:/app:1001",
             "--insecure",
             "-v" })]
@@ -84,8 +84,8 @@ namespace Nibbler.Test
 
         [TestMethod]
         [DataRow(new string[] {
-            "--base-image", "localhost:5000/dotnet/aspnet:5.0",
-            "--destination", "localhost:5000/test/nibbler-test:unittest",
+            "--from-image", "localhost:5000/dotnet/aspnet:5.0",
+            "--to-image", "localhost:5000/test/nibbler-test:unittest",
             "--add", @"../../../../tests/TestData/publish/:/app:1001:1001",
             "--insecure",
             "-v" })]
@@ -93,8 +93,8 @@ namespace Nibbler.Test
 
         [TestMethod]
         [DataRow(new string[] {
-            "--base-image", "localhost:5000/dotnet/aspnet:5.0",
-            "--destination", "localhost:5000/test/nibbler-test:unittest",
+            "--from-image", "localhost:5000/dotnet/aspnet:5.0",
+            "--to-image", "localhost:5000/test/nibbler-test:unittest",
             "--add", @"../../../../tests/TestData/publish/:/app:1001:0:777",
             "--insecure",
             "-v" })]
@@ -102,8 +102,8 @@ namespace Nibbler.Test
 
         [TestMethod]
         [DataRow(new string[] {
-            "--base-image", "localhost:5000/dotnet/aspnet:5.0",
-            "--destination", "localhost:5000/test/nibbler-test:unittest",
+            "--from-image", "localhost:5000/dotnet/aspnet:5.0",
+            "--to-image", "localhost:5000/test/nibbler-test:unittest",
             "--add", @"../../../../tests/TestData/publish/:/app:::777",
             "--insecure",
             "-v" })]
@@ -111,8 +111,8 @@ namespace Nibbler.Test
 
         [TestMethod]
         [DataRow(new string[] {
-            "--base-image", "localhost:5000/dotnet/aspnet:5.0",
-            "--destination", "localhost:5000/test/nibbler-test:unittest",
+            "--from-image", "localhost:5000/dotnet/aspnet:5.0",
+            "--to-image", "localhost:5000/test/nibbler-test:unittest",
             "--add", @"../../../../tests/TestData/publish/:/app",
             "--add", @"../../../../tests/TestData/publish/:/app",
             "--add", @"../../../../tests/TestData/wwwroot/:/wwwroot",
@@ -122,8 +122,8 @@ namespace Nibbler.Test
 
         [TestMethod]
         [DataRow(new string[] {
-            "--base-image", "localhost:5000/dotnet/aspnet:5.0",
-            "--destination", "localhost:5000/test/nibbler-test:unittest",
+            "--from-image", "localhost:5000/dotnet/aspnet:5.0",
+            "--to-image", "localhost:5000/test/nibbler-test:unittest",
             "--add", @"../../../../tests/TestData/publish/:/app",
             "--addFolder", @"/app:1001:0:777",
             "--insecure",
@@ -132,8 +132,17 @@ namespace Nibbler.Test
 
         [TestMethod]
         [DataRow(new string[] {
-            "--base-image", "localhost:5000/dotnet/aspnet:5.0",
-            "--destination", "localhost:5000/test/nibbler-test:unittest",
+            "--from-image", "localhost:5000/dotnet/aspnet:5.0",
+            "--to-image", "localhost:5000/test/nibbler-test:unittest",
+            "--addFolder", @"/app:1001:0:777",
+            "--insecure",
+            "-v" })]
+        public async Task BuilderCommand_AddFolder(string[] args) => await Run(args);
+
+        [TestMethod]
+        [DataRow(new string[] {
+            "--from-image", "localhost:5000/dotnet/aspnet:5.0",
+            "--to-image", "localhost:5000/test/nibbler-test:unittest",
             "--workdir", "/root",
             "--insecure",
             "-v" })]
@@ -141,8 +150,8 @@ namespace Nibbler.Test
 
         [TestMethod]
         [DataRow(new string[] {
-            "--base-image", "localhost:5000/dotnet/aspnet:5.0",
-            "--destination", "localhost:5000/test/nibbler-test:unittest",
+            "--from-image", "localhost:5000/dotnet/aspnet:5.0",
+            "--to-image", "localhost:5000/test/nibbler-test:unittest",
             "--label", "test1=test2",
             "--label", "test4=test4",
             "--insecure",
@@ -151,8 +160,8 @@ namespace Nibbler.Test
 
         [TestMethod]
         [DataRow(new string[] {
-            "--base-image", "localhost:5000/dotnet/aspnet:5.0",
-            "--destination", "localhost:5000/test/nibbler-test:unittest",
+            "--from-image", "localhost:5000/dotnet/aspnet:5.0",
+            "--to-image", "localhost:5000/test/nibbler-test:unittest",
             "--user", "1000",
             "--insecure",
             "-v" })]
@@ -160,8 +169,8 @@ namespace Nibbler.Test
 
         [TestMethod]
         [DataRow(new string[] {
-            "--base-image", "localhost:5000/dotnet/aspnet:5.0",
-            "--destination", "localhost:5000/test/nibbler-test:unittest",
+            "--from-image", "localhost:5000/dotnet/aspnet:5.0",
+            "--to-image", "localhost:5000/test/nibbler-test:unittest",
             "--env", "ENV_VAR_1=test2",
             "--env", "ENV_VAR_2=test4",
             "--insecure",
@@ -170,8 +179,8 @@ namespace Nibbler.Test
 
         [TestMethod]
         [DataRow(new string[] {
-            "--base-image", "localhost:5000/dotnet/aspnet:5.0",
-            "--destination", "localhost:5000/test/nibbler-test:unittest",
+            "--from-image", "localhost:5000/dotnet/aspnet:5.0",
+            "--to-image", "localhost:5000/test/nibbler-test:unittest",
             "--cmd", "dotnet TestData.dll",
             "--entrypoint", "dotnet TestData.dll",
             "--insecure",
@@ -180,8 +189,8 @@ namespace Nibbler.Test
 
         [TestMethod]
         [DataRow(new string[] {
-            "--base-image", "localhost:5000/dotnet/aspnet:5.0",
-            "--destination", "localhost:5000/test/nibbler-test:unittest",
+            "--from-image", "localhost:5000/dotnet/aspnet:5.0",
+            "--to-image", "localhost:5000/test/nibbler-test:unittest",
             "--git-labels=../../../../",
             "--insecure",
             "-v" })]
@@ -189,8 +198,8 @@ namespace Nibbler.Test
 
         [TestMethod]
         [DataRow(new string[] {
-            "--base-image", "localhost:5000/dotnet/aspnet:5.0",
-            "--destination", "localhost:5000/test/nibbler-test:unittest",
+            "--from-image", "localhost:5000/dotnet/aspnet:5.0",
+            "--to-image", "localhost:5000/test/nibbler-test:unittest",
             "--digest-file",
             "--insecure",
             "-v" })]
@@ -198,21 +207,79 @@ namespace Nibbler.Test
 
         [TestMethod]
         [DataRow(new string[] {
-            "--base-image", "registry.hub.docker.com/library/hello-world:latest",
-            "--destination", "localhost:5000/hello-world:latest",
-            "--insecure-push",
+            "--from-image", "registry.hub.docker.com/library/hello-world:latest",
+            "--to-image", "localhost:5000/hello-world:latest",
+            "--to-insecure",
             "-v" })]
         [DataRow(new string[] {
-            "--base-image", "registry.hub.docker.com/library/ubuntu:xenial",
-            "--destination", "localhost:5000/ubuntu:xenial",
-            "--insecure-push",
+            "--from-image", "registry.hub.docker.com/library/ubuntu:xenial",
+            "--to-image", "localhost:5000/ubuntu:xenial",
+            "--to-insecure",
             "-v" })]
         [DataRow(new string[] {
-            "--base-image", "registry.hub.docker.com/library/ubuntu:bionic",
-            "--destination", "localhost:5000/ubuntu:bionic",
-            "--insecure-push",
+            "--from-image", "registry.hub.docker.com/library/ubuntu:bionic",
+            "--to-image", "localhost:5000/ubuntu:bionic",
+            "--to-insecure",
             "-v" })]
         public async Task BuilderCommand_Copy_Image(string[] args) => await Run(args);
+
+        [TestMethod]
+        [DataRow(new string[] {
+            "--from-image", "localhost:5000/dotnet/aspnet:5.0",
+            "--from-insecure",
+            "--to-file", "../../../../tests/TestData/test-image",
+            "--add", @"../../../../tests/TestData/publish/:/app",
+            "-v" },
+            "../../../../tests/TestData/test-image")]
+        public async Task BuilderCommand_Add_Write_To_File(string[] args, string folder)
+        {
+            Assert.IsFalse(System.IO.Directory.Exists(folder));
+            await Run(args);
+            Assert.IsTrue(System.IO.Directory.Exists(folder));
+            System.IO.Directory.Delete(folder, true);
+        }
+
+        [TestMethod]
+        [DataRow(
+            new string[] {
+                "--from-image", "localhost:5000/dotnet/aspnet:5.0",
+                "--from-insecure",
+                "--to-file", "../../../../tests/TestData/test-image-1",
+                "-v" 
+            },
+            new string[] {
+                "--from-file", "../../../../tests/TestData/test-image-1",
+                "--to-file", "../../../../tests/TestData/test-image-2",
+                "--add", @"../../../../tests/TestData/publish/:/app",
+                "-v"
+            },
+            new string[] {
+                "--from-file", "../../../../tests/TestData/test-image-2",
+                "--to-image", "localhost:5000/test/nibbler-test:unittest",
+                "--to-insecure",
+                "-v"
+            },
+            new string[] {
+                "../../../../tests/TestData/test-image-1",
+                "../../../../tests/TestData/test-image-2"
+            })]
+        public async Task BuilderCommand_Add_Via_File(string[] args1, string[] args2, string[] args3, string[] folders)
+        {
+            foreach (var folder in folders)
+            {
+                Assert.IsFalse(System.IO.Directory.Exists(folder));
+            }
+
+            await Run(args1);
+            await Run(args2);
+            await Run(args3);
+
+            foreach (var folder in folders)
+            {
+                System.IO.Directory.Delete(folder, true);
+            }
+        }
+
 
         public static async Task Run(string[] args)
         {

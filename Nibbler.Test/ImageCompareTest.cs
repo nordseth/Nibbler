@@ -21,17 +21,18 @@ namespace Nibbler.Test
         [DataRow("localhost:5000/nibbler-test:nibbler", true)]
         public async Task ImageCompare_Download_Image_And_Layer(string image, bool insecure)
         {
-            var registry = new Registry(ImageHelper.GetRegistryBaseUrl(image, insecure), new Logger("REGISTRY", true), null);
+            var logger = new Logger("REGISTRY", true);
+            var registry = new Registry(ImageHelper.GetRegistryBaseUrl(image, insecure), logger, null);
 
-            var manifest = await registry.GetManifest(ImageHelper.GetImageName(image), ImageHelper.GetImageReference(image));
+            var imageSource = new RegistryImageSource(ImageHelper.GetImageName(image), ImageHelper.GetImageReference(image), registry, logger);
+            var loadedImage = await imageSource.LoadImageMetadata();
             //Console.WriteLine("-------------");
             //Console.WriteLine(JsonConvert.SerializeObject(manifest, Formatting.Indented));
 
-            var imageConfig = await registry.GetImage(ImageHelper.GetImageName(image), manifest.config.digest);
             //Console.WriteLine("-------------");
             //Console.WriteLine(JsonConvert.SerializeObject(imageConfig, Formatting.Indented));
 
-            var layer = await registry.DownloadBlob(ImageHelper.GetImageName(image), manifest.layers.Last().digest);
+            var layer = await registry.DownloadBlob(ImageHelper.GetImageName(image), loadedImage.Manifest.layers.Last().digest);
 
             using var gzipStream = new GZipInputStream(layer);
             using var tarStream = new TarInputStream(gzipStream, null);
