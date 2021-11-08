@@ -41,6 +41,7 @@ curl -o /dev/null --fail -sH "$AUTH" -H "$ACCEPT" $GH_REPO  || { echo "ERROR: In
 echo "Creating new release for $VERSION"
 RELASE_RESP=$(curl -sH "$AUTH" -H "$ACCEPT" --data "$(generate_post_data)" "$GH_REPO/releases")
 
+# download jq from https://github.com/stedolan/jq/releases (rename to jq.exe and place in folder in path)
 RELASE_ID=$(echo $RELASE_RESP | jq ".id")
 RELASE_UPLOAD_URL=$(echo $RELASE_RESP | jq ".upload_url")
 

@@ -15,6 +15,8 @@ WIN=win-x64
 dotnet publish $PROJECT $PUBLISHARGS -c $CONFIGURATION -f $FRAMEWORK -r $WIN
 mv $PROJECT/bin/$CONFIGURATION/$FRAMEWORK/$WIN/publish/$PROJECT.exe $PROJECT/bin/$CONFIGURATION/$FRAMEWORK/$WIN/publish/$COMMAND.exe
 rm -f $FOLDER/$COMMAND.${VERSION}_$WIN.zip
+# note: how to install zip on gitbash https://stackoverflow.com/a/55749636
+#   The foler is probably $Home\AppData\Local\Programs\Git\mingw64\bin
 zip -j $FOLDER/$COMMAND.${VERSION}_$WIN.zip $PROJECT/bin/$CONFIGURATION/$FRAMEWORK/$WIN/publish/$COMMAND.exe
 
 LINUX=linux-x64
