@@ -16,12 +16,16 @@ namespace Nibbler.Command
     public class BuildCommand
     {
         private readonly ILogger _logger;
+        private readonly ILogger _httpClientLogger;
+        private readonly HttpClientFactory _httpClientFactory;
         private const string ManifestDigestFileName = "digest";
         private string _tempFolderPath;
 
         public BuildCommand()
         {
             _logger = new Logger("BUILD", false);
+            _httpClientLogger = new Logger("HTTP", false);
+            _httpClientFactory = new HttpClientFactory(_httpClientLogger);
         }
 
         public CommandOption FromImage { get; private set; }
@@ -52,6 +56,7 @@ namespace Nibbler.Command
         public CommandOption Entrypoint { get; private set; }
 
         public CommandOption Verbose { get; private set; }
+        public CommandOption Trace { get; private set; }
         public CommandOption DryRun { get; private set; }
 
         public CommandOption DockerConfig { get; private set; }
@@ -95,6 +100,7 @@ namespace Nibbler.Command
 
             // options:
             Verbose = app.Option("-v|--debug", "Verbose output", CommandOptionType.NoValue);
+            Trace = app.Option("--trace", "Trace log", CommandOptionType.NoValue);
             DryRun = app.Option("--dry-run", "Does not push, only shows what would happen (use with -v)", CommandOptionType.NoValue);
 
             DockerConfig = app.Option("--docker-config", "Specify docker config file for authentication with registry. (default: ~/.docker/config.json)", CommandOptionType.SingleOrNoValue);
@@ -161,6 +167,8 @@ namespace Nibbler.Command
         {
             var sw = System.Diagnostics.Stopwatch.StartNew();
             _logger.SetDebugEnable(Verbose.HasValue());
+            _httpClientLogger.SetDebugEnable(Verbose.HasValue());
+            _httpClientLogger.SetTraceEnable(Trace.HasValue());
 
             try
             {
@@ -250,7 +258,8 @@ namespace Nibbler.Command
                     Insecure.HasValue() || FromInsecure.HasValue(),
                     FromSkipTlsVerify.HasValue() || SkipTlsVerify.HasValue(),
                     DockerConfig.Value(),
-                    CreateLogger("FROM-REG"));
+                    CreateLogger("FROM-REG"),
+                    _httpClientFactory);
             }
             else
             {
@@ -270,7 +279,8 @@ namespace Nibbler.Command
                 var toRegAuthHandler = new AuthenticationHandler(
                     ImageHelper.GetRegistryName(ToImage.Value()),
                     dockerConfigCredentials,
-                    logger);
+                    logger,
+                    _httpClientFactory.Create(null, false, null));
 
                 if (ToUsername.HasValue() && ToPassword.HasValue())
                 {
@@ -278,7 +288,8 @@ namespace Nibbler.Command
                 }
 
                 var toSkipTlsVerify = ToSkipTlsVerify.HasValue() || SkipTlsVerify.HasValue();
-                var toRegistry = new Registry(toUri, logger, toRegAuthHandler, toSkipTlsVerify);
+                var toRegistryClient = _httpClientFactory.Create(toUri, toSkipTlsVerify, toRegAuthHandler);
+                var toRegistry = new Registry(toUri, logger, toRegistryClient);
 
                 logger.LogDebug($"using {toUri} for push{(toSkipTlsVerify ? ", skipTlsVerify" : "")}");
 

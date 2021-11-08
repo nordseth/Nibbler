@@ -23,12 +23,12 @@ namespace Nibbler.Utils
         private string _username;
         private string _password;
 
-        public AuthenticationHandler(string registry, IDockerConfigCredentials dockerConfigCredentials, ILogger logger)
+        public AuthenticationHandler(string registry, IDockerConfigCredentials dockerConfigCredentials, ILogger logger, HttpClient tokenClient)
         {
             _registry = registry;
             _dockerConfigCredentials = dockerConfigCredentials;
             _logger = logger;
-            _tokenClient = new HttpClient();
+            _tokenClient = tokenClient;
         }
 
         public void SetCredentials(string username, string password)

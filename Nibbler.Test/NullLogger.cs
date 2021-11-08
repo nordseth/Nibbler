@@ -14,6 +14,8 @@ namespace Nibbler.Test
 
         public bool WarningEnabled => false;
 
+        public bool TraceEnabled => false;
+
         public void LogDebug(Exception ex, string message)
         {
         }
@@ -22,11 +24,19 @@ namespace Nibbler.Test
         {
         }
 
+        public void LogTrace(string message)
+        {
+        }
+
         public void LogWarning(string message)
         {
         }
 
         public void SetDebugEnable(bool enabled)
+        {
+        }
+
+        public void SetTraceEnable(bool enabled)
         {
         }
 

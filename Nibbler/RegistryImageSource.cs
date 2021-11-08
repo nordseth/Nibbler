@@ -57,7 +57,7 @@ namespace Nibbler
             return new HttpContentWrapper(contents);
         }
 
-        public static RegistryImageSource Create(string image, string username, string password, bool insecure, bool skipTlsVerify, string dockerConfig, ILogger logger)
+        public static RegistryImageSource Create(string image, string username, string password, bool insecure, bool skipTlsVerify, string dockerConfig, ILogger logger, HttpClientFactory httpClientFactory)
         {
             var fromUri = ImageHelper.GetRegistryBaseUrl(image, insecure);
 
@@ -65,14 +65,16 @@ namespace Nibbler
             var fromRegAuthHandler = new AuthenticationHandler(
                 ImageHelper.GetRegistryName(image),
                 dockerConfigCredentials,
-                logger);
+                logger,
+                httpClientFactory.Create());
 
             if (!string.IsNullOrEmpty(username) && !string.IsNullOrEmpty(password))
             {
                 fromRegAuthHandler.SetCredentials(username, password);
             }
 
-            var registry = new Registry(fromUri, logger, fromRegAuthHandler, skipTlsVerify);
+            var fromRegistryClient = httpClientFactory.Create(fromUri, skipTlsVerify, fromRegAuthHandler);
+            var registry = new Registry(fromUri, logger, fromRegistryClient);
 
             logger.LogDebug($"using {fromUri} for pull{(skipTlsVerify ? ", skipTlsVerify" : "")}");
 

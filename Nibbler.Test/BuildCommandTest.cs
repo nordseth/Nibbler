@@ -51,7 +51,8 @@ namespace Nibbler.Test
             "--from-image", "localhost:5000/dotnet/aspnet:5.0",
             "--to-image", "localhost:5000/test/nibbler-test:unittest",
             "--insecure",
-            "-v"})]
+            "-v",
+            "--trace"})]
         [DataRow(new string[] {
             "--from-image", "localhost:5000/dotnet/aspnet:5.0",
             "--to-image", "localhost:5000/test/nibbler-test:unittest",
@@ -61,7 +62,8 @@ namespace Nibbler.Test
             "--from-image", "localhost:5000/dotnet/aspnet:5.0",
             "--to-image", "localhost:5000/test/nibbler-test:unittest",
             "--insecure",
-            "-v"})]
+            "-v",
+            "--trace"})]
         public async Task BuilderCommand_Minimal_Args(string[] args) => await Run(args);
 
         [TestMethod]
@@ -70,7 +72,8 @@ namespace Nibbler.Test
             "--to-image", "localhost:5000/test/nibbler-test:unittest",
             "--add", @"../../../../tests/TestData/publish/:/app",
             "--insecure",
-            "-v" })]
+            "-v",
+            "--trace" })]
         public async Task BuilderCommand_Add(string[] args) => await Run(args);
 
         [TestMethod]
@@ -79,7 +82,8 @@ namespace Nibbler.Test
             "--to-image", "localhost:5000/test/nibbler-test:unittest",
             "--add", @"../../../../tests/TestData/publish/:/app:1001",
             "--insecure",
-            "-v" })]
+            "-v",
+            "--trace" })]
         public async Task BuilderCommand_Add_User(string[] args) => await Run(args);
 
         [TestMethod]
@@ -88,7 +92,8 @@ namespace Nibbler.Test
             "--to-image", "localhost:5000/test/nibbler-test:unittest",
             "--add", @"../../../../tests/TestData/publish/:/app:1001:1001",
             "--insecure",
-            "-v" })]
+            "-v",
+            "--trace" })]
         public async Task BuilderCommand_Add_User_Group(string[] args) => await Run(args);
 
         [TestMethod]
@@ -97,7 +102,8 @@ namespace Nibbler.Test
             "--to-image", "localhost:5000/test/nibbler-test:unittest",
             "--add", @"../../../../tests/TestData/publish/:/app:1001:0:777",
             "--insecure",
-            "-v" })]
+            "-v",
+            "--trace" })]
         public async Task BuilderCommand_Add_User_Group_Mode(string[] args) => await Run(args);
 
         [TestMethod]
@@ -106,7 +112,8 @@ namespace Nibbler.Test
             "--to-image", "localhost:5000/test/nibbler-test:unittest",
             "--add", @"../../../../tests/TestData/publish/:/app:::777",
             "--insecure",
-            "-v" })]
+            "-v",
+            "--trace" })]
         public async Task BuilderCommand_Add_Mode(string[] args) => await Run(args);
 
         [TestMethod]
@@ -117,7 +124,8 @@ namespace Nibbler.Test
             "--add", @"../../../../tests/TestData/publish/:/app",
             "--add", @"../../../../tests/TestData/wwwroot/:/wwwroot",
             "--insecure",
-            "-v" })]
+            "-v",
+            "--trace" })]
         public async Task BuilderCommand_Adds(string[] args) => await Run(args);
 
         [TestMethod]
@@ -127,7 +135,8 @@ namespace Nibbler.Test
             "--add", @"../../../../tests/TestData/publish/:/app",
             "--addFolder", @"/app:1001:0:777",
             "--insecure",
-            "-v" })]
+            "-v",
+            "--trace" })]
         public async Task BuilderCommand_Add_AddFolder(string[] args) => await Run(args);
 
         [TestMethod]
@@ -136,7 +145,8 @@ namespace Nibbler.Test
             "--to-image", "localhost:5000/test/nibbler-test:unittest",
             "--addFolder", @"/app:1001:0:777",
             "--insecure",
-            "-v" })]
+            "-v",
+            "--trace" })]
         public async Task BuilderCommand_AddFolder(string[] args) => await Run(args);
 
         [TestMethod]
@@ -145,7 +155,8 @@ namespace Nibbler.Test
             "--to-image", "localhost:5000/test/nibbler-test:unittest",
             "--workdir", "/root",
             "--insecure",
-            "-v" })]
+            "-v",
+            "--trace" })]
         public async Task BuilderCommand_WorkDir(string[] args) => await Run(args);
 
         [TestMethod]
@@ -155,7 +166,8 @@ namespace Nibbler.Test
             "--label", "test1=test2",
             "--label", "test4=test4",
             "--insecure",
-            "-v" })]
+            "-v",
+            "--trace" })]
         public async Task BuilderCommand_Labels(string[] args) => await Run(args);
 
         [TestMethod]
@@ -164,7 +176,8 @@ namespace Nibbler.Test
             "--to-image", "localhost:5000/test/nibbler-test:unittest",
             "--user", "1000",
             "--insecure",
-            "-v" })]
+            "-v",
+            "--trace" })]
         public async Task BuilderCommand_User(string[] args) => await Run(args);
 
         [TestMethod]
@@ -174,7 +187,8 @@ namespace Nibbler.Test
             "--env", "ENV_VAR_1=test2",
             "--env", "ENV_VAR_2=test4",
             "--insecure",
-            "-v" })]
+            "-v",
+            "--trace" })]
         public async Task BuilderCommand_Env(string[] args) => await Run(args);
 
         [TestMethod]
@@ -184,7 +198,8 @@ namespace Nibbler.Test
             "--cmd", "dotnet TestData.dll",
             "--entrypoint", "dotnet TestData.dll",
             "--insecure",
-            "-v" })]
+            "-v",
+            "--trace" })]
         public async Task BuilderCommand_EntryPoint_Cmd(string[] args) => await Run(args);
 
         [TestMethod]
@@ -193,7 +208,8 @@ namespace Nibbler.Test
             "--to-image", "localhost:5000/test/nibbler-test:unittest",
             "--git-labels=../../../../",
             "--insecure",
-            "-v" })]
+            "-v",
+            "--trace" })]
         public async Task BuilderCommand_GitLabels(string[] args) => await Run(args);
 
         [TestMethod]
@@ -202,7 +218,8 @@ namespace Nibbler.Test
             "--to-image", "localhost:5000/test/nibbler-test:unittest",
             "--digest-file",
             "--insecure",
-            "-v" })]
+            "-v",
+            "--trace" })]
         public async Task BuilderCommand_DigestFile(string[] args) => await Run(args);
 
         [TestMethod]
@@ -210,7 +227,8 @@ namespace Nibbler.Test
             "--from-image", "registry.hub.docker.com/library/hello-world:latest",
             "--to-image", "localhost:5000/hello-world:latest",
             "--to-insecure",
-            "-v" })]
+            "-v",
+            "--trace" })]
         [DataRow(new string[] {
             "--from-image", "registry.hub.docker.com/library/ubuntu:xenial",
             "--to-image", "localhost:5000/ubuntu:xenial",
@@ -220,7 +238,8 @@ namespace Nibbler.Test
             "--from-image", "registry.hub.docker.com/library/ubuntu:bionic",
             "--to-image", "localhost:5000/ubuntu:bionic",
             "--to-insecure",
-            "-v" })]
+            "-v",
+            "--trace"})]
         public async Task BuilderCommand_Copy_Image(string[] args) => await Run(args);
 
         [TestMethod]
@@ -229,7 +248,8 @@ namespace Nibbler.Test
             "--from-insecure",
             "--to-file", "../../../../tests/TestData/test-image",
             "--add", @"../../../../tests/TestData/publish/:/app",
-            "-v" },
+            "-v",
+            "--trace" },
             "../../../../tests/TestData/test-image")]
         public async Task BuilderCommand_Add_Write_To_File(string[] args, string folder)
         {
@@ -245,19 +265,22 @@ namespace Nibbler.Test
                 "--from-image", "localhost:5000/dotnet/aspnet:5.0",
                 "--from-insecure",
                 "--to-file", "../../../../tests/TestData/test-image-1",
-                "-v" 
+                "-v",
+                "--trace"
             },
             new string[] {
                 "--from-file", "../../../../tests/TestData/test-image-1",
                 "--to-file", "../../../../tests/TestData/test-image-2",
                 "--add", @"../../../../tests/TestData/publish/:/app",
-                "-v"
+                "-v",
+                "--trace"
             },
             new string[] {
                 "--from-file", "../../../../tests/TestData/test-image-2",
                 "--to-image", "localhost:5000/test/nibbler-test:unittest",
                 "--to-insecure",
-                "-v"
+                "-v",
+                "--trace"
             },
             new string[] {
                 "../../../../tests/TestData/test-image-1",

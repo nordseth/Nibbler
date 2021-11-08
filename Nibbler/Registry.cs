@@ -15,29 +15,14 @@ namespace Nibbler
     {
         public Uri BaseUri { get; }
         public HttpClient HttpClient { get; }
-        internal HttpMessageHandler Handler { get; }
 
         private readonly ILogger _logger;
 
-        public Registry(Uri baseUri, ILogger logger, DelegatingHandler authenticationHandler, bool skipTlsVerify = false)
+        public Registry(Uri baseUri, ILogger logger, HttpClient httpClient)
         {
             BaseUri = baseUri;
+            HttpClient = httpClient;
             _logger = logger;
-            var primaryHandler = new HttpClientHandler();
-            if (skipTlsVerify)
-            {
-                primaryHandler.ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
-            }
-
-            Handler = primaryHandler;
-            if (authenticationHandler != null)
-            {
-                authenticationHandler.InnerHandler = Handler;
-                Handler = authenticationHandler;
-            }
-
-            HttpClient = new HttpClient(Handler);
-            HttpClient.BaseAddress = BaseUri;
         }
 
         public async Task<HttpContent> GetManifest(string name, string reference)

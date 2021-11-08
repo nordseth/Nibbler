@@ -52,7 +52,7 @@ namespace Nibbler.Test
             string password = "password1";
             var expectedAuth = AuthenticationHandler.EncodeCredentials(username, password);
 
-            var handler = new AuthenticationHandler(null, null, NullLogger.Instance);
+            var handler = new AuthenticationHandler(null, null, NullLogger.Instance, null);
             handler.SetCredentials(username, password);
 
             var fakeHandler = new FakeRequireAuthHandler("Basic", null, expectedAuth);
@@ -71,7 +71,7 @@ namespace Nibbler.Test
             var dockerConfigMock = new Mock<IDockerConfigCredentials>();
             dockerConfigMock.Setup(c => c.GetEncodedCredentials(null)).Returns(token);
 
-            var handler = new AuthenticationHandler(null, dockerConfigMock.Object, NullLogger.Instance);
+            var handler = new AuthenticationHandler(null, dockerConfigMock.Object, NullLogger.Instance, null);
 
             var fakeHandler = new FakeRequireAuthHandler("Basic", null, token);
             handler.InnerHandler = fakeHandler;
@@ -98,16 +98,18 @@ namespace Nibbler.Test
             var regImageSrc = cmd.CreateImageSource() as RegistryImageSource;
             Assert.IsNotNull(regImageSrc);
 
-            var fromAuthHandler = regImageSrc.Registry.Handler as AuthenticationHandler;
-            Assert.IsNotNull(fromAuthHandler);
-            Assert.AreEqual(fromCreds, fromAuthHandler.HasCredentials());
+            Assert.Fail("Selects_Correct_Credentials not implemented because of refactor of HttpClientFactory");
 
-            var regImageDest = cmd.CreateImageDest(null) as RegistryPusher;
-            Assert.IsNotNull(regImageDest);
+            //var fromAuthHandler = regImageSrc.Registry.Handler as AuthenticationHandler;
+            //Assert.IsNotNull(fromAuthHandler);
+            //Assert.AreEqual(fromCreds, fromAuthHandler.HasCredentials());
 
-            var toAuthHandler = regImageDest.Registry.Handler as AuthenticationHandler;
-            Assert.IsNotNull(toAuthHandler);
-            Assert.AreEqual(toCreds, toAuthHandler.HasCredentials());
+            //var regImageDest = cmd.CreateImageDest(null) as RegistryPusher;
+            //Assert.IsNotNull(regImageDest);
+
+            //var toAuthHandler = regImageDest.Registry.Handler as AuthenticationHandler;
+            //Assert.IsNotNull(toAuthHandler);
+            //Assert.AreEqual(toCreds, toAuthHandler.HasCredentials());
         }
 
         public class FakeRequireAuthHandler : DelegatingHandler
