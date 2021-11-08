@@ -16,7 +16,7 @@ namespace Nibbler.Test
 
         public ImageDataTest()
         {
-            _registryLogger = new Utils.Logger("REGISTRY", true);
+            _registryLogger = new Utils.Logger("REGISTRY", true, true);
         }
 
         [TestMethod]

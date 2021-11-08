@@ -16,7 +16,7 @@ namespace Nibbler.Test
 
         public RegistryUploadTest()
         {
-            _registryLogger = new Logger("REGISTRY", true);
+            _registryLogger = new Logger("REGISTRY", true, true);
         }
 
         [TestMethod]
@@ -59,7 +59,7 @@ namespace Nibbler.Test
         {
             try
             {
-                await RetryHelper.Retry(3, new Logger("RETRY", true), () => throw new Exception());
+                await RetryHelper.Retry(3, new Logger("RETRY", true, true), () => throw new Exception());
                 Assert.Fail("Should throw exception");
             }
             catch

@@ -23,8 +23,8 @@ namespace Nibbler.Command
 
         public BuildCommand()
         {
-            _logger = new Logger("BUILD", false);
-            _httpClientLogger = new Logger("HTTP", false);
+            _logger = new Logger("BUILD", false, false);
+            _httpClientLogger = new Logger("HTTP", false, false);
             _httpClientFactory = new HttpClientFactory(_httpClientLogger);
         }
 
@@ -100,7 +100,7 @@ namespace Nibbler.Command
 
             // options:
             Verbose = app.Option("-v|--debug", "Verbose output", CommandOptionType.NoValue);
-            Trace = app.Option("--trace", "Trace log", CommandOptionType.NoValue);
+            Trace = app.Option("--trace", "Trace log. INSECURE! Exposes authentication headers", CommandOptionType.NoValue);
             DryRun = app.Option("--dry-run", "Does not push, only shows what would happen (use with -v)", CommandOptionType.NoValue);
 
             DockerConfig = app.Option("--docker-config", "Specify docker config file for authentication with registry. (default: ~/.docker/config.json)", CommandOptionType.SingleOrNoValue);
@@ -166,9 +166,7 @@ namespace Nibbler.Command
         public async Task<int> ExecuteAsync(CancellationToken cancellationToken)
         {
             var sw = System.Diagnostics.Stopwatch.StartNew();
-            _logger.SetDebugEnable(Verbose.HasValue());
-            _httpClientLogger.SetDebugEnable(Verbose.HasValue());
-            _httpClientLogger.SetTraceEnable(Trace.HasValue());
+            UpdateLogLevel();
 
             try
             {
@@ -242,9 +240,17 @@ namespace Nibbler.Command
             }
         }
 
+        private void UpdateLogLevel()
+        {
+            _logger.SetDebugEnable(Verbose.HasValue());
+            _logger.SetTraceEnable(Trace.HasValue());
+            _httpClientLogger.SetDebugEnable(Verbose.HasValue());
+            _httpClientLogger.SetTraceEnable(Trace.HasValue());
+        }
+
         private ILogger CreateLogger(string name)
         {
-            return new Logger(name, Verbose.HasValue());
+            return new Logger(name, Verbose.HasValue(), Trace.HasValue());
         }
 
         internal IImageSource CreateImageSource()

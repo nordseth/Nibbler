@@ -6,12 +6,12 @@ namespace Nibbler.Utils
 {
     public class Logger : ILogger
     {
-        public Logger(string name, bool debugEnable)
+        public Logger(string name, bool debugEnable, bool traceEnable)
         {
             Name = name;
             DebugEnabled = debugEnable;
+            TraceEnabled = traceEnable;
             WarningEnabled = true;
-            TraceEnabled = false;
         }
 
         public string Name { get; }

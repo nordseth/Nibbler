@@ -17,9 +17,8 @@ namespace Nibbler.Test
 
         public RegistryTest()
         {
-            _registryLogger = new Utils.Logger("REGISTRY", true);
-            _httpLogger = new Utils.Logger("HTTPCLIENT", true);
-            _httpLogger.SetTraceEnable(true);
+            _registryLogger = new Utils.Logger("REGISTRY", true, true);
+            _httpLogger = new Utils.Logger("HTTPCLIENT", true, true);
             _httpClientFactory = new HttpClientFactory(_httpLogger);
         }
 
