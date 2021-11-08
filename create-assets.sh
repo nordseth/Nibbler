@@ -1,8 +1,8 @@
 #!/bin/bash
 set -ex
 
-PUBLISHARGS="-p:PublishSingleFile=true -p:PublishTrimmed=true -p:InvariantGlobalization=true"
-FRAMEWORK=net5.0
+PUBLISHARGS="-p:PublishSingleFile=true -p:PublishTrimmed=true -p:InvariantGlobalization=true --self-contained"
+FRAMEWORK=net6.0
 CONFIGURATION=Release
 PROJECT=Nibbler
 COMMAND=nibbler
