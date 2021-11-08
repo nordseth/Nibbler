@@ -50,14 +50,15 @@ namespace Nibbler.Utils
             }
 
             var response = await base.SendAsync(request, cancellationToken);
-            if (response.StatusCode != System.Net.HttpStatusCode.Unauthorized
+            if ((response.StatusCode != System.Net.HttpStatusCode.Unauthorized
+                    && response.StatusCode != System.Net.HttpStatusCode.Forbidden)
                 || !response.Headers.WwwAuthenticate.Any())
             {
                 return response;
             }
 
             var wwwAuth = response.Headers.WwwAuthenticate.First();
-            _logger.LogDebug($"Failed to authenticate {wwwAuth}");
+            _logger.LogDebug($"Unauthorized, trying to authenticate {wwwAuth}");
             if (!await TrySetAuthorization(wwwAuth))
             {
                 return response;
