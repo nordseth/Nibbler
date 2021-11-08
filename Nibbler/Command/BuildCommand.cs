@@ -285,6 +285,7 @@ namespace Nibbler.Command
                 var toRegAuthHandler = new AuthenticationHandler(
                     ImageHelper.GetRegistryName(ToImage.Value()),
                     dockerConfigCredentials,
+                    true,
                     logger,
                     _httpClientFactory.Create(null, false, null));
 

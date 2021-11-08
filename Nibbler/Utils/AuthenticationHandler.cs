@@ -15,6 +15,7 @@ namespace Nibbler.Utils
     {
         private readonly string _registry;
         private readonly IDockerConfigCredentials _dockerConfigCredentials;
+        private readonly bool _push;
         private readonly ILogger _logger;
         private readonly HttpClient _tokenClient;
 
@@ -23,10 +24,11 @@ namespace Nibbler.Utils
         private string _username;
         private string _password;
 
-        public AuthenticationHandler(string registry, IDockerConfigCredentials dockerConfigCredentials, ILogger logger, HttpClient tokenClient)
+        public AuthenticationHandler(string registry, IDockerConfigCredentials dockerConfigCredentials, bool push, ILogger logger, HttpClient tokenClient)
         {
             _registry = registry;
             _dockerConfigCredentials = dockerConfigCredentials;
+            _push = push;
             _logger = logger;
             _tokenClient = tokenClient;
         }
@@ -105,6 +107,17 @@ namespace Nibbler.Utils
 
             if (scope != null)
             {
+                if (_push)
+                {
+                    var resourceScope = ResourceScope.TryParse(scope);
+                    if (resourceScope != null && resourceScope.IsPullOnly())
+                    {
+                        resourceScope.SetPullPush();
+                        scope = resourceScope.ToString();
+                        _logger.LogDebug($"Adding push to scope: {scope}");
+                    }
+                }
+
                 queryString = queryString.Add("scope", scope);
                 _scope = scope;
             }

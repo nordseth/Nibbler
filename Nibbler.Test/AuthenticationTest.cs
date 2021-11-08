@@ -5,6 +5,7 @@ using Nibbler.Command;
 using Nibbler.Utils;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -52,7 +53,7 @@ namespace Nibbler.Test
             string password = "password1";
             var expectedAuth = AuthenticationHandler.EncodeCredentials(username, password);
 
-            var handler = new AuthenticationHandler(null, null, NullLogger.Instance, null);
+            var handler = new AuthenticationHandler(null, null, false, NullLogger.Instance, null);
             handler.SetCredentials(username, password);
 
             var fakeHandler = new FakeRequireAuthHandler("Basic", null, expectedAuth);
@@ -71,7 +72,7 @@ namespace Nibbler.Test
             var dockerConfigMock = new Mock<IDockerConfigCredentials>();
             dockerConfigMock.Setup(c => c.GetEncodedCredentials(null)).Returns(token);
 
-            var handler = new AuthenticationHandler(null, dockerConfigMock.Object, NullLogger.Instance, null);
+            var handler = new AuthenticationHandler(null, dockerConfigMock.Object, false, NullLogger.Instance, null);
 
             var fakeHandler = new FakeRequireAuthHandler("Basic", null, token);
             handler.InnerHandler = fakeHandler;
@@ -110,6 +111,58 @@ namespace Nibbler.Test
             //var toAuthHandler = regImageDest.Registry.Handler as AuthenticationHandler;
             //Assert.IsNotNull(toAuthHandler);
             //Assert.AreEqual(toCreds, toAuthHandler.HasCredentials());
+        }
+
+        [TestMethod]
+        [DataRow("repository:library/hello-world:pull")]
+        [DataRow("repository:dchub-cicd/azure-jenkins-agents-go-test:pull,push")]
+        [DataRow("repository:dchub-cicd/azure-jenkins-agents-go-test:")]
+        [DataRow(":dchub-cicd/azure-jenkins-agents-go-test:")]
+        [DataRow("::")]
+        [DataRow("repository::")]
+        [DataRow("repository:https://test.com:8080/azure-jenkins-agents-go-test:pull")]
+        public void ResourceScope_TryParse_Valid(string scope)
+        {
+            var resourceScope = ResourceScope.TryParse(scope);
+            Assert.IsNotNull(resourceScope);
+            Console.Write(resourceScope);
+            Console.WriteLine($" ({resourceScope.Actions.Count()})");
+        }
+
+        [TestMethod]
+        [DataRow("repository:library/hello-world:pull")]
+        [DataRow("repository:https://test.com:8080/azure-jenkins-agents-go-test:pull")]
+        public void ResourceScope_TryParse_IsPullOnly(string scope)
+        {
+            var resourceScope = ResourceScope.TryParse(scope);
+            Assert.IsNotNull(resourceScope);
+            Console.Write(resourceScope);
+            Console.WriteLine($" ({resourceScope.Actions.Count()})");
+            Assert.IsTrue(resourceScope.IsPullOnly());
+        }
+
+        [TestMethod]
+        [DataRow("repository:dchub-cicd/azure-jenkins-agents-go-test:pull,push")]
+        [DataRow("repository:dchub-cicd/azure-jenkins-agents-go-test:")]
+        [DataRow(":dchub-cicd/azure-jenkins-agents-go-test:")]
+        [DataRow("::")]
+        [DataRow("repository::")]
+        public void ResourceScope_TryParse_Not_IsPullOnly(string scope)
+        {
+            var resourceScope = ResourceScope.TryParse(scope);
+            Assert.IsNotNull(resourceScope);
+            Console.Write(resourceScope);
+            Console.WriteLine($" ({resourceScope.Actions.Count()})");
+            Assert.IsFalse(resourceScope.IsPullOnly());
+        }
+
+        [TestMethod]
+        [DataRow("")]
+        [DataRow("repository:dchub-cicd/azure-jenkins-agents-go-test")]
+        public void ResourceScope_TryParse_InvalidValid(string scope)
+        {
+            var resourceScope = ResourceScope.TryParse(scope);
+            Assert.IsNull(resourceScope);
         }
 
         public class FakeRequireAuthHandler : DelegatingHandler

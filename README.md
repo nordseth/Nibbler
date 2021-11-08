@@ -64,6 +64,7 @@ Options:
   --cmd                   Set the image cmd
   --entrypoint            Set the image entrypoint
   -v|--debug              Verbose output
+  --trace                 Trace log. INSECURE! Exposes authentication headers
   --dry-run               Does not push, only shows what would happen (use with -v)
   --docker-config         Specify docker config file for authentication with registry. (default: ~/.docker/config.json)
   --username              Registry username (deprecated)
