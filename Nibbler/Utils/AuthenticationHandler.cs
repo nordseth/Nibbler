@@ -134,6 +134,7 @@ namespace Nibbler.Utils
 
             _authorization = new AuthenticationHeaderValue("Bearer", tokenResponse.token ?? tokenResponse.access_token);
             _logger.LogDebug($"Using Bearer token for {_registry} ({queryString})");
+            _logger.LogTrace($"Setting authorization to: {_authorization}");
             return true;
         }
 
@@ -153,6 +154,7 @@ namespace Nibbler.Utils
             {
                 _authorization = new AuthenticationHeaderValue("Basic", credentials);
                 _logger.LogDebug($"Using Basic auth for {_registry}");
+                _logger.LogTrace($"Setting authorization to: {_authorization}");
                 return true;
             }
 
