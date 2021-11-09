@@ -27,6 +27,7 @@ namespace Nibbler.Utils
         public HttpClient Create(Uri baseUri, bool skipTlsVerify, params DelegatingHandler[] additionalHandlers)
         {
             var primaryHandler = new HttpClientHandler();
+            primaryHandler.UseCookies = true;
             if (skipTlsVerify)
             {
                 primaryHandler.ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
