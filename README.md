@@ -13,9 +13,9 @@ It does not need root or any other privileges, so is well suited for running in 
 
 ## Status
 
-Nibbler should not be considered stable, but it is used for building production images.
-Missing feature as mostly better error handling and messages.
-The test set is limited, especially around authentication methods used with different image registries.
+Nibbler is kind of stable, it is used by some organizations in production pipelines.
+Error handling and messages could be better.
+The test set is limited, especially around authentication methods with different image registries.
 
 ## Why Nibbler
 
@@ -42,7 +42,7 @@ Do simple changes to OCI images
 Usage: nibbler [options]
 
 Options:
-  -?|-h|--help            Show help information
+  -?|-h|--help            Show help information.
   --from-image            Set from image (required)
   --from-insecure         Insecure from registry (http)
   --from-skip-tls-verify  Skip verifying from registry TLS certificate
@@ -53,6 +53,8 @@ Options:
   --to-skip-tls-verify    Skip verifying to registry TLS certificate
   --to-username           To registry username
   --to-password           To registry password
+  --from-file             Read from image from file (alternative to --from-image)
+  --to-file               Write image to file (alternative to --to-image)
   --add                   Add contents of a folder to the image 'sourceFolder:destFolder[:ownerId:groupId:permissions]'
   --addFolder             Add a folder to the image 'destFolder[:ownerId:groupId:permissions]'
   --label                 Add label to the image 'name=value'
@@ -67,8 +69,6 @@ Options:
   --trace                 Trace log. INSECURE! Exposes authentication headers
   --dry-run               Does not push, only shows what would happen (use with -v)
   --docker-config         Specify docker config file for authentication with registry. (default: ~/.docker/config.json)
-  --username              Registry username (deprecated)
-  --password              Registry password (deprecated)
   --insecure              Insecure registry (http). Only use if base image and destination is the same registry.
   --skip-tls-verify       Skip verifying registry TLS certificate. Only use if base image and destination is the same
                           registry.
@@ -81,7 +81,7 @@ Options:
 ```
 dotnet publish -o $PWD/artifacts
 nibbler \
-	--from-image mcr.microsoft.com/dotnet/aspnet:5.0 \
+	--from-image mcr.microsoft.com/dotnet/aspnet:6.0 \
 	--to-image my-registy.com/repo/image:latest  \
 	--add "artifacts:/app" \
 	--workdir /app \
@@ -100,6 +100,7 @@ nibbler \
 - uses docker-config.json for authentication.
 - uses "./.nibbler" to store layers
   - folder is not cleaned up. Can be overwritten with "--temp-folder"
+- can store images locally, in a proprietary format, and be used to copy images
   
 ## Work arounds
 
