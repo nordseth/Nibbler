@@ -61,12 +61,19 @@ namespace Nibbler.Test
         }
 
         [TestMethod]
-        [DataRow("registry.hub.docker.com/library/hello-world:latest", false, false)]
-        public async Task Registry_Get_Manifest_With_Auth(string image, bool insecure, bool skipTlsVerify)
+        [DataRow("registry.hub.docker.com/library/hello-world:latest", false, false, false)]
+        [DataRow("registry.hub.docker.com/nordseth/kubetest:latest", false, false, true)]
+        [DataRow("nordseth.azurecr.io/azure-test:latest", false, false, true)]
+        public async Task Registry_Get_Manifest_With_Auth(string image, bool insecure, bool skipTlsVerify, bool useDockerConfig)
         {
             var registryName = ImageHelper.GetRegistryName(image);
             var registryUrl = ImageHelper.GetRegistryBaseUrl(image, insecure);
-            var authHandler = new AuthenticationHandler(registryName, null, false, _registryLogger, _httpClientFactory.Create(registryUrl));
+            IDockerConfigCredentials dockerCredentials = null;
+            if (useDockerConfig)
+            {
+                dockerCredentials = new DockerConfigCredentials(null);
+            }
+            var authHandler = new AuthenticationHandler(registryName, dockerCredentials, false, _registryLogger, _httpClientFactory.Create(registryUrl));
             var httpClient = _httpClientFactory.Create(registryUrl, skipTlsVerify, authHandler);
             var registry = new Registry(registryUrl, _registryLogger, httpClient);
 
