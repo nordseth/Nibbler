@@ -15,19 +15,6 @@ namespace Nibbler.Command
 {
     public class BuildCommand
     {
-        private readonly ILogger _logger;
-        private readonly ILogger _httpClientLogger;
-        private readonly HttpClientFactory _httpClientFactory;
-        private const string ManifestDigestFileName = "digest";
-        private string _tempFolderPath;
-
-        public BuildCommand()
-        {
-            _logger = new Logger("BUILD", false, false);
-            _httpClientLogger = new Logger("HTTP", false, false);
-            _httpClientFactory = new HttpClientFactory(_httpClientLogger);
-        }
-
         public CommandOption FromImage { get; private set; }
         public CommandOption FromInsecure { get; private set; }
         public CommandOption FromSkipTlsVerify { get; private set; }
@@ -166,352 +153,131 @@ namespace Nibbler.Command
         public async Task<int> ExecuteAsync(CancellationToken cancellationToken)
         {
             var sw = System.Diagnostics.Stopwatch.StartNew();
-            UpdateLogLevel();
+            var run = new BuildRun(Verbose.HasValue(), Trace.HasValue());
 
             try
             {
-                var imageSource = CreateImageSource();
-                var image = await imageSource.LoadImage();
-                var imageUpdated = UpdateImageConfig(image.Config);
+                SetImageSource(run);
+                SetImageDest(run);
+                SetConfig(run);
 
-                if (imageUpdated)
+                foreach (var a in Add.Values ?? Enumerable.Empty<string>())
                 {
-                    image.ConfigUpdated();
+                    run.Add.Add(AddArgument.Parse(a, false));
                 }
 
-                if (Add.HasValue() || AddFolder.HasValue())
+                foreach (var a in AddFolder.Values ?? Enumerable.Empty<string>())
                 {
-                    var layer = CreateLayer(Add.Values, AddFolder.Values, $"layer{image.LayersAdded.Count():00}");
-                    image.AddLayer(layer);
+                    run.AddFolder.Add(AddArgument.Parse(a, true));
                 }
 
-                if (!image.ManifestUpdated)
-                {
-                    _logger.LogDebug("No changes to image, will copy image.");
-                }
+                run.DryRun = DryRun.HasValue();
+                run.TempFolderPath = TempFolder.Value();
+                run.WriteDigestFile = DigestFile.HasValue();
+                run.DigestFilepath = DigestFile.Value();
 
-                var pusher = CreateImageDest(image.LayersAdded);
+                await run.ExecuteAsync();
 
-                bool configExists = await pusher.CheckConfigExists(image.Manifest);
-                var missingLayers = await pusher.FindMissingLayers(image.Manifest);
-
-                if (!DryRun.HasValue())
-                {
-                    if (!configExists)
-                    {
-                        await pusher.PushConfig(image.Manifest.config, () => new MemoryStream(image.ConfigBytes));
-                    }
-
-                    await pusher.CopyLayers(imageSource, missingLayers);
-                    await pusher.PushLayers(f => File.OpenRead(Path.Combine(_tempFolderPath, f)));
-                    await pusher.PushManifest(() => new MemoryStream(image.ManifestBytes));
-                }
-
-                _logger.LogDebug($"Image digest: {image.ManifestDigest}");
-
-                if (DigestFile.HasValue())
-                {
-                    string digestFilepath;
-                    if (!string.IsNullOrEmpty(DigestFile.Value()))
-                    {
-                        digestFilepath = DigestFile.Value();
-                    }
-                    else
-                    {
-                        EnsureTempFolder();
-                        digestFilepath = Path.Combine(_tempFolderPath, ManifestDigestFileName);
-                    }
-
-                    File.WriteAllText(digestFilepath, image.ManifestDigest);
-                }
-
-                _logger.LogDebug($"completed in {sw.ElapsedMilliseconds} ms");
-                Console.WriteLine(image.ManifestDigest);
+                run.Logger.LogDebug($"completed in {sw.ElapsedMilliseconds} ms");
+                Console.WriteLine(run.ManifestDigest);
 
                 return 0;
             }
             catch (Exception ex)
             {
                 Console.Error.WriteLine($"Error: {ex.Message}");
-                _logger.LogDebug(ex, "exception");
-                _logger.LogDebug($"completed in {sw.ElapsedMilliseconds} ms");
+                run.Logger.LogDebug(ex, "exception");
+                run.Logger.LogDebug($"completed in {sw.ElapsedMilliseconds} ms");
 
                 return 1;
             }
         }
 
-        private void UpdateLogLevel()
-        {
-            _logger.SetDebugEnable(Verbose.HasValue());
-            _logger.SetTraceEnable(Trace.HasValue());
-            _httpClientLogger.SetDebugEnable(Verbose.HasValue());
-            _httpClientLogger.SetTraceEnable(Trace.HasValue());
-        }
-
-        private ILogger CreateLogger(string name)
-        {
-            return new Logger(name, Verbose.HasValue(), Trace.HasValue());
-        }
-
-        internal IImageSource CreateImageSource()
+        private void SetImageSource(BuildRun run)
         {
             if (FromImage.HasValue())
             {
-                return RegistryImageSource.Create(
+                run.SetRegistryImageSource(
                     FromImage.Value(),
                     FromUsername.Value(),
                     FromPassword.Value(),
                     Insecure.HasValue() || FromInsecure.HasValue(),
                     FromSkipTlsVerify.HasValue() || SkipTlsVerify.HasValue(),
-                    DockerConfig.Value(),
-                    CreateLogger("FROM-REG"),
-                    _httpClientFactory);
+                    DockerConfig.Value());
             }
             else
             {
-                return new FileImageSource(FromFile.Value(), CreateLogger("FILE"));
+                run.SetFileImageSource(FromFile.Value());
             }
         }
 
-        internal IImageDestination CreateImageDest(IEnumerable<BuilderLayer> addedLayers)
+        private void SetImageDest(BuildRun run)
         {
             if (ToImage.HasValue())
             {
-                var logger = CreateLogger("TO-REG");
-
-                var toUri = ImageHelper.GetRegistryBaseUrl(ToImage.Value(), Insecure.HasValue() || ToInsecure.HasValue());
-
-                var dockerConfigCredentials = new DockerConfigCredentials(DockerConfig.Value());
-                var toRegAuthHandler = new AuthenticationHandler(
-                    ImageHelper.GetRegistryName(ToImage.Value()),
-                    dockerConfigCredentials,
-                    true,
-                    logger,
-                    _httpClientFactory.Create(null, false, null));
-
-                if (ToUsername.HasValue() && ToPassword.HasValue())
-                {
-                    toRegAuthHandler.SetCredentials(ToUsername.Value(), ToPassword.Value());
-                }
-
-                var toSkipTlsVerify = ToSkipTlsVerify.HasValue() || SkipTlsVerify.HasValue();
-                var toRegistryClient = _httpClientFactory.Create(toUri, toSkipTlsVerify, toRegAuthHandler);
-                var toRegistry = new Registry(logger, toRegistryClient);
-
-                logger.LogDebug($"using {toUri} for push{(toSkipTlsVerify ? ", skipTlsVerify" : "")}");
-
-                return new RegistryPusher(ToImage.Value(), toRegistry, addedLayers, logger);
+                run.SetRegistoryImageDest(
+                    ToImage.Value(),
+                    ToUsername.Value(),
+                    ToPassword.Value(),
+                    Insecure.HasValue() || ToInsecure.HasValue(),
+                    ToSkipTlsVerify.HasValue() || SkipTlsVerify.HasValue(),
+                    DockerConfig.Value());
             }
             else
             {
-                return new FileImageDestination(ToFile.Value(), addedLayers, CreateLogger("FILE"));
+                run.SetFileImageDest(ToFile.Value());
             }
         }
 
-        private bool UpdateImageConfig(ImageV1 image)
+        private void SetConfig(BuildRun run)
         {
-            var config = image.config;
-            var historyStrings = new List<string>();
-
-            // do git labels before other labels, to enable users to overwrite them
             if (GitLabels.HasValue())
             {
-                IDictionary<string, string> gitLabels = null;
-                try
-                {
-                    gitLabels = Utils.GitLabels.GetLabels(GitLabels.Value(), GitLabelsPrefix.Value());
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning($"Failed to read git labels: {ex.Message}");
-                }
-
-                if (gitLabels != null)
-                {
-                    foreach (var l in gitLabels)
-                    {
-                        config.Labels = config.Labels ?? new Dictionary<string, string>();
-                        config.Labels[l.Key] = l.Value;
-                        historyStrings.Add($"--gitLabels {l.Key}={l.Value}");
-                    }
-                }
+                run.AddGitLabels = true;
+                run.GitLabelsPrefix = GitLabelsPrefix.Value();
+                run.GitRepoPath = GitLabels.Value();
             }
 
             foreach (var label in Label.Values)
             {
-                config.Labels = config.Labels ?? new Dictionary<string, string>();
                 var split = label.Split('=', 2);
                 if (split.Length != 2)
                 {
                     throw new Exception($"Invalid label {label}");
                 }
 
-                config.Labels[split[0]] = split[1];
-                historyStrings.Add($"--label {split[0]}={split[1]}");
+                run.Labels.Add(split[0], split[1]);
             }
 
             foreach (var var in Env.Values)
             {
-                config.Env = config.Env ?? new List<string>();
-                config.Env.Add(var);
-                historyStrings.Add($"--env {var}");
+                run.Env.Add(var);
             }
 
             if (WorkDir.HasValue())
             {
-                config.WorkingDir = WorkDir.Value();
-                historyStrings.Add($"--workdir {WorkDir.Value()}");
+                run.WorkingDir = WorkDir.Value();
             }
 
             if (User.HasValue())
             {
-                config.User = User.Value();
-                historyStrings.Add($"--user {User.Value()}");
+                run.User = User.Value();
             }
 
             if (Cmd.HasValue())
             {
-                config.Cmd = SplitCmd(Cmd.Value()).ToList();
-                var cmdString = string.Join(", ", config.Cmd.Select(c => $"\"{c}\""));
-                historyStrings.Add($"--cmd {cmdString}");
+                run.Cmd = SplitCmd(Cmd.Value()).ToList();
             }
 
             if (Entrypoint.HasValue())
             {
-                config.Entrypoint = SplitCmd(Entrypoint.Value()).ToList();
-                var epString = string.Join(", ", config.Entrypoint.Select(c => $"\"{c}\""));
-                historyStrings.Add($"--entrypoint {epString}");
-            }
-
-            if (historyStrings.Any())
-            {
-                image.history.Add(ImageV1History.Create(string.Join(", ", historyStrings), true));
-            }
-
-            foreach (var h in historyStrings)
-            {
-                _logger.LogDebug(h);
-            }
-
-            if (historyStrings.Any())
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
-
-        private BuilderLayer CreateLayer(IEnumerable<string> adds, IEnumerable<string> addFolders, string layerName)
-        {
-            var description = new StringBuilder();
-            EnsureTempFolder();
-            var archive = new Archive(Path.Combine(_tempFolderPath, $"{layerName}.tar.gz"), true, new[] { _tempFolderPath }, _logger);
-
-            foreach (var a in adds ?? Enumerable.Empty<string>())
-            {
-                var arg = AddArgument.Parse(a, false);
-                _logger.LogDebug($"--add {arg.Source} {arg.Dest} {arg.OwnerId} {arg.GroupId} {arg.Mode.AsOctalString()}");
-
-                description.Append($"--add . {arg.Dest} {arg.OwnerId} {arg.GroupId} {arg.Mode.AsOctalString()} ");
-                archive.CreateEntries(arg.Source, arg.Dest, arg.OwnerId, arg.GroupId, arg.Mode);
-            }
-
-            foreach (var a in addFolders ?? Enumerable.Empty<string>())
-            {
-                var arg = AddArgument.Parse(a, true);
-                _logger.LogDebug($"--addFolder {arg.Dest} {arg.OwnerId} {arg.GroupId} {arg.Mode.AsOctalString()}");
-
-                description.Append($"--addFolder {arg.Dest} {arg.OwnerId} {arg.GroupId} {arg.Mode.AsOctalString()} ");
-                archive.CreateFolderEntry(arg.Dest, arg.OwnerId, arg.GroupId, arg.Mode);
-            }
-
-            var (digest, diffId) = archive.WriteFileAndCalcDigests();
-            var layer = new BuilderLayer
-            {
-                Name = layerName,
-                Digest = digest,
-                DiffId = diffId,
-                Size = archive.GetSize(),
-                Description = description.ToString(),
-            };
-
-            var layerLogger = CreateLogger("LAYER");
-            layerLogger.LogDebug($"{layer}");
-            foreach (var e in archive.Entries)
-            {
-                layerLogger.LogDebug($"    {Archive.PrintEntry(e.Value.Item2)}");
-            }
-
-            return layer;
-        }
-
-        private void EnsureTempFolder()
-        {
-            if (TempFolder.HasValue())
-            {
-                _tempFolderPath = System.IO.Path.GetFullPath(TempFolder.Value());
-            }
-            else
-            {
-                _tempFolderPath = Path.GetFullPath(".nibbler");
-            }
-
-            if (!Directory.Exists(_tempFolderPath))
-            {
-                Directory.CreateDirectory(_tempFolderPath);
+                run.Entrypoint = SplitCmd(Entrypoint.Value()).ToList();
             }
         }
 
         private IEnumerable<string> SplitCmd(string cmd)
         {
             return cmd.Split(" ", StringSplitOptions.RemoveEmptyEntries);
-        }
-
-        private class AddArgument
-        {
-            public string Source { get; set; }
-            public string Dest { get; set; }
-            public int? OwnerId { get; set; }
-            public int? GroupId { get; set; }
-            public int? Mode { get; set; }
-
-            public static AddArgument Parse(string s, bool isFolder)
-            {
-                var split = s.Split(new[] { ':', ';' });
-                if (!isFolder && split.Length < 2)
-                {
-                    throw new Exception($"Invalid add {s}");
-                }
-
-                int i = 0;
-                string source = null;
-                if (!isFolder)
-                {
-                    source = split[i++];
-                }
-
-                string dest = split[i++];
-
-                bool hasOwner = int.TryParse(split.Skip(i++).FirstOrDefault(), out int ownerId);
-                bool hasGroup = int.TryParse(split.Skip(i++).FirstOrDefault(), out int groupId);
-                string modeString = split.Skip(i++).FirstOrDefault();
-                int? mode = null;
-                if (!string.IsNullOrEmpty(modeString))
-                {
-                    mode = Convert.ToInt32(modeString, 8);
-                }
-
-                return new AddArgument
-                {
-                    Source = source,
-                    Dest = dest,
-                    OwnerId = hasOwner ? ownerId : (int?)null,
-                    GroupId = hasGroup ? groupId : (int?)null,
-                    Mode = mode,
-                };
-            }
         }
     }
 }

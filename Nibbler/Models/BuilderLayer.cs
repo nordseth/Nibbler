@@ -17,5 +17,17 @@ namespace Nibbler.Models
         {
             return $"{Name}: {Digest} - {Size} bytes - diff_id: {DiffId}";
         }
+
+        public BuilderLayer Clone()
+        {
+            return new BuilderLayer
+            {
+                Name = Name,
+                Digest = Digest,
+                DiffId = DiffId,
+                Size = Size,
+                Description = Description,
+            };
+        }
     }
 }
