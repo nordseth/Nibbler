@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.29424.173
+# Visual Studio Version 17
+VisualStudioVersion = 17.2.32630.192
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{194229F5-EBA0-4F06-B160-AE78282F5271}"
 	ProjectSection(SolutionItems) = preProject
@@ -12,7 +12,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nibbler", "Nibbler\Nibbler.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nibbler.Test", "Nibbler.Test\Nibbler.Test.csproj", "{AEA99A7A-5834-41E0-B416-69A0087A39B3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nibbler.LinuxFileUtils", "Nibbler.LinuxFileUtils\Nibbler.LinuxFileUtils.csproj", "{B401D70B-6A48-47F3-AE64-2180759C6699}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nibbler.LinuxFileUtils", "Nibbler.LinuxFileUtils\Nibbler.LinuxFileUtils.csproj", "{B401D70B-6A48-47F3-AE64-2180759C6699}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nibbler-Build", "Nibbler-Build\Nibbler-Build.csproj", "{A8528FA2-8FE1-48CF-8ADF-188546B07B62}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -32,6 +34,10 @@ Global
 		{B401D70B-6A48-47F3-AE64-2180759C6699}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B401D70B-6A48-47F3-AE64-2180759C6699}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B401D70B-6A48-47F3-AE64-2180759C6699}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A8528FA2-8FE1-48CF-8ADF-188546B07B62}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A8528FA2-8FE1-48CF-8ADF-188546B07B62}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A8528FA2-8FE1-48CF-8ADF-188546B07B62}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A8528FA2-8FE1-48CF-8ADF-188546B07B62}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
