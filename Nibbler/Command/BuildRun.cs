@@ -114,6 +114,11 @@ namespace Nibbler.Command
             _imageWriterFactory = () => new FileImageWriter(file, CreateLogger("FILE"));
         }
 
+        public void SetDockerArchiveDest(string file)
+        {
+            _imageWriterFactory = () => new DockerArchiveWriter(file, CreateLogger("FILE"));
+        }
+
         public async Task LoadSourceImage()
         {
             // validate _imageSourceFactory not null?

@@ -124,8 +124,7 @@ namespace Nibbler.Test
             "--add", @"../../../../tests/TestData/publish/:/app",
             "--add", @"../../../../tests/TestData/wwwroot/:/wwwroot",
             "--insecure",
-            "-v",
-            "--trace" })]
+            "-v" })]
         public async Task BuilderCommand_Adds(string[] args) => await Run(args);
 
         [TestMethod]
@@ -248,8 +247,7 @@ namespace Nibbler.Test
             "--from-insecure",
             "--to-file", "../../../../tests/TestData/test-image",
             "--add", @"../../../../tests/TestData/publish/:/app",
-            "-v",
-            "--trace" },
+            "-v" },
             "../../../../tests/TestData/test-image")]
         public async Task BuilderCommand_Add_Write_To_File(string[] args, string folder)
         {
@@ -257,6 +255,20 @@ namespace Nibbler.Test
             await Run(args);
             Assert.IsTrue(System.IO.Directory.Exists(folder));
             System.IO.Directory.Delete(folder, true);
+        }
+
+        [TestMethod]
+        [DataRow(new string[] {
+            "--from-image", "localhost:5000/dotnet/aspnet:6.0",
+            "--from-insecure",
+            "--to-archive", "../../../../tests/TestData/test-image.tar",
+            "--add", @"../../../../tests/TestData/publish/:/app",
+            "-v" },
+            "../../../../tests/TestData/test-image.tar")]
+        public async Task BuilderCommand_Add_Write_To_Archive(string[] args, string file)
+        {
+            await Run(args);
+            Assert.IsTrue(System.IO.File.Exists(file));
         }
 
         [TestMethod]
