@@ -14,6 +14,8 @@ namespace Nibbler
 {
     public class Image
     {
+        public const string ManifestFileName = "manifest.json";
+
         public byte[] ManifestBytes { get; private set; }
         public string ManifestDigest { get; private set; }
         public ManifestV2 Manifest { get; private set; }

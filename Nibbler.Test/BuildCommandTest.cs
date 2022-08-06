@@ -253,7 +253,7 @@ namespace Nibbler.Test
             "../../../../tests/TestData/test-image")]
         public async Task BuilderCommand_Add_Write_To_File(string[] args, string folder)
         {
-            Assert.IsFalse(System.IO.Directory.Exists(folder));
+            Assert.IsFalse(System.IO.Directory.Exists(folder), $"Folder {folder} already exists");
             await Run(args);
             Assert.IsTrue(System.IO.Directory.Exists(folder));
             System.IO.Directory.Delete(folder, true);
@@ -290,7 +290,7 @@ namespace Nibbler.Test
         {
             foreach (var folder in folders)
             {
-                Assert.IsFalse(System.IO.Directory.Exists(folder));
+                Assert.IsFalse(System.IO.Directory.Exists(folder), $"Folder {folder} already exists");
             }
 
             await Run(args1);
