@@ -26,7 +26,7 @@ namespace Nibbler.Test
         [DataRow("https://mcr.microsoft.com", "dotnet/aspnet", "6.0")]
         public async Task Digest_Compare(string registryUrl, string imageName, string imageTag)
         {
-            var registry = new Registry(new Uri(registryUrl), _registryLogger, _httpClientFactory.Create(new Uri(registryUrl)));
+            var registry = new Registry(_registryLogger, _httpClientFactory.Create(new Uri(registryUrl)));
             var imageSource = new RegistryImageSource(imageName, imageTag, registry, _registryLogger);
 
             var image = await imageSource.LoadImageMetadata();
@@ -39,12 +39,12 @@ namespace Nibbler.Test
         [DataRow("https://mcr.microsoft.com", "dotnet/aspnet", "6.0", "http://localhost:5000")]
         public async Task Registry_Upload(string sourceRegistryUrl, string imageName, string imageTag, string destRegistryUrl)
         {
-            var registry = new Registry(new Uri(sourceRegistryUrl), _registryLogger, _httpClientFactory.Create(new Uri(sourceRegistryUrl)));
+            var registry = new Registry(_registryLogger, _httpClientFactory.Create(new Uri(sourceRegistryUrl)));
             var imageSource = new RegistryImageSource(imageName, imageTag, registry, _registryLogger);
 
             var image = await imageSource.LoadImageMetadata();
 
-            var dest = new Registry(new Uri(destRegistryUrl), _registryLogger, _httpClientFactory.Create(new Uri(destRegistryUrl)));
+            var dest = new Registry(_registryLogger, _httpClientFactory.Create(new Uri(destRegistryUrl)));
             var uploadUri = await dest.StartUpload(imageName);
             Console.WriteLine($"uploadUri: {uploadUri}");
 

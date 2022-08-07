@@ -75,7 +75,7 @@ namespace Nibbler
             }
 
             var fromRegistryClient = httpClientFactory.Create(fromUri, skipTlsVerify, fromRegAuthHandler);
-            var registry = new Registry(fromUri, logger, fromRegistryClient);
+            var registry = new Registry(logger, fromRegistryClient);
 
             logger.LogDebug($"using {fromUri} for pull{(skipTlsVerify ? ", skipTlsVerify" : "")}");
 

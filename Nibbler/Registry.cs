@@ -13,14 +13,13 @@ namespace Nibbler
 {
     public class Registry 
     {
-        public Uri BaseUri { get; }
+        public Uri BaseUri => HttpClient.BaseAddress;
         public HttpClient HttpClient { get; }
 
         private readonly ILogger _logger;
 
-        public Registry(Uri baseUri, ILogger logger, HttpClient httpClient)
+        public Registry(ILogger logger, HttpClient httpClient)
         {
-            BaseUri = baseUri;
             HttpClient = httpClient;
             _logger = logger;
         }

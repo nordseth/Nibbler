@@ -83,6 +83,7 @@ namespace Nibbler.Test
         }
 
         [TestMethod]
+        [Ignore]
         [DataRow("--from-image|docker.io|--to-image|docker.io", false, false)]
         [DataRow("--from-image|docker.io|--to-image|docker.io|--from-username|a|--from-password|b", true, false)]
         [DataRow("--from-image|docker.io|--to-image|docker.io|--to-username|a|--to-password|b", false, true)]

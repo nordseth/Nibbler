@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Nibbler.Models;
+using Nibbler.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,18 +13,20 @@ namespace Nibbler.Test
     [TestClass]
     public class ImageDataTest
     {
-        private readonly Utils.Logger _registryLogger;
+        private readonly Logger _registryLogger;
+        private readonly Logger _httpLogger;
 
         public ImageDataTest()
         {
-            _registryLogger = new Utils.Logger("REGISTRY", true, true);
+            _registryLogger = new Logger("REGISTRY", true, true);
+            _httpLogger = new Logger("HTTP", true, true);
         }
 
         [TestMethod]
         [DataRow("http://localhost:5000", "hello-world", "latest")]
         public async Task Image_LoadMetadata(string registryUrl, string imageName, string imageRef)
         {
-            var registry = new Registry(new Uri(registryUrl), _registryLogger, null);
+            var registry = new Registry(_registryLogger, new HttpClientFactory(_httpLogger).Create(new Uri(registryUrl)));
             var imageSource = new RegistryImageSource(imageName, imageRef, registry, _registryLogger);
 
             var image = await imageSource.LoadImageMetadata();
@@ -44,7 +47,7 @@ namespace Nibbler.Test
         [DataRow("http://localhost:5000", "hello-world", "latest")]
         public async Task Image_UpdateImage(string registryUrl, string imageName, string imageRef)
         {
-            var registry = new Registry(new Uri(registryUrl), _registryLogger, null);
+            var registry = new Registry(_registryLogger, new HttpClientFactory(_httpLogger).Create(new Uri(registryUrl)));
             var imageSource = new RegistryImageSource(imageName, imageRef, registry, _registryLogger);
 
             var image = await imageSource.LoadImageMetadata();
@@ -73,7 +76,7 @@ namespace Nibbler.Test
             string digest = "invalid-digest";
             int size = 2;
 
-            var registry = new Registry(new Uri(registryUrl), _registryLogger, null);
+            var registry = new Registry(_registryLogger, new HttpClientFactory(_httpLogger).Create(new Uri(registryUrl)));
             var imageSource = new RegistryImageSource(imageName, imageRef, registry, _registryLogger);
 
             var image = await imageSource.LoadImageMetadata();

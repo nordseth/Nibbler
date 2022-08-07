@@ -296,7 +296,7 @@ namespace Nibbler.Command
 
                 var toSkipTlsVerify = ToSkipTlsVerify.HasValue() || SkipTlsVerify.HasValue();
                 var toRegistryClient = _httpClientFactory.Create(toUri, toSkipTlsVerify, toRegAuthHandler);
-                var toRegistry = new Registry(toUri, logger, toRegistryClient);
+                var toRegistry = new Registry(logger, toRegistryClient);
 
                 logger.LogDebug($"using {toUri} for push{(toSkipTlsVerify ? ", skipTlsVerify" : "")}");
 

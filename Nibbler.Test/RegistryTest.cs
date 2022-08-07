@@ -26,7 +26,7 @@ namespace Nibbler.Test
         [DataRow("http://localhost:5000", "hello-world", "latest")]
         public async Task Registry_Get_ManifestFile(string registryUrl, string imageName, string imageRef)
         {
-            var registry = new Registry(new Uri(registryUrl), _registryLogger, _httpClientFactory.Create(new Uri(registryUrl)));
+            var registry = new Registry(_registryLogger, _httpClientFactory.Create(new Uri(registryUrl)));
 
             var manifestContent = await registry.GetManifest(imageName, imageRef);
             var manifestJson = await manifestContent.ReadAsStringAsync();
@@ -38,7 +38,7 @@ namespace Nibbler.Test
         [DataRow("http://localhost:5000", "hello-world", "latest")]
         public async Task Registry_Get_Manifest(string registryUrl, string imageName, string imageRef)
         {
-            var registry = new Registry(new Uri(registryUrl), _registryLogger, _httpClientFactory.Create(new Uri(registryUrl)));
+            var registry = new Registry(_registryLogger, _httpClientFactory.Create(new Uri(registryUrl)));
 
             var manifestContent = await registry.GetManifest(imageName, imageRef);
             var manifestJson = await manifestContent.ReadAsStringAsync();
@@ -68,7 +68,7 @@ namespace Nibbler.Test
             var registryUrl = ImageHelper.GetRegistryBaseUrl(image, insecure);
             var authHandler = new AuthenticationHandler(registryName, null, false, _registryLogger, _httpClientFactory.Create(registryUrl));
             var httpClient = _httpClientFactory.Create(registryUrl, skipTlsVerify, authHandler);
-            var registry = new Registry(registryUrl, _registryLogger, httpClient);
+            var registry = new Registry(_registryLogger, httpClient);
 
             var imageName = ImageHelper.GetImageName(image);
             var imageRef = ImageHelper.GetImageReference(image);
@@ -98,7 +98,7 @@ namespace Nibbler.Test
         public async Task Registry_Get_ImageFile(string registryUrl, string imageName, string digest)
         {
             var httpClient = _httpClientFactory.Create(new Uri(registryUrl), false);
-            var registry = new Registry(new Uri(registryUrl), _registryLogger, httpClient);
+            var registry = new Registry(_registryLogger, httpClient);
 
             var imageContent = await registry.GetImageConfig(imageName, digest);
             var imageJson = await imageContent.ReadAsStringAsync();
@@ -112,7 +112,7 @@ namespace Nibbler.Test
             var registryUrl = ImageHelper.GetRegistryBaseUrl(registryName, insecure);
             var authHandler = new AuthenticationHandler(registryName, null, false, _registryLogger, _httpClientFactory.Create(registryUrl));
             var httpClient = _httpClientFactory.Create(registryUrl, skipTlsVerify, authHandler);
-            var registry = new Registry(registryUrl, _registryLogger, httpClient);
+            var registry = new Registry(_registryLogger, httpClient);
 
             var imageContent = await registry.GetImageConfig(imageName, digest);
             var imageJson = await imageContent.ReadAsStringAsync();
@@ -123,7 +123,7 @@ namespace Nibbler.Test
         [DataRow("https://mcr.microsoft.com", "dotnet/core/aspnet", "sha256:930743cb4e197dc01a680b604464724ad1344a07b395e9871482ef05dbd25950")]
         public async Task Registry_Get_Image(string registryName, string imageName, string digest)
         {
-            var registry = new Registry(new Uri(registryName), _registryLogger, _httpClientFactory.Create(new Uri(registryName)));
+            var registry = new Registry(_registryLogger, _httpClientFactory.Create(new Uri(registryName)));
 
             var imageContent = await registry.GetImageConfig(imageName, digest);
             var imageJson = await imageContent.ReadAsStringAsync();
