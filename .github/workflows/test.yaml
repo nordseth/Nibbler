@@ -1,0 +1,42 @@
+name: 'Test Nibbler'
+
+on:
+  workflow_dispatch:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      registry:
+        image: registry:2
+        ports: 
+        - 5000:5000
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v2
+        with:
+          dotnet-version: 6.0.x
+
+      # add aspnet image to registry
+      - run: docker pull mcr.microsoft.com/dotnet/aspnet:6.0
+      - run: docker tag mcr.microsoft.com/dotnet/aspnet:6.0 localhost:5000/dotnet/aspnet:6.0
+      - run: docker push localhost:5000/dotnet/aspnet:6.0 
+      - run: docker image rm localhost:5000/dotnet/aspnet:6.0
+
+      # setup test data
+      - run: rm -rf tests/TestData
+      - run: mkdir tests/TestData
+      - run: dotnet new webapp -o tests/TestData
+      - run: dotnet publish tests/TestData -o ./tests/TestData/publish
+      - run: curl -L https://mcr.microsoft.com/v2/dotnet/core/aspnet/blobs/sha256:9526604e089d8d4aa947f34e52a14ac8793232dd181022932f3c15291c5cd3af -o tests/TestData/test.tar.gz
+
+      # build and run tests
+      - run: dotnet restore
+      - run: dotnet build --no-restore
+      - run: dotnet test Nibbler.Test --no-build
+
+      - run: dotnet tool install -g minver-cli
+      - run: cd tests && chmod u+x test-e2e.sh && ./test-e2e.sh

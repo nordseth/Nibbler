@@ -16,6 +16,7 @@ namespace Nibbler.Test
     public class ImageCompareTest
     {
         [TestMethod]
+        [Ignore]
         [DataRow("localhost:5000/nibbler-test:kaniko", true)]
         [DataRow("localhost:5000/nibbler-test:docker", true)]
         [DataRow("localhost:5000/nibbler-test:nibbler", true)]
