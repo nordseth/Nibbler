@@ -11,6 +11,7 @@ dotnetVersion=6.0
 dotnetRuntimeTag=$dotnetVersion
 dotnetSdkTag=$dotnetVersion
 targetImage=nibbler-test
+dockerReg=localhost:5000
 
 echo "-------- Prepair images --------"
 docker pull mcr.microsoft.com/dotnet/sdk:$dotnetSdkTag
@@ -25,7 +26,7 @@ NIBBLER_VERSION=$(minver -t v -v e)
 
 echo "-------- Run build in docker image --------"
 
-cat << EOF | docker run -i --rm -v /$PWD/nuget:/nuget mcr.microsoft.com/dotnet/sdk:$dotnetSdkTag bash
+cat << EOF | docker run -i --rm --network host -v /$PWD/nuget:/nuget mcr.microsoft.com/dotnet/sdk:$dotnetSdkTag bash
 set -e
 export PATH="\$PATH:/root/.dotnet/tools"
 
@@ -44,8 +45,8 @@ dotnet tool install -g Nibbler --version ${NIBBLER_VERSION} --add-source /nuget
 
 echo "-------- Build image with Nibbler --------"
 nibbler \
-	--from-image host.docker.internal:5000/dotnet/aspnet:$dotnetRuntimeTag \
-	--to-image host.docker.internal:5000/$targetImage:$dotnetVersion \
+	--from-image $dockerReg/dotnet/aspnet:$dotnetRuntimeTag \
+	--to-image $dockerReg/$targetImage:$dotnetVersion \
 	--add "publish:/app" \
 	--addFolder "/app:1001:1001:777" \
 	--git-labels \
@@ -62,4 +63,8 @@ echo "-- remember to stop the running image: docker ps, docker stop nibbler-test
 
 docker pull localhost:5000/$targetImage:$dotnetVersion
 docker run -d --rm -p 8080:80 --name nibbler-test-app localhost:5000/$targetImage:$dotnetVersion
-docker ps -a -f name=nibbler-test-app
+#docker ps -a -f name=nibbler-test-app
+
+sleep 1
+curl -s --fail http://localhost:8080
+docker stop nibbler-test-app
