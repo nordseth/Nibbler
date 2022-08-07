@@ -4,10 +4,10 @@ set -e
 docker pull registry:2
 docker run -d --rm -p 5000:5000 --name registry registry:2
 
-docker pull mcr.microsoft.com/dotnet/aspnet:5.0
-docker tag mcr.microsoft.com/dotnet/aspnet:5.0 localhost:5000/dotnet/aspnet:5.0 
-docker push localhost:5000/dotnet/aspnet:5.0 
-docker image rm localhost:5000/dotnet/aspnet:5.0 
+docker pull mcr.microsoft.com/dotnet/aspnet:6.0
+docker tag mcr.microsoft.com/dotnet/aspnet:6.0 localhost:5000/dotnet/aspnet:6.0 
+docker push localhost:5000/dotnet/aspnet:6.0 
+docker image rm localhost:5000/dotnet/aspnet:6.0 
 
 rm -rf TestData
 mkdir TestData

@@ -21,5 +21,5 @@ to verify goto http://localhost:8080
 docker stop registry
 rm -r ./TestData
 docker image rm registry:2
-docker image rm mcr.microsoft.com/dotnet/aspnet:5.0
+docker image rm mcr.microsoft.com/dotnet/aspnet:6.0
 ```

@@ -7,7 +7,7 @@ set -e
 # uses git to clone https://github.com/nordseth/aspnetcore-new as source
 ###################################
 
-dotnetVersion=5.0
+dotnetVersion=6.0
 dotnetRuntimeTag=$dotnetVersion
 dotnetSdkTag=$dotnetVersion
 targetImage=nibbler-test

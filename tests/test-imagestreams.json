@@ -14,10 +14,10 @@
             "spec": {
                 "tags": [
                     {
-                        "name": "5.0",
+                        "name": "6.0",
                         "from": {
                             "kind": "DockerImage",
-                            "name": "mcr.microsoft.com/dotnet/sdk:5.0"
+                            "name": "mcr.microsoft.com/dotnet/sdk:6.0"
                         }
                     }
                 ]
@@ -32,10 +32,10 @@
             "spec": {
                 "tags": [
                     {
-                        "name": "5.0",
+                        "name": "6.0",
                         "from": {
                             "kind": "DockerImage",
-                            "name": "mcr.microsoft.com/dotnet/aspnet:5.0"
+                            "name": "mcr.microsoft.com/dotnet/aspnet:6.0"
                         }
                     }
                 ]

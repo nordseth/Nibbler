@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-buildImage=mcr.microsoft.com/dotnet/sdk:5.0
+buildImage=mcr.microsoft.com/dotnet/sdk:6.0
 hubFromImage=nginx:latest
 fromImage=nginx:latest
 toImage=test-save-load

@@ -12,7 +12,7 @@ echo -- npm install --
 call npm install 
 
 echo -- run nibbler --
-dotnet run --framework net5.0 -p ../../Nibbler -- --from-image registry.hub.docker.com/library/node:12 --to-image localhost:5000/node-win-test --to-insecure --add ".:/app" --addFolder "/app:1001:1001:777" --workdir /app --cmd "node server.js" -v
+dotnet run --framework net6.0 -p ../../Nibbler -- --from-image registry.hub.docker.com/library/node:12 --to-image localhost:5000/node-win-test --to-insecure --add ".:/app" --addFolder "/app:1001:1001:777" --workdir /app --cmd "node server.js" -v
 
 cd %current_dir% 
 

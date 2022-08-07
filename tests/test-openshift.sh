@@ -34,12 +34,12 @@ echo "dev token: $devtoken"
 
 echo "-------- Build nibbler --------"
 
-dotnet build ../Nibbler -o ./tmp-nibbler-build -f net5.0
+dotnet build ../Nibbler -o ./tmp-nibbler-build -f net6.0
 
 echo "-------- Run nibbler --------"
 
 dotnet ./tmp-nibbler-build/nibbler.dll \
-	--from-image $ip:$nodeport/$project/test-dotnet:5.0 \
+	--from-image $ip:$nodeport/$project/test-dotnet:6.0 \
 	--username developer \
 	--password $devtoken \
 	--to-image $ip:$nodeport/$project/nibbler-test:latest \
