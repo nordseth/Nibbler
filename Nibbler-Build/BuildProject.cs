@@ -11,10 +11,11 @@ public class BuildProject
 {
     private const string BuildLoggerName = "[BUILD]";
 
-    public string BuildConfiguration { get; set; } = "Debug";
-    public string RuntimeIdentifier { get; set; } = "linux-x64";
-    public string PublishDir { get; set; } = ".nibbler-build";
-    public bool SelfContained { get; set; } = false;
+    public string BuildConfiguration { get; private set; } = "Debug";
+    public string RuntimeIdentifier { get; private set; } = "linux-x64";
+    public string PublishDir { get; private set; } = ".nibbler-build";
+    public bool SelfContained { get; private set; } = false;
+
     public string ShortParamString => $"-p:Configuration={BuildConfiguration} -p:RuntimeIdentifier={RuntimeIdentifier}";
 
     public string? ProjectFile { get; private set; }
@@ -24,7 +25,7 @@ public class BuildProject
 
     public string PublishPath { get; private set; } = ".";
 
-    public async Task<int> Run(string[] args)
+    public int Run(string[] args)
     {
         ProjectFile = FindProjectFile(args.FirstOrDefault() ?? "C:\\code\\_repos\\KubeTest\\KubeTest" /*"."*/);
         if (ProjectFile == null)
@@ -41,7 +42,7 @@ public class BuildProject
         catch (Exception ex)
         {
             Console.Error.WriteLine($"{BuildLoggerName} Error loading project: {ex.GetType().Name}: {ex.Message}");
-            return -1;
+            return -2;
         }
 
         Console.WriteLine($"{BuildLoggerName} Loaded: {ProjectFile}, AssemblyName: {AssemblyName}, TargetFramework: {Framework}, BaseImage: {FromImage}");
@@ -62,7 +63,7 @@ public class BuildProject
                 Console.Error.WriteLine($"{BuildLoggerName} Cannot determine from image.");
             }
 
-            return -1;
+            return -3;
         }
 
         Console.WriteLine($"{BuildLoggerName} +msbuild -t:restore {ShortParamString}");
@@ -71,7 +72,7 @@ public class BuildProject
         if (!restoreResult)
         {
             Console.Error.WriteLine($"{BuildLoggerName} Restore failed.");
-            return -3;
+            return -4;
         }
 
         PublishPath = Path.Combine(project.DirectoryPath, ".nibbler-build");
@@ -87,7 +88,7 @@ public class BuildProject
         if (!publishResult)
         {
             Console.Error.WriteLine($"{BuildLoggerName} Publish failed.");
-            return -4;
+            return -5;
         }
 
         return 0;
@@ -96,20 +97,38 @@ public class BuildProject
     private Project LoadProject()
     {
         Project project = new(ProjectFile);
+
+        RuntimeIdentifier = GetProperty(project, "NibblerRuntime") ?? RuntimeIdentifier;
+        BuildConfiguration = GetProperty(project, "NibblerConfiguration") ?? BuildConfiguration;
+
+        var readSelfContained = GetProperty(project, "NibblerSelfContained");
+        if (readSelfContained != null && bool.TryParse(readSelfContained, out bool parsedSelfContained))
+        {
+            SelfContained = parsedSelfContained;
+        }
+
+        Framework = GetProperty(project, "TargetFramework");
+        AssemblyName = GetProperty(project, "AssemblyName");
+        FromImage = GetProperty(project, "NibblerFromImage") ?? GetDefaultImage(Framework);
+
         project.SetGlobalProperty("Configuration", BuildConfiguration);
         project.SetGlobalProperty("PublishDir", PublishDir);
         project.SetGlobalProperty("RuntimeIdentifier", RuntimeIdentifier);
         project.SetGlobalProperty("SelfContained", SelfContained.ToString());
 
-        Framework = GetProperty(project, "TargetFramework");
-        AssemblyName = GetProperty(project, "AssemblyName");
-        FromImage = GetProperty(project, "NibblerFromImage") ?? GetDefaultImage(Framework);
         return project;
     }
 
-    private string GetDefaultImage(string? framework)
+    private string? GetDefaultImage(string? framework)
     {
-        return "mcr.microsoft.com/dotnet/aspnet:6.0";
+        if (framework == "net6.0")
+        {
+            return "mcr.microsoft.com/dotnet/aspnet:6.0";
+        }
+        else
+        {
+            return null;
+        }
     }
 
     private string? GetProperty(Project project, string name)

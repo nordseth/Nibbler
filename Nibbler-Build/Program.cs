@@ -4,13 +4,13 @@ using System.Reflection;
 
 Console.WriteLine($"Nibbler-Build v{GetVersion()}");
 
-// [project] #todo: --to-image <image> [--to-insecure] [--to-skip-tls-verify] [--dry-run] [--write-digest-file]
+// [project] #todo: --to-image|--to-archive|--to-file <image> [--to-insecure] [--to-skip-tls-verify] [--write-digest-file]
 
 var sw = System.Diagnostics.Stopwatch.StartNew();
 
 MSBuildLocator.RegisterDefaults();
 var buildProject = new BuildProject();
-int buildResult = await buildProject.Run(args);
+int buildResult = buildProject.Run(args);
 if (buildResult != 0)
 {
     Console.WriteLine($"[BUILD] completed in {sw.ElapsedMilliseconds} ms (error: {buildResult})");
