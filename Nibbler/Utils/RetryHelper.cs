@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 
 namespace Nibbler.Utils
 {
@@ -26,7 +26,7 @@ namespace Nibbler.Utils
                     }
                     else
                     {
-                        var msg = JsonConvert.SerializeObject(ex.Message);
+                        var msg = JsonSerializer.Serialize(ex.Message);
                         logger.LogWarning($"failed, but will retry! error: {msg}");
 
                         tries++;

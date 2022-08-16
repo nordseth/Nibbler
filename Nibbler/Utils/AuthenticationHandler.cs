@@ -1,11 +1,11 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -143,7 +143,7 @@ namespace Nibbler.Utils
 
             var content = await response.Content.ReadAsStringAsync();
             response.EnsureSuccessStatusCode();
-            var tokenResponse = JsonConvert.DeserializeObject<TokenResponse>(content);
+            var tokenResponse = JsonSerializer.Deserialize<TokenResponse>(content);
 
             _authorization = new AuthenticationHeaderValue("Bearer", tokenResponse.token ?? tokenResponse.access_token);
             _logger.LogDebug($"Using Bearer token for {_registry} ({queryString})");

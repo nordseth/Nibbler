@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using Nibbler.Models;
+﻿using Nibbler.Models;
 using Nibbler.Utils;
 using System;
 using System.Collections.Generic;
@@ -7,6 +6,7 @@ using System.IO;
 using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace Nibbler
@@ -32,12 +32,12 @@ namespace Nibbler
             image.ManifestBytes = await manifestContent.ReadBytesAsync();
             image.ManifestDigest = FileHelper.Digest(image.ManifestBytes);
             var manifestJson = await manifestContent.ReadStringAsync();
-            image.Manifest = JsonConvert.DeserializeObject<ManifestV2>(manifestJson);
+            image.Manifest = JsonSerializer.Deserialize<ManifestV2>(manifestJson);
 
             var imageConfigContent = await getConfig(image.Manifest.config.digest);
             image.ConfigBytes = await imageConfigContent.ReadBytesAsync();
             var configJson = await imageConfigContent.ReadStringAsync();
-            image.Config = JsonConvert.DeserializeObject<ImageV1>(configJson);
+            image.Config = JsonSerializer.Deserialize<ImageV1>(configJson);
 
             image.ManifestUpdated = false;
             return image;
