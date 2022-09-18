@@ -3,16 +3,16 @@ using System.Collections.Generic;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace Nibbler.Utils
 {
     public static class FileHelper
     {
-        public static JsonSerializerSettings JsonSerializerSettings = new JsonSerializerSettings
+        public static JsonSerializerOptions JsonSerializerOptions = new JsonSerializerOptions
         {
-            Formatting = Formatting.Indented,
-            NullValueHandling = NullValueHandling.Ignore,
+            WriteIndented = true,
+            IgnoreNullValues = true,
         };
 
         // https://github.com/docker/distribution/blob/master/docs/spec/api.md#digest-parameter
@@ -39,9 +39,9 @@ namespace Nibbler.Utils
             return $"sha256:{BitConverter.ToString(hash).Replace("-", string.Empty).ToLowerInvariant()}";
         }
 
-        public static string JsonSerialize(object obj)
+        public static string JsonSerialize<T>(T obj)
         {
-            return JsonConvert.SerializeObject(obj, JsonSerializerSettings);
+            return JsonSerializer.Serialize<T>(obj, JsonSerializerOptions);
         }
 
         public static string AsOctalString(this int? mode)

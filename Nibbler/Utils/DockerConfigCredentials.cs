@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace Nibbler.Utils
 {
@@ -51,7 +51,7 @@ namespace Nibbler.Utils
             try
             {
                 var dockerConfigJson = File.ReadAllText(configPath);
-                config = JsonConvert.DeserializeObject<DockerConfig>(dockerConfigJson);
+                config = JsonSerializer.Deserialize<DockerConfig>(dockerConfigJson);
             }
             catch (Exception ex)
             {
@@ -102,7 +102,7 @@ namespace Nibbler.Utils
                     process.WaitForExit();
 
                     var resp = process.StandardOutput.ReadToEnd();
-                    return JsonConvert.DeserializeObject<CredentialHelperResult>(resp);
+                    return JsonSerializer.Deserialize<CredentialHelperResult>(resp);
                 }
             }
             catch

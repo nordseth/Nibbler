@@ -1,8 +1,8 @@
 using System;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Newtonsoft.Json;
 using Nibbler.Models;
 using Nibbler.Utils;
 
@@ -42,7 +42,7 @@ namespace Nibbler.Test
 
             var manifestContent = await registry.GetManifest(imageName, imageRef);
             var manifestJson = await manifestContent.ReadAsStringAsync();
-            var manifest = JsonConvert.DeserializeObject<ManifestV2>(manifestJson);
+            var manifest = JsonSerializer.Deserialize<ManifestV2>(manifestJson);
 
             Assert.IsNotNull(manifest);
             Assert.IsNotNull(manifest.layers);
@@ -74,7 +74,7 @@ namespace Nibbler.Test
             var imageRef = ImageHelper.GetImageReference(image);
             var manifestContent = await registry.GetManifest(imageName, imageRef);
             var manifestJson = await manifestContent.ReadAsStringAsync();
-            var manifest = JsonConvert.DeserializeObject<ManifestV2>(manifestJson);
+            var manifest = JsonSerializer.Deserialize<ManifestV2>(manifestJson);
             Assert.IsNotNull(manifest);
             Assert.IsNotNull(manifest.layers);
             Assert.IsTrue(manifest.layers.Any());
@@ -127,7 +127,7 @@ namespace Nibbler.Test
 
             var imageContent = await registry.GetImageConfig(imageName, digest);
             var imageJson = await imageContent.ReadAsStringAsync();
-            var image = JsonConvert.DeserializeObject<ImageV1>(imageJson);
+            var image = JsonSerializer.Deserialize<ImageV1>(imageJson);
             Assert.IsNotNull(image);
             Assert.IsNotNull(image.config);
             Assert.IsNotNull(image.rootfs);

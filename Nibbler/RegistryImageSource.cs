@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using Nibbler.Models;
+﻿using Nibbler.Models;
 using Nibbler.Utils;
 using System;
 using System.Collections.Generic;
