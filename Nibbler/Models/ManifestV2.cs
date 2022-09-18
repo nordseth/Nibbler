@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace Nibbler.Models
@@ -15,6 +16,17 @@ namespace Nibbler.Models
         public string mediaType { get; set; } = MimeType;
         public ManifestV2Layer config { get; set; } = new ManifestV2Layer();
         public List<ManifestV2Layer> layers { get; set; } = new List<ManifestV2Layer>();
+
+        public ManifestV2 Clone()
+        {
+            return new ManifestV2
+            {
+                schemaVersion = schemaVersion,
+                mediaType = mediaType,
+                config = config?.Clone(),
+                layers = layers?.Select(l => l.Clone()).ToList(),
+            };
+        }
     }
 
     public class ManifestV2Layer
@@ -26,5 +38,16 @@ namespace Nibbler.Models
         public long size { get; set; }
         public string digest { get; set; }
         public List<string> urls { get; set; }
+
+        public ManifestV2Layer Clone()
+        {
+            return new ManifestV2Layer
+            {
+                mediaType = mediaType,
+                size = size,
+                digest = digest,
+                urls = urls?.ToList(),
+            };
+        }
     }
 }

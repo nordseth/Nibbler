@@ -97,8 +97,8 @@ namespace Nibbler.Test
             var splitArgs = args.Split('|');
             var result = await app.ExecuteAsync(splitArgs);
 
-            var regImageSrc = cmd.CreateImageSource() as RegistryImageSource;
-            Assert.IsNotNull(regImageSrc);
+            //var regImageSrc = cmd.CreateImageSource() as RegistryImageSource;
+            //Assert.IsNotNull(regImageSrc);
 
             Assert.Fail("Selects_Correct_Credentials not implemented because of refactor of HttpClientFactory");
 

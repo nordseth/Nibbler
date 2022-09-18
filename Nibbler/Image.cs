@@ -3,6 +3,7 @@ using Nibbler.Utils;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text;
@@ -70,6 +71,20 @@ namespace Nibbler
             });
 
             ConfigUpdated();
+        }
+
+        public Image Clone()
+        {
+            return new Image
+            {
+                ManifestBytes = ManifestBytes,
+                ManifestDigest = ManifestDigest,
+                Manifest = Manifest.Clone(),
+                ConfigBytes = ConfigBytes,
+                Config = Config?.Clone(),
+                ManifestUpdated = ManifestUpdated,
+                _layersAdded = _layersAdded.Select(l => l.Clone()).ToList(),
+            };
         }
 
         private (byte[], string) ToJson<T>(T obj)
