@@ -64,6 +64,7 @@ namespace Nibbler.Utils
             if (await TrySetAuthorization(wwwAuth))
             {
                 // try again, but with authorization set
+                request.Headers.Authorization = _authorization;
                 return await base.SendAsync(request, cancellationToken);
             }
             else
