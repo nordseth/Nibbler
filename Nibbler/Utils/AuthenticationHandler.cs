@@ -61,15 +61,14 @@ namespace Nibbler.Utils
 
             var wwwAuth = response.Headers.WwwAuthenticate.First();
             _logger.LogDebug($"Unauthorized, trying to authenticate {wwwAuth}");
-            if (!await TrySetAuthorization(wwwAuth))
+            if (await TrySetAuthorization(wwwAuth))
             {
-                return response;
+                // try again, but with authorization set
+                return await base.SendAsync(request, cancellationToken);
             }
             else
             {
-                // try again, but with authorization set 
-                // maybe we should have a check here to avoid endless recursion
-                return await SendAsync(request, cancellationToken);
+                return response;
             }
         }
 
