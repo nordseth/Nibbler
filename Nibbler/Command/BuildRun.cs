@@ -1,5 +1,6 @@
 ﻿using Nibbler.Models;
 using Nibbler.Utils;
+using Nibbler.Writer;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -20,7 +21,7 @@ namespace Nibbler.Command
 
         private IImageSource _imageSource;
         private Func<IImageSource> _imageSourceFactory;
-        private Func<IEnumerable<BuilderLayer>, IImageDestination> _imageDestinationFactory;
+        private Func<IImageWriter> _imageWriterFactory;
         private Image _fromImage;
         private Image _image;
 
@@ -79,7 +80,7 @@ namespace Nibbler.Command
 
         public void SetRegistoryImageDest(string image, string username, string password, bool insecure, bool skipTlsVerify, string dockerConfig)
         {
-            _imageDestinationFactory = addedLayers =>
+            _imageWriterFactory = () =>
             {
                 var logger = CreateLogger("TO-REG");
 
@@ -104,13 +105,18 @@ namespace Nibbler.Command
 
                 logger.LogDebug($"using {toUri} for push{(toSkipTlsVerify ? ", skipTlsVerify" : "")}");
 
-                return new RegistryPusher(image, toRegistry, addedLayers, logger);
+                return new RegistryImagePusher(image, toRegistry, logger);
             };
         }
 
         public void SetFileImageDest(string file)
         {
-            _imageDestinationFactory = addedLayers => new FileImageDestination(file, addedLayers, CreateLogger("FILE"));
+            _imageWriterFactory = () => new FileImageWriter(file, CreateLogger("FILE"));
+        }
+
+        public void SetDockerArchiveDest(string file)
+        {
+            _imageWriterFactory = () => new DockerArchiveWriter(file, CreateLogger("FILE"));
         }
 
         public async Task LoadSourceImage()
@@ -146,7 +152,11 @@ namespace Nibbler.Command
                 Logger.LogDebug("No changes to image, will copy image.");
             }
 
-            await WriteImage();
+            if (!DryRun && _imageWriterFactory != null)
+            {
+                var writer = _imageWriterFactory();
+                await writer.WriteImage(_image, LayerSource);
+            }
 
             Logger.LogDebug($"Image digest: {_image.ManifestDigest}");
 
@@ -162,24 +172,16 @@ namespace Nibbler.Command
             }
         }
 
-        private async Task WriteImage()
+        private async Task<Stream> LayerSource(string digest)
         {
-            // validate _imageDestinationFactory not null?
-            var pusher = _imageDestinationFactory(_image.LayersAdded);
-
-            bool configExists = await pusher.CheckConfigExists(_image.Manifest);
-            var missingLayers = await pusher.FindMissingLayers(_image.Manifest);
-
-            if (!DryRun)
+            var addedLayer = _image.LayersAdded.FirstOrDefault(l => l.Digest.Equals(digest));
+            if (addedLayer != null)
             {
-                if (!configExists)
-                {
-                    await pusher.PushConfig(_image.Manifest.config, () => new MemoryStream(_image.ConfigBytes));
-                }
-
-                await pusher.CopyLayers(_imageSource, missingLayers);
-                await pusher.PushLayers(f => File.OpenRead(Path.Combine(TempFolderPath, f)));
-                await pusher.PushManifest(() => new MemoryStream(_image.ManifestBytes));
+                return File.OpenRead(Path.Combine(TempFolderPath, $"{addedLayer.Name}.tar.gz"));
+            }
+            else
+            {
+                return await _imageSource.GetBlob(digest);
             }
         }
 

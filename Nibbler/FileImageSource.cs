@@ -40,7 +40,7 @@ namespace Nibbler
                 throw new Exception($"error image {_path} not found!");
             }
 
-            var manifestBytes = await File.ReadAllBytesAsync(Path.Combine(_path, FileImageDestination.ManifestFileName));
+            var manifestBytes = await File.ReadAllBytesAsync(Path.Combine(_path, Image.ManifestFileName));
 
             var image = await Image.LoadMetadata(new ByteContentWrapper(manifestBytes, Encoding.UTF8), GetBlobContent);
 

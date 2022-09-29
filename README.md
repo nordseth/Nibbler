@@ -55,6 +55,7 @@ Options:
   --to-password           To registry password
   --from-file             Read from image from file (alternative to --from-image)
   --to-file               Write image to file (alternative to --to-image)
+  --to-archive            Exprimental: Write image to docker archive (alternative to --to-image)
   --add                   Add contents of a folder to the image 'sourceFolder:destFolder[:ownerId:groupId:permissions]'
   --addFolder             Add a folder to the image 'destFolder[:ownerId:groupId:permissions]'
   --label                 Add label to the image 'name=value'
@@ -101,6 +102,7 @@ nibbler \
 - uses "./.nibbler" to store layers
   - folder is not cleaned up. Can be overwritten with "--temp-folder"
 - can store images locally, in a proprietary format, and be used to copy images
+- exprimental: Write docker archives that can be imported into docker locally 
   
 ## Work arounds
 

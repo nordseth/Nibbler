@@ -29,7 +29,7 @@ namespace Nibbler.Command
 
         public CommandOption FromFile { get; private set; }
         public CommandOption ToFile { get; private set; }
-
+        public CommandOption ToArchive { get; private set; }
         public CommandOption Add { get; private set; }
         public CommandOption AddFolder { get; private set; }
 
@@ -72,6 +72,7 @@ namespace Nibbler.Command
             // alternative to --from-image and --to-image
             FromFile = app.Option("--from-file", "Read from image from file (alternative to --from-image)", CommandOptionType.SingleValue);
             ToFile = app.Option("--to-file", "Write image to file (alternative to --to-image)", CommandOptionType.SingleValue);
+            ToArchive = app.Option("--to-archive", "Exprimental: Write image to docker archive (alternative to --to-image)", CommandOptionType.SingleValue);
 
             // "commands"
             Add = app.Option("--add", "Add contents of a folder to the image 'sourceFolder:destFolder[:ownerId:groupId:permissions]'", CommandOptionType.MultipleValue);
@@ -108,9 +109,9 @@ namespace Nibbler.Command
                 validationErrors.Add(($"--{FromImage.LongName} or --{FromFile.LongName} is required.", new[] { FromImage.LongName, FromFile.LongName }));
             }
 
-            if (!ToImage.HasValue() && !ToFile.HasValue())
+            if (!ToImage.HasValue() && !ToFile.HasValue() && !ToArchive.HasValue())
             {
-                validationErrors.Add(($"--{ToImage.LongName} or --{ToFile.LongName}  is required.", new[] { ToImage.LongName, ToFile.LongName }));
+                validationErrors.Add(($"--{ToImage.LongName}, --{ToFile.LongName} or --{ToArchive.LongName}  is required.", new[] { ToImage.LongName, ToFile.LongName, ToArchive.LongName }));
             }
 
             if (!validationErrors.Any() &&
@@ -222,6 +223,10 @@ namespace Nibbler.Command
                     Insecure.HasValue() || ToInsecure.HasValue(),
                     ToSkipTlsVerify.HasValue() || SkipTlsVerify.HasValue(),
                     DockerConfig.Value());
+            }
+            else if (ToArchive.HasValue())
+            {
+                run.SetDockerArchiveDest(ToArchive.Value());
             }
             else
             {
