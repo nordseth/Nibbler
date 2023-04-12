@@ -164,7 +164,7 @@ namespace Nibbler
             return await Registry.StartUpload(_targetImageName);
         }
 
-        public async Task PushManifest(Func<System.IO.Stream> manifestStream)
+        public async Task PushManifest(string mediaType, Func<System.IO.Stream> manifestStream)
         {
             await RetryHelper.Retry(_retryUpload, _logger,
                 async () =>
@@ -180,7 +180,7 @@ namespace Nibbler
                     {
                         _logger.LogDebug($"uploading manifest {_targetImageName}:{destImageRef}");
 
-                        await Registry.UploadManifest(_targetImageName, destImageRef, stream);
+                        await Registry.UploadManifest(_targetImageName, destImageRef, mediaType, stream);
                     }
                 });
         }

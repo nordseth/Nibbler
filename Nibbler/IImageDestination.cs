@@ -13,6 +13,6 @@ namespace Nibbler
         Task<IEnumerable<ManifestV2Layer>> FindMissingLayers(ManifestV2 manifest);
         Task PushConfig(ManifestV2Layer config, Func<Stream> configStream);
         Task PushLayers(Func<string, Stream> layerStream);
-        Task PushManifest(Func<Stream> manifestStream);
+        Task PushManifest(string mediaType, Func<Stream> manifestStream);
     }
 }

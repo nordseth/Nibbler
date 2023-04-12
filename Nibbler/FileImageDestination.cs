@@ -53,7 +53,7 @@ namespace Nibbler
             return Task.FromResult(missingLayers.AsEnumerable());
         }
 
-        public async Task PushManifest(Func<Stream> manifestStream)
+        public async Task PushManifest(string mediaType, Func<Stream> manifestStream)
         {
             CheckFolder();
             using (var stream = manifestStream())

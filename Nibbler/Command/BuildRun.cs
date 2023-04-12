@@ -179,7 +179,7 @@ namespace Nibbler.Command
 
                 await pusher.CopyLayers(_imageSource, missingLayers);
                 await pusher.PushLayers(f => File.OpenRead(Path.Combine(TempFolderPath, f)));
-                await pusher.PushManifest(() => new MemoryStream(_image.ManifestBytes));
+                await pusher.PushManifest(_image.Manifest.mediaType, () => new MemoryStream(_image.ManifestBytes));
             }
         }
 
