@@ -9,12 +9,6 @@ namespace Nibbler.Utils
 {
     public static class FileHelper
     {
-        public static JsonSerializerOptions JsonSerializerOptions = new JsonSerializerOptions
-        {
-            WriteIndented = true,
-            IgnoreNullValues = true,
-        };
-
         // https://github.com/docker/distribution/blob/master/docs/spec/api.md#digest-parameter
         public static string Digest(this Stream stream)
         {
@@ -37,11 +31,6 @@ namespace Nibbler.Utils
         public static string ToDigestString(this byte[] hash)
         {
             return $"sha256:{BitConverter.ToString(hash).Replace("-", string.Empty).ToLowerInvariant()}";
-        }
-
-        public static string JsonSerialize<T>(T obj)
-        {
-            return JsonSerializer.Serialize<T>(obj, JsonSerializerOptions);
         }
 
         public static string AsOctalString(this int? mode)

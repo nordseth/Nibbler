@@ -51,7 +51,7 @@ namespace Nibbler.Utils
             try
             {
                 var dockerConfigJson = File.ReadAllText(configPath);
-                config = JsonSerializer.Deserialize<DockerConfig>(dockerConfigJson);
+                config = JsonSerializer.Deserialize(dockerConfigJson, JsonContext.Default.DockerConfig);
             }
             catch (Exception ex)
             {
@@ -102,7 +102,7 @@ namespace Nibbler.Utils
                     process.WaitForExit();
 
                     var resp = process.StandardOutput.ReadToEnd();
-                    return JsonSerializer.Deserialize<CredentialHelperResult>(resp);
+                    return JsonSerializer.Deserialize(resp, JsonContext.Default.CredentialHelperResult);
                 }
             }
             catch
@@ -111,13 +111,13 @@ namespace Nibbler.Utils
             }
         }
 
-        private class DockerConfig
+        public class DockerConfig
         {
             public Dictionary<string, DockerConfigAuth> auths { get; set; }
             public string credsStore { get; set; }
         }
 
-        private class DockerConfigAuth
+        public class DockerConfigAuth
         {
             public string username { get; set; }
             public string password { get; set; }
@@ -125,7 +125,7 @@ namespace Nibbler.Utils
             public string email { get; set; }
         }
 
-        private class CredentialHelperResult
+        public class CredentialHelperResult
         {
             public string ServerURL { get; set; }
             public string Username { get; set; }

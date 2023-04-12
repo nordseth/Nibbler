@@ -1,7 +1,9 @@
-﻿using System;
+﻿using Nibbler.Utils;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 
 namespace Nibbler.Models
 {
@@ -33,6 +35,11 @@ namespace Nibbler.Models
                 rootfs = rootfs.Clone(),
                 history = history?.Select(h => h.Clone()).ToList(),
             };
+        }
+
+        public string ToJson()
+        {
+            return JsonSerializer.Serialize(this, JsonContext.Default.ImageV1);
         }
     }
 
