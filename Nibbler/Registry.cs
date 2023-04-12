@@ -27,6 +27,7 @@ namespace Nibbler
         {
             var request = new HttpRequestMessage(HttpMethod.Get, $"/v2/{name}/manifests/{reference}");
             request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(ManifestV2.MimeType));
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(ManifestV2.AltMimeType));
 
             var response = await HttpClient.SendAsync(request);
             await EnsureSuccessWithErrorContent(response);
