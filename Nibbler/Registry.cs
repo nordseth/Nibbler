@@ -170,16 +170,16 @@ namespace Nibbler
         {
             var request = new HttpRequestMessage(HttpMethod.Put, $"/v2/{name}/manifests/{reference}");
             request.Content = new StringContent(manifest.ToJson());
-            request.Content.Headers.ContentType = new MediaTypeHeaderValue(ManifestV2.MimeType);
+            request.Content.Headers.ContentType = new MediaTypeHeaderValue(manifest.mediaType);
             var response = await HttpClient.SendAsync(request);
             await EnsureSuccessWithErrorContent(response);
         }
 
-        public async Task UploadManifest(string name, string reference, Stream manifest)
+        public async Task UploadManifest(string name, string reference, string mediaType, Stream manifest)
         {
             var request = new HttpRequestMessage(HttpMethod.Put, $"/v2/{name}/manifests/{reference}");
             request.Content = new StreamContent(manifest);
-            request.Content.Headers.ContentType = new MediaTypeHeaderValue(ManifestV2.MimeType);
+            request.Content.Headers.ContentType = new MediaTypeHeaderValue(mediaType);
             var response = await HttpClient.SendAsync(request);
             await EnsureSuccessWithErrorContent(response);
         }
