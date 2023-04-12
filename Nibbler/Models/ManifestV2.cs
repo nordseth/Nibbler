@@ -1,7 +1,9 @@
-﻿using System;
+﻿using Nibbler.Utils;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 
 namespace Nibbler.Models
 {
@@ -27,6 +29,11 @@ namespace Nibbler.Models
                 config = config?.Clone(),
                 layers = layers?.Select(l => l.Clone()).ToList(),
             };
+        }
+       
+        public string ToJson()
+        {
+            return JsonSerializer.Serialize(this, JsonContext.Default.ManifestV2);
         }
     }
 

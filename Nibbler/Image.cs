@@ -33,12 +33,12 @@ namespace Nibbler
             image.ManifestBytes = await manifestContent.ReadBytesAsync();
             image.ManifestDigest = FileHelper.Digest(image.ManifestBytes);
             var manifestJson = await manifestContent.ReadStringAsync();
-            image.Manifest = JsonSerializer.Deserialize<ManifestV2>(manifestJson);
+            image.Manifest = JsonSerializer.Deserialize(manifestJson, JsonContext.Default.ManifestV2);
 
             var imageConfigContent = await getConfig(image.Manifest.config.digest);
             image.ConfigBytes = await imageConfigContent.ReadBytesAsync();
             var configJson = await imageConfigContent.ReadStringAsync();
-            image.Config = JsonSerializer.Deserialize<ImageV1>(configJson);
+            image.Config = JsonSerializer.Deserialize(configJson, JsonContext.Default.ImageV1);
 
             image.ManifestUpdated = false;
             return image;
@@ -46,12 +46,12 @@ namespace Nibbler
 
         public void ConfigUpdated()
         {
-            var (configBytes, configDigest) = ToJson(Config);
+            var (configBytes, configDigest) = ToBytesWithDiges(Config.ToJson());
             ConfigBytes = configBytes;
             Manifest.config.digest = configDigest;
             Manifest.config.size = configBytes.Length;
 
-            var (manifestBytes, manifestDigest) = ToJson(Manifest);
+            var (manifestBytes, manifestDigest) = ToBytesWithDiges(Manifest.ToJson());
             ManifestDigest = manifestDigest;
             ManifestBytes = manifestBytes;
             ManifestUpdated = true;
@@ -87,9 +87,8 @@ namespace Nibbler
             };
         }
 
-        private (byte[], string) ToJson<T>(T obj)
+        private (byte[], string) ToBytesWithDiges(string content)
         {
-            var content = FileHelper.JsonSerialize(obj);
             var bytes = Encoding.UTF8.GetBytes(content);
             var digest = FileHelper.Digest(bytes);
             return (bytes, digest);

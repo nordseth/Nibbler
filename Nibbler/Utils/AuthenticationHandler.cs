@@ -143,7 +143,7 @@ namespace Nibbler.Utils
 
             var content = await response.Content.ReadAsStringAsync();
             response.EnsureSuccessStatusCode();
-            var tokenResponse = JsonSerializer.Deserialize<TokenResponse>(content);
+            var tokenResponse = JsonSerializer.Deserialize(content, JsonContext.Default.TokenResponse);
 
             _authorization = new AuthenticationHeaderValue("Bearer", tokenResponse.token ?? tokenResponse.access_token);
             _logger.LogDebug($"Using Bearer token for {_registry} ({queryString})");
@@ -179,7 +179,7 @@ namespace Nibbler.Utils
             return Convert.ToBase64String(Encoding.UTF8.GetBytes($"{username}:{password}"));
         }
 
-        private class TokenResponse
+        public class TokenResponse
         {
             public string token { get; set; }
             public string refresh_token { get; set; }

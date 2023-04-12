@@ -26,7 +26,7 @@ namespace Nibbler.Utils
                     }
                     else
                     {
-                        var msg = JsonSerializer.Serialize(ex.Message);
+                        var msg = JsonSerializer.Serialize(ex.Message, JsonContext.Default.String);
                         logger.LogWarning($"failed, but will retry! error: {msg}");
 
                         tries++;
