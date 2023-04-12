@@ -1,16 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Nibbler.Models;
 using Nibbler.Utils;
 
 namespace Nibbler
 {
-    public class Registry 
+    public class Registry
     {
         public Uri BaseUri => HttpClient.BaseAddress;
         public HttpClient HttpClient { get; }
@@ -28,10 +31,46 @@ namespace Nibbler
             var request = new HttpRequestMessage(HttpMethod.Get, $"/v2/{name}/manifests/{reference}");
             request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(ManifestV2.MimeType));
             request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(ManifestV2.AltMimeType));
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(IndexV1.MimeType));
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(IndexV1.AltMimeType));
 
             var response = await HttpClient.SendAsync(request);
             await EnsureSuccessWithErrorContent(response);
-            return response.Content;
+
+            if (response.Content.Headers.ContentType?.MediaType == IndexV1.MimeType
+                || response.Content.Headers.ContentType?.MediaType == IndexV1.AltMimeType)
+            {
+                return await GetManifestForIndex(name, response);
+            }
+            else
+            {
+                return response.Content;
+            }
+        }
+
+        private async Task<HttpContent> GetManifestForIndex(string name, HttpResponseMessage response)
+        {
+            var indexJson = await response.Content.ReadAsStringAsync();
+            var index = JsonSerializer.Deserialize(indexJson, JsonContext.Default.IndexV1);
+
+            // prioritize linux and amd64. 
+            // todo: create arguments for specifying this
+            var m = index.manifests?
+                .Where(m => m.mediaType == ManifestV2.MimeType || m.mediaType == ManifestV2.AltMimeType)
+                .OrderByDescending(m => m.platform?.os == IndexV1Platform.DefaultOS)
+                .ThenByDescending(m => m.platform?.architecture == IndexV1Platform.DefaultArch)
+                .FirstOrDefault();
+
+            if (m != null)
+            {
+                _logger.LogWarning($"Found Image Index, using {m.platform?.os} {m.platform?.architecture}: {m.digest}");
+                return await GetManifest(name, m.digest);
+            }
+            else
+            {
+                _logger.LogWarning($"Found Image Index without any manifests, aborting");
+                throw new Exception($"Found Image Index without any manifests, aborting");
+            }
         }
 
         public async Task<HttpContent> GetImageConfig(string name, string digest)
