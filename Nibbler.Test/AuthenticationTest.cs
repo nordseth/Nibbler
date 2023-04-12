@@ -22,7 +22,7 @@ namespace Nibbler.Test
         public async Task BuildCommand_RegistryBaseAndDestValidate()
         {
             var args = new[] {
-                "--from-image", "localhost:5000/dotnet/aspnet:6.0",
+                "--from-image", "localhost:5000/dotnet/aspnet:7.0",
                 "--to-image", "localhost:5001/test/nibbler-test:unittest",
                 "--insecure",
                 "-v",
