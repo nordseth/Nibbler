@@ -2,7 +2,7 @@
 set -ex
 
 PUBLISHARGS="-p:PublishSingleFile=true -p:PublishTrimmed=true -p:InvariantGlobalization=true --self-contained"
-FRAMEWORK=net6.0
+FRAMEWORK=net7.0
 CONFIGURATION=Release
 PROJECT=Nibbler
 COMMAND=nibbler
