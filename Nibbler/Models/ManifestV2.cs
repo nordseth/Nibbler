@@ -11,6 +11,7 @@ namespace Nibbler.Models
     public class ManifestV2
     {
         public const string MimeType = "application/vnd.docker.distribution.manifest.v2+json";
+        public const string AltMimeType = "application/vnd.oci.image.manifest.v1+json";
 
         public int schemaVersion { get; set; } = 2;
         public string mediaType { get; set; } = MimeType;
