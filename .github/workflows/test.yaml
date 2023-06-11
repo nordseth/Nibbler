@@ -30,6 +30,7 @@ jobs:
       - run: rm -rf tests/TestData
       - run: mkdir tests/TestData
       - run: dotnet new webapp -o tests/TestData
+      - run: dotnet new gitignore -o tests/TestData
       - run: dotnet publish tests/TestData -o ./tests/TestData/publish
       - run: curl -L https://mcr.microsoft.com/v2/dotnet/core/aspnet/blobs/sha256:9526604e089d8d4aa947f34e52a14ac8793232dd181022932f3c15291c5cd3af -o tests/TestData/test.tar.gz
 
