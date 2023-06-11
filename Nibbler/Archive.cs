@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
-using System.Text;
-using ICSharpCode.SharpZipLib.GZip;
 using ICSharpCode.SharpZipLib.Tar;
 using Nibbler.Utils;
 
@@ -14,14 +12,16 @@ namespace Nibbler
     {
         private readonly string _outfile;
         private readonly bool _reproducable;
+        private readonly string _ignoreFile;
         private readonly IEnumerable<string> _ignorePaths;
         private readonly ILogger _logger;
         private readonly bool _isLinux;
 
-        public Archive(string outfile, bool reproducable, IEnumerable<string> ignorePaths, ILogger logger)
+        public Archive(string outfile, bool reproducable, IEnumerable<string> ignorePaths, string ignoreFile, ILogger logger)
         {
             _outfile = outfile;
             _reproducable = reproducable;
+            _ignoreFile = ignoreFile;
             _ignorePaths = ignorePaths ?? Enumerable.Empty<string>();
             _logger = logger;
 
@@ -32,7 +32,9 @@ namespace Nibbler
 
         public void CreateEntries(string source, string dest, int? owner, int? group, int? mode)
         {
-            CreateEntries(source, dest, ModifyEntry);
+            var ignore = CreateIgnore(source);
+
+            CreateEntries(source, dest, ignore, ModifyEntry);
 
             void ModifyEntry(TarEntry entry)
             {
@@ -62,20 +64,37 @@ namespace Nibbler
             }
         }
 
-        private void CreateEntries(string source, string dest, Action<TarEntry> modifyEntry)
+        private Ignore.Ignore CreateIgnore(string source)
+        {
+            var ignore = new Ignore.Ignore();
+            if (_ignoreFile != null)
+            {
+                var ignoreFilePath = Path.Combine(source, _ignoreFile);
+                if (File.Exists(ignoreFilePath))
+                {
+                    _logger?.LogDebug($"Using ignore file \"{ignoreFilePath}\".");
+                    var fileContent = File.ReadAllLines(ignoreFilePath);
+                    ignore.Add(fileContent);
+                }
+            }
+
+            return ignore;
+        }
+
+        private void CreateEntries(string source, string dest, Ignore.Ignore ignore, Action<TarEntry> modifyEntry)
         {
             foreach (var path in Directory.EnumerateFileSystemEntries(source))
             {
-                if (_ignorePaths.Any(p => p == path))
+                if (ShouldIgnore(source, path, ignore))
                 {
-                    _logger?.LogWarning($"Ignoring path \"{path}\" in layer");
+                    _logger?.LogDebug($"Ignoring \"{path}\" in layer.");
                 }
                 else
                 {
                     var attr = File.GetAttributes(path);
                     if (attr.HasFlag(FileAttributes.Directory))
                     {
-                        CreateFolderEntry(path, dest, modifyEntry);
+                        CreateFolderEntry(path, dest, ignore, modifyEntry);
                     }
                     else
                     {
@@ -83,6 +102,26 @@ namespace Nibbler
                     }
                 }
             }
+        }
+
+        private bool ShouldIgnore(string root, string path, Ignore.Ignore ignore)
+        {
+            var relative = Path.GetRelativePath(root, path);
+            var full = Path.GetFullPath(path);
+            if (_ignorePaths.Any(p => p == full))
+            {
+                return true;
+            }
+            else if (_ignoreFile != null && relative == _ignoreFile)
+            {
+                return true;
+            }
+            else if (ignore.IsIgnored(relative))
+            {
+                return true;
+            }
+
+            return false;
         }
 
         private void CreateFileEntry(string path, string dest, Action<TarEntry> modifyEntry)
@@ -109,7 +148,7 @@ namespace Nibbler
             Entries[tarName] = (path, entry);
         }
 
-        private void CreateFolderEntry(string path, string dest, Action<TarEntry> modifyEntry)
+        private void CreateFolderEntry(string path, string dest, Ignore.Ignore ignore, Action<TarEntry> modifyEntry)
         {
             var dirInfo = new DirectoryInfo(path);
 
@@ -125,7 +164,7 @@ namespace Nibbler
                 }
             }
 
-            CreateEntries(path, Path.Combine(dest, dirInfo.Name), modifyEntry);
+            CreateEntries(path, Path.Combine(dest, dirInfo.Name), ignore, modifyEntry);
         }
 
         private void CreateSymlinkFolder(string path, string tarName, string fullName, LinuxFileUtils.FileInfo info, Action<TarEntry> modifyEntry)

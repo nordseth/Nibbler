@@ -1,4 +1,5 @@
-﻿using Nibbler.Models;
+﻿using Ignore;
+using Nibbler.Models;
 using Nibbler.Utils;
 using System;
 using System.Collections.Generic;
@@ -32,6 +33,7 @@ namespace Nibbler.Command
         public IList<AddArgument> Add { get; set; } = new List<AddArgument>();
         public IList<AddArgument> AddFolder { get; set; } = new List<AddArgument>();
         public bool Reproducible { get; set; } = true;
+        public string IgnoreFile { get; set; }
 
         public bool AddGitLabels { get; set; } = false;
         public string GitRepoPath { get; set; }
@@ -277,7 +279,7 @@ namespace Nibbler.Command
         {
             var description = new StringBuilder();
             EnsureTempFolder();
-            var archive = new Archive(Path.Combine(TempFolderPath, $"{layerName}.tar.gz"), Reproducible, new[] { TempFolderPath }, Logger);
+            var archive = new Archive(Path.Combine(TempFolderPath, $"{layerName}.tar.gz"), Reproducible, new[] { TempFolderPath }, IgnoreFile, Logger);
 
             foreach (var arg in adds)
             {
