@@ -32,6 +32,7 @@ namespace Nibbler.Command
 
         public CommandOption Add { get; private set; }
         public CommandOption AddFolder { get; private set; }
+        public CommandOption NonReproducible { get; private set; }
 
         public CommandOption Label { get; private set; }
         public CommandOption Env { get; private set; }
@@ -76,6 +77,7 @@ namespace Nibbler.Command
             // "commands"
             Add = app.Option("--add", "Add contents of a folder to the image 'sourceFolder:destFolder[:ownerId:groupId:permissions]'", CommandOptionType.MultipleValue);
             AddFolder = app.Option("--addFolder", "Add a folder to the image 'destFolder[:ownerId:groupId:permissions]'", CommandOptionType.MultipleValue);
+            NonReproducible = app.Option("--non-reproducible", "Don't produce a reproducible image", CommandOptionType.NoValue);
             Label = app.Option("--label", "Add label to the image 'name=value'", CommandOptionType.MultipleValue);
             Env = app.Option("--env", "Add a environment variable to the image 'name=value'", CommandOptionType.MultipleValue);
             GitLabels = app.Option("--git-labels", "Add common git labels to image, optionally define the path to the git repo.", CommandOptionType.SingleOrNoValue);
@@ -175,6 +177,7 @@ namespace Nibbler.Command
                 run.TempFolderPath = TempFolder.Value();
                 run.WriteDigestFile = DigestFile.HasValue();
                 run.DigestFilepath = DigestFile.Value();
+                run.Reproducible = !NonReproducible.HasValue();
 
                 await run.ExecuteAsync();
 
