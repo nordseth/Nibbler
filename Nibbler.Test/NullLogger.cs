@@ -1,47 +1,41 @@
-﻿using Nibbler.Utils;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿namespace Nibbler.Test;
 
-namespace Nibbler.Test
+public class NullLogger : ILogger
 {
-    public class NullLogger : ILogger
+    private static ILogger _instance = new NullLogger();
+    public static ILogger Instance => _instance;
+
+    public bool DebugEnabled => false;
+
+    public bool WarningEnabled => false;
+
+    public bool TraceEnabled => false;
+
+    public void LogDebug(Exception ex, string message)
     {
-        private static ILogger _instance = new NullLogger();
-        public static ILogger Instance => _instance;
+    }
 
-        public bool DebugEnabled => false;
+    public void LogDebug(string message)
+    {
+    }
 
-        public bool WarningEnabled => false;
+    public void LogTrace(string message)
+    {
+    }
 
-        public bool TraceEnabled => false;
+    public void LogWarning(string message)
+    {
+    }
 
-        public void LogDebug(Exception ex, string message)
-        {
-        }
+    public void SetDebugEnable(bool enabled)
+    {
+    }
 
-        public void LogDebug(string message)
-        {
-        }
+    public void SetTraceEnable(bool enabled)
+    {
+    }
 
-        public void LogTrace(string message)
-        {
-        }
-
-        public void LogWarning(string message)
-        {
-        }
-
-        public void SetDebugEnable(bool enabled)
-        {
-        }
-
-        public void SetTraceEnable(bool enabled)
-        {
-        }
-
-        public void SetWarningEnable(bool enabled)
-        {
-        }
+    public void SetWarningEnable(bool enabled)
+    {
     }
 }
