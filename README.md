@@ -57,6 +57,7 @@ Options:
   --to-file               Write image to file (alternative to --to-image)
   --add                   Add contents of a folder to the image 'sourceFolder:destFolder[:ownerId:groupId:permissions]'
   --addFolder             Add a folder to the image 'destFolder[:ownerId:groupId:permissions]'
+  --non-reproducible      Don't produce a reproducible image
   --label                 Add label to the image 'name=value'
   --env                   Add a environment variable to the image 'name=value'
   --git-labels            Add common git labels to image, optionally define the path to the git repo.
