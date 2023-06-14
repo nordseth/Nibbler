@@ -31,6 +31,7 @@ namespace Nibbler.Command
 
         public IList<AddArgument> Add { get; set; } = new List<AddArgument>();
         public IList<AddArgument> AddFolder { get; set; } = new List<AddArgument>();
+        public bool Reproducible { get; set; } = true;
 
         public bool AddGitLabels { get; set; } = false;
         public string GitRepoPath { get; set; }
@@ -276,7 +277,7 @@ namespace Nibbler.Command
         {
             var description = new StringBuilder();
             EnsureTempFolder();
-            var archive = new Archive(Path.Combine(TempFolderPath, $"{layerName}.tar.gz"), true, new[] { TempFolderPath }, Logger);
+            var archive = new Archive(Path.Combine(TempFolderPath, $"{layerName}.tar.gz"), Reproducible, new[] { TempFolderPath }, Logger);
 
             foreach (var arg in adds)
             {
