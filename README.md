@@ -92,17 +92,19 @@ nibbler \
 
 ## Features
 
-- uses docker registry api v2
+- Uses docker registry api v2
   - https://github.com/opencontainers/distribution-spec/blob/master/spec.md
-- supports oci image manifest and ocean image config spec
+- Supports oci image manifest and ocean image config spec
   - https://github.com/opencontainers/image-spec/blob/master/manifest.md
   - https://github.com/opencontainers/image-spec/blob/master/config.md
-- layers and image is created as "reproducible", that means dates in image config and in file system layers are always the same.
-  - files added are always set with same modified date
-- uses docker-config.json for authentication.
-- uses "./.nibbler" to store layers
-  - folder is not cleaned up. Can be overwritten with "--temp-folder"
-- can store images locally, in a proprietary format, and be used to copy images
+- Layers and image is created as "reproducible", that means dates in image config and in file system layers are always the same.
+  - Files added are always set with same modified date (2000-01-01)
+  - Can be overwrittern with "--non-reproducible"
+- Uses docker-config.json for authentication.
+- Uses "./.nibbler" to store layers
+  - Folder is not cleaned up. Can be overwritten with "--temp-folder"
+- Can store images locally, in a proprietary format, and be used to copy images
+- Supports ignore file with "--ignore-file". Might not be completly compadible with .dockerignore files.
   
 ## Work arounds
 
