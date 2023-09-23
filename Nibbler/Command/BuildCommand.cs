@@ -75,7 +75,7 @@ public class BuildCommand
         ToFile = app.Option("--to-file", "Write image to file (alternative to --to-image)", CommandOptionType.SingleValue);
 
         // alternative to --to-image 
-        ToImages = app.Option("--to-images", "Comma or new line seperated target images. Use docker config file for authentication, does not support insecure. (alternative to --to-image)", CommandOptionType.SingleValue);
+        ToImages = app.Option("--to-images", "Comma separated target images. Use docker config file for authentication, does not support insecure. (alternative to --to-image)", CommandOptionType.SingleValue);
 
         // "commands"
         Add = app.Option("--add", "Add contents of a folder to the image 'sourceFolder:destFolder[:ownerId:groupId:permissions]'", CommandOptionType.MultipleValue);
@@ -83,7 +83,7 @@ public class BuildCommand
         NonReproducible = app.Option("--non-reproducible", "Don't produce a reproducible image", CommandOptionType.NoValue);
         IgnoreFile = app.Option("--ignore-file", "Use ignore file, optionally specify file (default: '.dockerignore')", CommandOptionType.SingleOrNoValue);
         Label = app.Option("--label", "Add label to the image 'name=value'", CommandOptionType.MultipleValue);
-        Labels = app.Option("--labels", "Comma or new line seperated labels to the image 'name=value,name=value'", CommandOptionType.SingleValue);
+        Labels = app.Option("--labels", "Comma separated labels to the image 'name=value,name=value'", CommandOptionType.SingleValue);
         Env = app.Option("--env", "Add a environment variable to the image 'name=value'", CommandOptionType.MultipleValue);
         GitLabels = app.Option("--git-labels", "Add common git labels to image, optionally define the path to the git repo.", CommandOptionType.SingleOrNoValue);
         GitLabelsPrefix = app.Option("--git-labels-prefix", "Specify the prefix of the git labels. (default: 'nibbler.git')", CommandOptionType.SingleValue);
@@ -238,16 +238,17 @@ public class BuildCommand
         }
         else
         {
-            var dests = ToImages.Value().Split(new[] { ",", Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+            var dests = ToImages.Value().Split(new[] { "," }, StringSplitOptions.RemoveEmptyEntries);
             foreach (var dest in dests)
             {
-                if (dest.StartsWith("file:"))
+                var trimmedDest = dest.Trim();
+                if (trimmedDest.StartsWith("file:"))
                 {
-                    run.AddFileImageDest(dest.Substring(5));
+                    run.AddFileImageDest(trimmedDest.Substring(5));
                 }
                 else
                 {
-                    run.AddRegistoryImageDest(dest, null, null, false, false, DockerConfig.Value());
+                    run.AddRegistoryImageDest(trimmedDest, null, null, false, false, DockerConfig.Value());
                 }
             }
         }
@@ -275,7 +276,7 @@ public class BuildCommand
 
         if (Labels.HasValue())
         {
-            var labels = Labels.Value().Split(new[] { ",", Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+            var labels = Labels.Value().Split(new[] { "," }, StringSplitOptions.RemoveEmptyEntries);
             foreach (var label in labels)
             {
                 var split = label.Split('=', 2);
@@ -284,7 +285,7 @@ public class BuildCommand
                     throw new Exception($"Invalid label {label}");
                 }
 
-                run.Labels.Add(split[0], split[1]);
+                run.Labels.Add(split[0].Trim(), split[1].Trim());
             }
         }
 
