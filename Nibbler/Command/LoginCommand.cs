@@ -42,7 +42,7 @@ public class LoginCommand
             if (string.IsNullOrEmpty(configPath))
             {
                 var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-                configPath = $"{home}/.docker-test/config.json";
+                configPath = $"{home}/.docker/config.json";
             }
 
             var authToken = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{Username.Value()}:{Password.Value()}"));
@@ -75,6 +75,7 @@ public class LoginCommand
             auths[Registry.Value] = login;
 
             File.WriteAllText(configPath, config.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+            Console.WriteLine($"Wrote config to {configPath}");
             return Task.FromResult(0);
         }
         catch (Exception ex)
