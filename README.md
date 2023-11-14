@@ -83,10 +83,11 @@ Options:
 ```
 dotnet publish -o $PWD/artifacts
 nibbler \
-	--from-image mcr.microsoft.com/dotnet/aspnet:7.0 \
+	--from-image mcr.microsoft.com/dotnet/aspnet:8.0 \
 	--to-image my-registy.com/repo/image:latest  \
-	--add "artifacts:/app" \
-	--workdir /app \
+	--add "artifacts:/home/app" \
+	--workdir /home/app \
+  --user app \
 	--entrypoint "dotnet MyApp.dll" 
 ```
 

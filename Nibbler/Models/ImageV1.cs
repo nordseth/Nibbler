@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Nibbler.Models
 {
@@ -85,14 +86,16 @@ namespace Nibbler.Models
     public class ImageV1Rootfs
     {
         public List<string> diff_ids { get; set; }
-        public string type { get; set; } = "layers";
+        // the name "type" seems to break json source generator
+        [JsonPropertyName("type")]
+        public string type_prop { get; set; } = "layers";
 
         public ImageV1Rootfs Clone()
         {
             return new ImageV1Rootfs
             {
                 diff_ids = diff_ids?.ToList(),
-                type = type,
+                type_prop = type_prop,
             };
         }
     }

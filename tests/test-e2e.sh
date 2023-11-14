@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+#set -x
 
 ###################################
 # Script that does end to end testing of
@@ -7,7 +8,7 @@ set -e
 # uses git to clone https://github.com/nordseth/aspnetcore-new as source
 ###################################
 
-dotnetVersion=7.0
+dotnetVersion=8.0
 dotnetRuntimeTag=$dotnetVersion
 dotnetSdkTag=$dotnetVersion
 targetImage=nibbler-test
@@ -38,7 +39,7 @@ cd aspnetcore-new
 echo "-------- Build --------"
 dotnet restore
 dotnet build --no-restore
-dotnet publish -o ./publish --no-build
+dotnet publish -o ./publish 
 
 echo "-------- Install Nibbler --------"
 dotnet tool install -g Nibbler --version ${NIBBLER_VERSION} --add-source /nuget
@@ -47,10 +48,10 @@ echo "-------- Build image with Nibbler --------"
 nibbler \
 	--from-image $dockerReg/dotnet/aspnet:$dotnetRuntimeTag \
 	--to-image $dockerReg/$targetImage:$dotnetVersion \
-	--add "publish:/app" \
-	--addFolder "/app:1001:1001:777" \
+	--add "publish:/home/app" \
 	--git-labels \
-	--workdir /app \
+	--workdir /home/app \
+	--user app \
 	--cmd "dotnet aspnetcore-new.dll" \
 	--insecure \
 	-v
@@ -62,7 +63,7 @@ echo "-------- Pull and run built image locally at http://localhost:8080/ ------
 echo "-- remember to stop the running image: docker ps, docker stop nibbler-test-app"
 
 docker pull localhost:5000/$targetImage:$dotnetVersion
-docker run -d --rm -p 8080:80 --name nibbler-test-app localhost:5000/$targetImage:$dotnetVersion
+docker run -d --rm -p 8080:8080 --name nibbler-test-app localhost:5000/$targetImage:$dotnetVersion
 #docker ps -a -f name=nibbler-test-app
 
 sleep 1

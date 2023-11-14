@@ -16,7 +16,7 @@ public class RegistryUploadTest
     }
 
     [TestMethod]
-    [DataRow("https://mcr.microsoft.com", "dotnet/aspnet", "7.0")]
+    [DataRow("https://mcr.microsoft.com", "dotnet/aspnet", "8.0")]
     public async Task Digest_Compare(string registryUrl, string imageName, string imageTag)
     {
         var registry = new Registry(_registryLogger, _httpClientFactory.Create(new Uri(registryUrl)));
@@ -29,7 +29,7 @@ public class RegistryUploadTest
     }
 
     [TestMethod]
-    [DataRow("https://mcr.microsoft.com", "dotnet/aspnet", "7.0", "http://localhost:5000")]
+    [DataRow("https://mcr.microsoft.com", "dotnet/aspnet", "8.0", "http://localhost:5000")]
     public async Task Registry_Upload(string sourceRegistryUrl, string imageName, string imageTag, string destRegistryUrl)
     {
         var registry = new Registry(_registryLogger, _httpClientFactory.Create(new Uri(sourceRegistryUrl)));

@@ -17,7 +17,7 @@ public class RegistryTest
     }
 
     [TestMethod]
-    [DataRow("https://mcr.microsoft.com", "dotnet/aspnet", "7.0")]
+    [DataRow("https://mcr.microsoft.com", "dotnet/aspnet", "8.0")]
     [DataRow("http://localhost:5000", "hello-world", "latest")]
     public async Task Registry_Get_ManifestFile(string registryUrl, string imageName, string imageRef)
     {
@@ -29,7 +29,7 @@ public class RegistryTest
     }
 
     [TestMethod]
-    [DataRow("https://mcr.microsoft.com", "dotnet/aspnet", "7.0")]
+    [DataRow("https://mcr.microsoft.com", "dotnet/aspnet", "8.0")]
     [DataRow("http://localhost:5000", "hello-world", "latest")]
     public async Task Registry_Get_Manifest(string registryUrl, string imageName, string imageRef)
     {
