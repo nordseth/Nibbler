@@ -28,7 +28,7 @@
 		<PackageReference Include="Nordseth.Git" Version="1.0.1" />
 		<PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="4.1.0" />
 		<PackageReference Include="SharpZipLib" Version="1.4.2" />
-		<PackageReference Include="System.Text.Encodings.Web" Version="7.0.0" />
+		<PackageReference Include="System.Text.Encodings.Web" Version="8.0.0" />
 	</ItemGroup>
 
 	<ItemGroup>
