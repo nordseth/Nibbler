@@ -1,0 +1,92 @@
+name: Create release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create ${{ github.ref_name }} -d --generate-notes 
+      - name: set version 
+        id: version
+        env:
+          REF: ${{ github.ref_name }}
+        run: |
+          echo "version=${REF:1}" >> $GITHUB_OUTPUT
+
+  nuget:
+    runs-on: ubuntu-latest
+    needs: create-release
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: create nuget
+        run: dotnet pack Nibbler -o ./publish
+      - name: upload 
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.create-release.outputs.version }}
+        run: gh release upload ${{ github.ref_name }} ./publish/Nibbler.$VERSION.nupkg --clobber
+
+  linux:
+    runs-on: ubuntu-latest
+    needs: create-release
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: create aot exe
+        run: dotnet publish Nibbler.Aot -c Release -f net8.0 -r linux-x64 -o tmp/
+      - name: create tar
+        env:
+          VERSION: ${{ needs.create-release.outputs.version }}
+        run: |
+          rm tmp/Nibbler
+          mv tmp/Nibbler.Aot tmp/Nibbler
+          tar -czvf Nibbler.${VERSION}_linux-x64.tar.gz \
+              --mode='a+x' --owner=0 \
+              -C tmp/ Nibbler
+      - name: upload 
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.create-release.outputs.version }}
+        run: gh release upload ${{ github.ref_name }} Nibbler.${VERSION}_linux-x64.tar.gz --clobber
+
+  windows:
+    runs-on: windows-latest
+    needs: create-release
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: create aot exe
+        run: dotnet publish Nibbler.Aot -c Release -f net8.0 -r win-x64 -o tmp\
+      - name: create zip
+        env:
+          VERSION: ${{ needs.create-release.outputs.version }}
+        run: |
+          rm tmp\Nibbler.exe
+          move tmp\Nibbler.Aot.exe Nibbler.exe
+          7z a Nibbler.${Env:VERSION}_win-x64.zip Nibbler.exe
+      - name: upload 
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.create-release.outputs.version }}
+        run: gh release upload ${{ github.ref_name }} Nibbler.${Env:VERSION}_win-x64.zip --clobber
