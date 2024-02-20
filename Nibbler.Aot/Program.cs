@@ -1,0 +1,1 @@
+﻿return await Nibbler.Program.Main(args);
