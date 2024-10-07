@@ -46,7 +46,7 @@ jobs:
     needs: create-release
     strategy:
       matrix:
-        runtime: ['linux-x64', 'linux-arm64', 'linux-musl-x64', 'linux-musl-arm64']
+        runtime: ['linux-x64', 'linux-arm64', 'linux-musl-x64']
     steps:
       - uses: actions/checkout@v4
       - name: Setup .NET Core
@@ -66,7 +66,7 @@ jobs:
           sudo sed -i -e 's/deb http/deb [arch=amd64] http/g' /etc/apt/sources.list
           sudo sed -i -e 's/deb mirror/deb [arch=amd64] mirror/g' /etc/apt/sources.list
           sudo apt update
-          sudo apt install -y clang llvm binutils-aarch64-linux-gnu gcc-aarch64-linux-gnu zlib1g-dev:arm64 zlib-dev:arm64
+          sudo apt install -y clang llvm binutils-aarch64-linux-gnu gcc-aarch64-linux-gnu zlib1g-dev:arm64 
       - name: create aot exe
         env:
           RUNTIME: ${{ matrix.runtime }}
