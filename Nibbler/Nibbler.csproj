@@ -1,8 +1,8 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
-		<TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
+		<TargetFrameworks>net6.0;net8.0;net9.0;</TargetFrameworks>
 		<RollForward>major</RollForward>
 		<PackAsTool>true</PackAsTool>
 		<ToolCommandName>nibbler</ToolCommandName>
@@ -28,6 +28,13 @@
 		<PackageReference Include="Nordseth.Git" Version="1.0.1" />
 		<PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="4.1.1" />
 		<PackageReference Include="SharpZipLib" Version="1.4.2" />
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
+		<PackageReference Include="System.Text.Encodings.Web" Version="8.0.0" />
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(TargetFramework)' != 'net6.0'">
 		<PackageReference Include="System.Text.Encodings.Web" Version="9.0.0" />
 	</ItemGroup>
 
