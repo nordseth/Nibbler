@@ -18,13 +18,13 @@ jobs:
       - name: Setup dotnet
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: 9.0.x
 
       # add aspnet image to registry
-      - run: docker pull mcr.microsoft.com/dotnet/aspnet:8.0
-      - run: docker tag mcr.microsoft.com/dotnet/aspnet:8.0 localhost:5000/dotnet/aspnet:8.0
-      - run: docker push localhost:5000/dotnet/aspnet:8.0 
-      - run: docker image rm localhost:5000/dotnet/aspnet:8.0
+      - run: docker pull mcr.microsoft.com/dotnet/aspnet:9.0
+      - run: docker tag mcr.microsoft.com/dotnet/aspnet:9.0 localhost:5000/dotnet/aspnet:9.0
+      - run: docker push localhost:5000/dotnet/aspnet:9.0 
+      - run: docker image rm localhost:5000/dotnet/aspnet:9.0
 
       # setup test data
       - run: rm -rf tests/TestData

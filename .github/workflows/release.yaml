@@ -32,7 +32,7 @@ jobs:
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: 9.0.x
       - name: create nuget
         run: dotnet pack Nibbler -o ./publish
       - name: upload 
@@ -49,9 +49,9 @@ jobs:
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: 9.0.x
       - name: create aot exe
-        run: dotnet publish Nibbler.Aot -c Release -f net8.0 -r linux-x64 -o tmp/
+        run: dotnet publish Nibbler.Aot -c Release -f net9.0 -r linux-x64 -o tmp/
       - name: create tar
         env:
           VERSION: ${{ needs.create-release.outputs.version }}
@@ -75,9 +75,9 @@ jobs:
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: 9.0.x
       - name: create aot exe
-        run: dotnet publish Nibbler.Aot -c Release -f net8.0 -r win-x64 -o tmp\
+        run: dotnet publish Nibbler.Aot -c Release -f net9.0 -r win-x64 -o tmp\
       - name: create zip
         env:
           VERSION: ${{ needs.create-release.outputs.version }}
