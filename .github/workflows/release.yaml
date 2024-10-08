@@ -46,7 +46,7 @@ jobs:
     needs: create-release
     strategy:
       matrix:
-        runtime: ['linux-x64', 'linux-arm64', 'linux-musl-x64']
+        runtime: ['linux-x64', 'linux-arm64', 'linux-musl-x64', 'linux-musl-arm64']
     steps:
       - uses: actions/checkout@v4
       - name: Setup .NET Core
@@ -70,7 +70,12 @@ jobs:
       - name: create aot exe
         env:
           RUNTIME: ${{ matrix.runtime }}
-        run: dotnet publish Nibbler.Aot -c Release -f net8.0 -r $RUNTIME -o tmp/
+        run: |
+          if [ $RUNTIME == "linux-musl-arm64" ]; then
+            EXTRA_ARGS="-p:LinkerFlavor=lld"
+            # -p:ObjCopyName=aarch64-linux-gnu-objcopy 
+          fi
+          dotnet publish Nibbler.Aot -c Release -f net8.0 -r $RUNTIME -o tmp/ $EXTRA_ARGS
       - name: create tar
         env:
           VERSION: ${{ needs.create-release.outputs.version }}
