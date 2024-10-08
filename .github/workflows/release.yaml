@@ -44,28 +44,54 @@ jobs:
   linux:
     runs-on: ubuntu-latest
     needs: create-release
+    strategy:
+      matrix:
+        runtime: ['linux-x64', 'linux-arm64', 'linux-musl-x64', 'linux-musl-arm64']
     steps:
       - uses: actions/checkout@v4
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
+      - name: setup arm64
+        if: matrix.runtime == 'linux-arm64' || matrix.runtime == 'linux-musl-arm64'
+        # from https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot/cross-compile#linux
+        run: |
+          sudo dpkg --add-architecture arm64
+          sudo bash -c 'cat > /etc/apt/sources.list.d/arm64.list <<EOF
+          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy main restricted
+          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy-updates main restricted
+          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy-backports main restricted universe multiverse
+          EOF'
+          sudo sed -i -e 's/deb http/deb [arch=amd64] http/g' /etc/apt/sources.list
+          sudo sed -i -e 's/deb mirror/deb [arch=amd64] mirror/g' /etc/apt/sources.list
+          sudo apt update
+          sudo apt install -y clang llvm binutils-aarch64-linux-gnu gcc-aarch64-linux-gnu zlib1g-dev:arm64 
       - name: create aot exe
-        run: dotnet publish Nibbler.Aot -c Release -f net8.0 -r linux-x64 -o tmp/
+        env:
+          RUNTIME: ${{ matrix.runtime }}
+        run: |
+          if [ $RUNTIME == "linux-musl-arm64" ]; then
+            EXTRA_ARGS="-p:LinkerFlavor=lld"
+            # -p:ObjCopyName=aarch64-linux-gnu-objcopy 
+          fi
+          dotnet publish Nibbler.Aot -c Release -f net8.0 -r $RUNTIME -o tmp/ $EXTRA_ARGS
       - name: create tar
         env:
           VERSION: ${{ needs.create-release.outputs.version }}
+          RUNTIME: ${{ matrix.runtime }}
         run: |
           rm tmp/Nibbler
           mv tmp/Nibbler.Aot tmp/nibbler
-          tar -czvf Nibbler.${VERSION}_linux-x64.tar.gz \
+          tar -czvf Nibbler.${VERSION}_${RUNTIME}.tar.gz \
               --mode='a+x' --owner=0 \
               -C tmp/ nibbler
       - name: upload 
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ needs.create-release.outputs.version }}
-        run: gh release upload ${{ github.ref_name }} Nibbler.${VERSION}_linux-x64.tar.gz --clobber
+          RUNTIME: ${{ matrix.runtime }}
+        run: gh release upload ${{ github.ref_name }} Nibbler.${VERSION}_${RUNTIME}.tar.gz --clobber
 
   windows:
     runs-on: windows-latest
