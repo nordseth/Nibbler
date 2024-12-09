@@ -14,7 +14,6 @@ namespace Nibbler
         private readonly string _targetImageName;
         private readonly IEnumerable<BuilderLayer> _addedLayers;
         private readonly ILogger _logger;
-        private readonly int _chunckSize;
         private readonly int _retryUpload;
 
         public RegistryPusher(string destination, Registry registry, IEnumerable<BuilderLayer> addedLayers, ILogger logger)
@@ -24,8 +23,6 @@ namespace Nibbler
             Registry = registry;
             _addedLayers = addedLayers;
             _logger = logger;
-            // set to 0 to diable chunckes
-            _chunckSize = 0;
             _retryUpload = 3;
         }
 
@@ -86,14 +83,8 @@ namespace Nibbler
 
                     using (var stream = configStream())
                     {
-                        if (_chunckSize > 0)
-                        {
-                            await Registry.UploadBlobChuncks(uploadUri, config.digest, stream, _chunckSize);
-                        }
-                        else
-                        {
-                            await Registry.UploadBlob(uploadUri, config.digest, stream, config.size);
-                        }
+
+                        await Registry.UploadBlob(uploadUri, config.digest, stream, config.size);
                     }
                 });
         }
@@ -116,14 +107,7 @@ namespace Nibbler
 
                     using (var stream = await imageSource.GetBlob(layer.digest))
                     {
-                        if (_chunckSize > 0)
-                        {
-                            await Registry.UploadBlobChuncks(uploadUri, layer.digest, stream, _chunckSize);
-                        }
-                        else
-                        {
-                            await Registry.UploadBlob(uploadUri, layer.digest, stream, layer.size);
-                        }
+                        await Registry.UploadBlob(uploadUri, layer.digest, stream, layer.size);
                     }
                 });
         }
@@ -146,15 +130,7 @@ namespace Nibbler
 
                     using (var stream = layerStream($"{layer.Name}.tar.gz"))
                     {
-                        if (_chunckSize > 0)
-                        {
-                            await Registry.UploadBlobChuncks(uploadUri, layer.Digest, stream, _chunckSize);
-                        }
-                        else
-                        {
-                            await Registry.UploadBlob(uploadUri, layer.Digest, stream, layer.Size);
-                        }
-
+                        await Registry.UploadBlob(uploadUri, layer.Digest, stream, layer.Size);
                     }
                 });
         }

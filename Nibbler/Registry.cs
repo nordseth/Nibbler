@@ -130,42 +130,6 @@ namespace Nibbler
             await EnsureSuccessWithErrorContent(response);
         }
 
-        public async Task UploadBlobChuncks(string uploadUrl, string digest, Stream stream, int chunckSize)
-        {
-            var buffer = new byte[chunckSize];
-            int currentIndex = 0;
-            int read;
-            while ((read = stream.Read(buffer, 0, chunckSize)) > 0)
-            {
-                HttpRequestMessage request;
-                // send put on last request
-                if (read >= chunckSize)
-                {
-                    request = new HttpRequestMessage(new HttpMethod("Patch"), uploadUrl);
-                }
-                else
-                {
-                    request = new HttpRequestMessage(HttpMethod.Put, AddUploadQuery(uploadUrl, $"digest={digest}"));
-                }
-
-                request.Content = new ByteArrayContent(buffer);
-                request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-                request.Content.Headers.ContentLength = read;
-                request.Content.Headers.TryAddWithoutValidation("Content-Range", $"{currentIndex}-{currentIndex + read - 1}");
-                var response = await HttpClient.SendAsync(request);
-
-                _logger.LogDebug($"uploaded {currentIndex}-{currentIndex + read - 1}{(request.Method == HttpMethod.Put ? " (last)" : "")} - {(int)response.StatusCode}");
-
-                await EnsureSuccessWithErrorContent(response);
-                currentIndex += read;
-
-                if (response.Headers.Location != null)
-                {
-                    uploadUrl = response.Headers.Location.ToString();
-                }
-            }
-        }
-
         public async Task UploadManifest(string name, string reference, ManifestV2 manifest)
         {
             var request = new HttpRequestMessage(HttpMethod.Put, $"/v2/{name}/manifests/{reference}");
