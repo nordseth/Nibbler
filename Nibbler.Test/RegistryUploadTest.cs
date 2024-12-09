@@ -72,7 +72,7 @@ public class RegistryUploadTest
         {
             Console.WriteLine($"Copying layer: {layer.digest} - {layer.mediaType} - {layer.size}");
             var blob = await source.DownloadBlob(imageName, layer.digest);
-            await dest.UploadBlobChuncks(uploadUri, layer.digest, blob, 10000);
+            await dest.UploadBlob(uploadUri, layer.digest, blob, layer.size);
             Console.WriteLine($"Done copying layer: {layer.digest} to {uploadUri}");
         }
     }
