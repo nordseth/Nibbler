@@ -57,17 +57,28 @@ jobs:
         if: matrix.runtime == 'linux-arm64' || matrix.runtime == 'linux-musl-arm64'
         # from https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot/cross-compile#linux
         run: |
-          echo "---- current sources ----"
-          cat /etc/apt/sources.list.d/ubuntu.sources
-          echo "----"
           sudo dpkg --add-architecture arm64
-          echo "---- add arm64 lists ----"
-          sudo bash -c 'cat > /etc/apt/sources.list.d/arm64.sources <<EOF
+          sudo bash -c 'cat > /etc/apt/sources.list.d/ubuntu.sources <<EOF
+          Types: deb
+          URIs: http://azure.archive.ubuntu.com/ubuntu/
+          Suites: noble noble-updates noble-backports
+          Components: main universe restricted multiverse
+          Architectures: amd64
+          Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+
+          Types: deb
+          URIs: http://azure.archive.ubuntu.com/ubuntu/
+          Suites: noble-security
+          Components: main universe restricted multiverse
+          Architectures: amd64
+          Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+
           Types: deb
           URIs: http://ports.ubuntu.com/ubuntu-ports/
           Suites: noble noble-updates noble-backports
           Components: main restricted universe multiverse
           Architectures: arm64
+          Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
           EOF'
           echo "---- apt update ----"
           sudo apt update
