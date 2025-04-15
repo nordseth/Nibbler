@@ -57,16 +57,19 @@ jobs:
         if: matrix.runtime == 'linux-arm64' || matrix.runtime == 'linux-musl-arm64'
         # from https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot/cross-compile#linux
         run: |
+          echo "---- current sources ----"
+          cat /etc/apt/sources.list
+          echo "----"
           sudo dpkg --add-architecture arm64
-          echo "add arm64 lists"
+          echo "---- add arm64 lists ----"
           sudo bash -c 'cat > /etc/apt/sources.list.d/arm64.list <<EOF
-          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ noble main restricted universe multiverse
-          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ noble-updates main restricted universe multiverse
-          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ noble-backports main restricted universe multiverse
+          Types: deb
+          URIs: http://ports.ubuntu.com/ubuntu-ports/
+          Suites: noble noble-updates noble-backports
+          Components: main restricted universe multiverse
+          Architectures: arm64
           EOF'
-          sudo sed -i -e 's/deb http/deb [arch=amd64] http/g' /etc/apt/sources.list
-          sudo sed -i -e 's/deb mirror/deb [arch=amd64] mirror/g' /etc/apt/sources.list
-          echo "apt update"
+          echo "---- apt update ----"
           sudo apt update
           sudo apt install -y clang llvm binutils-aarch64-linux-gnu gcc-aarch64-linux-gnu zlib1g-dev:arm64 
       - name: create aot exe
