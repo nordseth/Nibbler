@@ -58,11 +58,12 @@ public class RegistryTest
     [TestMethod]
     [DataRow("registry.hub.docker.com/library/hello-world:latest", false, false, false)]
     [DataRow("registry.hub.docker.com/nordseth/lego-kubectl:latest", false, false, true)]
+    [DataRow("nordseth.azurecr.io/azure-test:latest_master", false, false, true)]
     public async Task Registry_Get_Manifest_With_Auth(string image, bool insecure, bool skipTlsVerify, bool useDockerConfig)
     {
         var registryName = ImageHelper.GetRegistryName(image);
         var registryUrl = ImageHelper.GetRegistryBaseUrl(image, insecure);
-        IDockerConfigCredentials dockerCredentials = null;
+        DockerConfigCredentials dockerCredentials = null;
         if (useDockerConfig)
         {
             dockerCredentials = new DockerConfigCredentials(null);

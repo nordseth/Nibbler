@@ -7,23 +7,29 @@ using System.Text.Json;
 
 namespace Nibbler.Utils
 {
-    public interface IDockerConfigCredentials
+    public class DockerConfigCredentials 
     {
-        Dictionary<string, string> GetCredentials(string registry);
-    }
+        public const string UsernameKey = "username";
+        public const string PasswordKey = "password";
+        public const string AuthKey = "auth";
+        public const string IdentityTokenKey = "identitytoken";
 
-    public class DockerConfigCredentials : IDockerConfigCredentials
-    {
         private const string TokenUserName = "<token>";
 
         private readonly string _dockerConfigFile;
+
+        protected DockerConfigCredentials()
+        {
+            // for test purposes
+            _dockerConfigFile = null;
+        }
 
         public DockerConfigCredentials(string dockerConfigFile)
         {
             _dockerConfigFile = dockerConfigFile;
         }
 
-        public Dictionary<string, string> GetCredentials(string registry)
+        public virtual Dictionary<string, string> GetCredentials(string registry)
         {
             return GetDockerConfigAuth(registry, _dockerConfigFile);
         }
@@ -59,15 +65,15 @@ namespace Nibbler.Utils
                         {
                             return new()
                             {
-                                ["identityToken"] = creds.Secret,
+                                [DockerConfigCredentials.IdentityTokenKey] = creds.Secret,
                             };
                         }
                         else
                         {
                             return new()
                             {
-                                ["username"] = creds.Username,
-                                ["password"] = creds.Secret,
+                                [DockerConfigCredentials.UsernameKey] = creds.Username,
+                                [DockerConfigCredentials.PasswordKey] = creds.Secret,
                             };
                         }
                     }
@@ -85,7 +91,7 @@ namespace Nibbler.Utils
 
         private static bool IsEmptyAuth(Dictionary<string, string> auth)
         {
-            return !auth.ContainsKey("auth") && !auth.ContainsKey("username") && !auth.ContainsKey("password") && !auth.ContainsKey("identityToken");
+            return !auth.ContainsKey("auth") && !auth.ContainsKey("username") && !auth.ContainsKey("password") && !auth.ContainsKey("identitytoken");
         }
 
         private static CredentialHelperResult GetCredentialFromHelper(string helper, string key)
