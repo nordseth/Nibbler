@@ -119,27 +119,27 @@ namespace Nibbler.Utils
                 _scope = scope;
             }
 
-            AuthConfig tokenCredentials;
+            Dictionary<string, string> tokenCredentials;
             if (HasCredentials())
             {
-                tokenCredentials = new AuthConfig
+                tokenCredentials = new()
                 {
-                    username = _username,
-                    password = _password,
+                    ["username"] = _username,
+                    ["password"] = _password,
                 };
                 _logger.LogDebug($"Using provided credentials");
             }
             else
             {
                 tokenCredentials = _dockerConfigCredentials?.GetCredentials(_registry);
-                _logger.LogDebug($"Using dockerConfig: {tokenCredentials?.Describe()}");
+                _logger.LogDebug($"Using dockerConfig for {_registry}: {string.Join(", ", tokenCredentials?.Keys)}");
             }
 
             authParams.TryGetValue("service", out string service);
             authParams.TryGetValue("realm", out string realm);
 
             TokenResponse tokenResponse;
-            if (_refreshToken != null || !string.IsNullOrEmpty(tokenCredentials?.identityToken) || _forceOAuth)
+            if (_refreshToken != null || tokenCredentials?.ContainsKey("identityToken") == true || _forceOAuth)
             {
                 tokenResponse = await FetchOAuthToken(realm, tokenCredentials, service, scope);
             }
@@ -176,7 +176,7 @@ namespace Nibbler.Utils
         }
 
         // https://github.com/docker/cli/blob/master/vendor/github.com/docker/distribution/registry/client/auth/session.go#L323
-        private async Task<TokenResponse> FetchOAuthToken(string realm, AuthConfig authConfig, string service, string scopes)
+        private async Task<TokenResponse> FetchOAuthToken(string realm, Dictionary<string, string> authConfig, string service, string scopes)
         {
             var form = new Dictionary<string, string>
             {
@@ -185,16 +185,16 @@ namespace Nibbler.Utils
                 ["client_id"] = _clientId ?? defaultClientID,
             };
 
-            if (_refreshToken != null || authConfig?.identityToken != null)
+            if (_refreshToken != null || authConfig?.ContainsKey("identityToken") == true)
             {
                 form["grant_type"] = "refresh_token";
-                form["refresh_token"] = _refreshToken ?? authConfig.identityToken;
+                form["refresh_token"] = _refreshToken ?? authConfig["identityToken"];
             }
-            else if (authConfig?.HasUsernamePassword() ?? false)
+            else if (authConfig?.ContainsKey("username") == true && authConfig?.ContainsKey("password") == true)
             {
                 form["grant_type"] = "password";
-                form["username"] = authConfig?.username;
-                form["password"] = authConfig?.password;
+                form["username"] = authConfig["username"];
+                form["password"] = authConfig["password"];
                 form["access_type"] = "offline";
             }
             else
@@ -209,7 +209,7 @@ namespace Nibbler.Utils
             return tokenResponse;
         }
 
-        private async Task<TokenResponse> FetchBasicAuthToken(string realm, AuthConfig authConfig, string service, string scopes)
+        private async Task<TokenResponse> FetchBasicAuthToken(string realm, Dictionary<string, string> authConfig, string service, string scopes)
         {
             Uri realmUri = new Uri(realm);
             var queryString = new QueryString(realmUri.Query);
@@ -224,7 +224,11 @@ namespace Nibbler.Utils
                 queryString = queryString.Add("scope", scopes);
             }
 
-            // todo: support for refresh tokens here
+            if (false)
+            {
+                queryString = queryString.Add("offline_token", "true");
+                queryString = queryString.Add("client_id", _clientId ?? defaultClientID);
+            }
 
             var request = new HttpRequestMessage(HttpMethod.Get, $"{realmUri.GetLeftPart(UriPartial.Path)}{queryString}");
             if (authConfig != null)
@@ -268,16 +272,16 @@ namespace Nibbler.Utils
             return Convert.ToBase64String(Encoding.UTF8.GetBytes($"{username}:{password}"));
         }
 
-        public static string EncodeBasicCredentials(AuthConfig authConfig)
+        public static string EncodeBasicCredentials(Dictionary<string, string> authConfig)
         {
-            if (authConfig?.auth != null)
+            if (authConfig?.ContainsKey("auth") == true)
             {
-                return authConfig.auth;
+                return authConfig["auth"];
             }
 
-            if (authConfig?.username != null && authConfig?.password != null)
+            if (authConfig?.ContainsKey("username") == true && authConfig?.ContainsKey("password") == true)
             {
-                return EncodeBasicCredentials(authConfig.username, authConfig.password);
+                return EncodeBasicCredentials(authConfig["username"], authConfig["password"]);
             }
 
             return null;
