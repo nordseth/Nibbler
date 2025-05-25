@@ -30,10 +30,10 @@ namespace Nibbler.Utils
         private string _password;
 
         public AuthenticationHandler(
-            string registry, 
-            IDockerConfigCredentials dockerConfigCredentials, 
-            bool push, 
-            ILogger logger, 
+            string registry,
+            IDockerConfigCredentials dockerConfigCredentials,
+            bool push,
+            ILogger logger,
             HttpClient tokenClient,
             bool forceOauth = false,
             string clientId = null)
@@ -127,17 +127,19 @@ namespace Nibbler.Utils
                     username = _username,
                     password = _password,
                 };
+                _logger.LogDebug($"Using provided credentials");
             }
             else
             {
                 tokenCredentials = _dockerConfigCredentials?.GetCredentials(_registry);
+                _logger.LogDebug($"Using dockerConfig: {tokenCredentials.Describe()}");
             }
 
             authParams.TryGetValue("service", out string service);
             authParams.TryGetValue("realm", out string realm);
 
             TokenResponse tokenResponse;
-            if (_refreshToken != null || tokenCredentials?.identityToken != null || _forceOAuth)
+            if (_refreshToken != null || !string.IsNullOrEmpty(tokenCredentials?.identityToken) || _forceOAuth)
             {
                 tokenResponse = await FetchOAuthToken(realm, tokenCredentials, service, scope);
             }

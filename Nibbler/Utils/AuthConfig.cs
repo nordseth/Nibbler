@@ -1,4 +1,6 @@
-﻿namespace Nibbler.Utils;
+﻿using System.Text;
+
+namespace Nibbler.Utils;
 
 /// <summary>
 /// https://github.com/docker/cli/blob/master/cli/config/types/authconfig.go
@@ -26,5 +28,17 @@ public class AuthConfig
     public bool HasUsernamePassword()
     {
         return username != null && password != null;
+    }
+
+    public string Describe()
+    {
+        var sb = new StringBuilder();
+        sb.Append($"username: {string.IsNullOrEmpty(username)}");
+        sb.Append($", password: {string.IsNullOrEmpty(password)}");
+        sb.Append($", auth: {string.IsNullOrEmpty(auth)}");
+        sb.Append($", serverAddress: {string.IsNullOrEmpty(serverAddress)}");
+        sb.Append($", identityToken: {string.IsNullOrEmpty(identityToken)}");
+        sb.Append($", registryToken: {string.IsNullOrEmpty(registryToken)}");
+        return sb.ToString();
     }
 }
