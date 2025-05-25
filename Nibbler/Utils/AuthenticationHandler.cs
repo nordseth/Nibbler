@@ -132,7 +132,7 @@ namespace Nibbler.Utils
             else
             {
                 tokenCredentials = _dockerConfigCredentials?.GetCredentials(_registry);
-                _logger.LogDebug($"Using dockerConfig: {tokenCredentials.Describe()}");
+                _logger.LogDebug($"Using dockerConfig: {tokenCredentials?.Describe()}");
             }
 
             authParams.TryGetValue("service", out string service);
