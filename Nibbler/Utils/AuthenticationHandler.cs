@@ -13,24 +13,38 @@ namespace Nibbler.Utils
 {
     public class AuthenticationHandler : DelegatingHandler
     {
+        private const string defaultClientID = "registry-client";
+
         private readonly string _registry;
         private readonly IDockerConfigCredentials _dockerConfigCredentials;
         private readonly bool _push;
+        private readonly bool _forceOAuth;
+        private readonly string _clientId;
         private readonly ILogger _logger;
         private readonly HttpClient _tokenClient;
 
         private AuthenticationHeaderValue _authorization;
+        private string _refreshToken;
         private string _scope;
         private string _username;
         private string _password;
 
-        public AuthenticationHandler(string registry, IDockerConfigCredentials dockerConfigCredentials, bool push, ILogger logger, HttpClient tokenClient)
+        public AuthenticationHandler(
+            string registry, 
+            IDockerConfigCredentials dockerConfigCredentials, 
+            bool push, 
+            ILogger logger, 
+            HttpClient tokenClient,
+            bool forceOauth = false,
+            string clientId = null)
         {
             _registry = registry;
             _dockerConfigCredentials = dockerConfigCredentials;
             _push = push;
             _logger = logger;
             _tokenClient = tokenClient;
+            _forceOAuth = forceOauth;
+            _clientId = clientId;
         }
 
         public void SetCredentials(string username, string password)
@@ -99,56 +113,128 @@ namespace Nibbler.Utils
                 return false;
             }
 
-            var queryString = QueryString.Empty;
-            if (authParams.TryGetValue("service", out var service))
+            if (scope != null)
+            {
+                scope = TryUpdateScope(scope);
+                _scope = scope;
+            }
+
+            AuthConfig tokenCredentials;
+            if (HasCredentials())
+            {
+                tokenCredentials = new AuthConfig
+                {
+                    username = _username,
+                    password = _password,
+                };
+            }
+            else
+            {
+                tokenCredentials = _dockerConfigCredentials?.GetCredentials(_registry);
+            }
+
+            authParams.TryGetValue("service", out string service);
+            authParams.TryGetValue("realm", out string realm);
+
+            TokenResponse tokenResponse;
+            if (_refreshToken != null || tokenCredentials?.identityToken != null || _forceOAuth)
+            {
+                tokenResponse = await FetchOAuthToken(realm, tokenCredentials, service, scope);
+            }
+            else
+            {
+                tokenResponse = await FetchBasicAuthToken(realm, tokenCredentials, service, scope);
+            }
+
+            _authorization = new AuthenticationHeaderValue("Bearer", tokenResponse.token ?? tokenResponse.access_token);
+            _logger.LogDebug($"Using Bearer token for {_registry} ({realm}, {service}, {scope})");
+            if (tokenResponse.refresh_token != null)
+            {
+                _refreshToken = tokenResponse.refresh_token;
+                _logger.LogDebug($"Set refresh token");
+            }
+            _logger.LogTrace($"Setting authorization to: {_authorization}");
+            return true;
+        }
+
+        private string TryUpdateScope(string scope)
+        {
+            if (_push)
+            {
+                var resourceScope = ResourceScope.TryParse(scope);
+                if (resourceScope != null && resourceScope.IsPullOnly())
+                {
+                    resourceScope.SetPullPush();
+                    scope = resourceScope.ToString();
+                    _logger.LogDebug($"Adding push to scope: {scope}");
+                }
+            }
+
+            return scope;
+        }
+
+        // https://github.com/docker/cli/blob/master/vendor/github.com/docker/distribution/registry/client/auth/session.go#L323
+        private async Task<TokenResponse> FetchOAuthToken(string realm, AuthConfig authConfig, string service, string scopes)
+        {
+            var form = new Dictionary<string, string>
+            {
+                ["scope"] = scopes,
+                ["service"] = service,
+                ["client_id"] = _clientId ?? defaultClientID,
+            };
+
+            if (_refreshToken != null || authConfig?.identityToken != null)
+            {
+                form["grant_type"] = "refresh_token";
+                form["refresh_token"] = _refreshToken ?? authConfig.identityToken;
+            }
+            else if (authConfig?.HasUsernamePassword() ?? false)
+            {
+                form["grant_type"] = "password";
+                form["username"] = authConfig?.username;
+                form["password"] = authConfig?.password;
+                form["access_type"] = "offline";
+            }
+            else
+            {
+                throw new InvalidOperationException("no supported grant type");
+            }
+
+            using var response = await _tokenClient.PostAsync(realm, new FormUrlEncodedContent(form));
+            var content = await response.Content.ReadAsStringAsync();
+            response.EnsureSuccessStatusCode();
+            var tokenResponse = JsonSerializer.Deserialize(content, JsonContext.Default.TokenResponse);
+            return tokenResponse;
+        }
+
+        private async Task<TokenResponse> FetchBasicAuthToken(string realm, AuthConfig authConfig, string service, string scopes)
+        {
+            Uri realmUri = new Uri(realm);
+            var queryString = new QueryString(realmUri.Query);
+
+            if (service != null)
             {
                 queryString = queryString.Add("service", service);
             }
 
-            if (scope != null)
+            if (scopes != null)
             {
-                if (_push)
-                {
-                    var resourceScope = ResourceScope.TryParse(scope);
-                    if (resourceScope != null && resourceScope.IsPullOnly())
-                    {
-                        resourceScope.SetPullPush();
-                        scope = resourceScope.ToString();
-                        _logger.LogDebug($"Adding push to scope: {scope}");
-                    }
-                }
-
-                queryString = queryString.Add("scope", scope);
-                _scope = scope;
+                queryString = queryString.Add("scope", scopes);
             }
 
-            var request = new HttpRequestMessage(HttpMethod.Get, $"{authParams["realm"]}{queryString}");
+            // todo: support for refresh tokens here
 
-            string tokenCredentials;
-            if (HasCredentials())
+            var request = new HttpRequestMessage(HttpMethod.Get, $"{realmUri.GetLeftPart(UriPartial.Path)}{queryString}");
+            if (authConfig != null)
             {
-                tokenCredentials = EncodeCredentials(_username, _password);
-            }
-            else
-            {
-                tokenCredentials = _dockerConfigCredentials?.GetEncodedCredentials(_registry);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Basic", EncodeBasicCredentials(authConfig));
             }
 
-            if (tokenCredentials != null)
-            {
-                request.Headers.Authorization = new AuthenticationHeaderValue("Basic", tokenCredentials);
-            }
-
-            var response = await _tokenClient.SendAsync(request);
-
+            using var response = await _tokenClient.SendAsync(request);
             var content = await response.Content.ReadAsStringAsync();
             response.EnsureSuccessStatusCode();
             var tokenResponse = JsonSerializer.Deserialize(content, JsonContext.Default.TokenResponse);
-
-            _authorization = new AuthenticationHeaderValue("Bearer", tokenResponse.token ?? tokenResponse.access_token);
-            _logger.LogDebug($"Using Bearer token for {_registry} ({queryString})");
-            _logger.LogTrace($"Setting authorization to: {_authorization}");
-            return true;
+            return tokenResponse;
         }
 
         private bool TrySetBasicAuth()
@@ -156,11 +242,12 @@ namespace Nibbler.Utils
             string credentials;
             if (HasCredentials())
             {
-                credentials = EncodeCredentials(_username, _password);
+                credentials = EncodeBasicCredentials(_username, _password);
             }
             else
             {
-                credentials = _dockerConfigCredentials?.GetEncodedCredentials(_registry);
+                var authConfig = _dockerConfigCredentials?.GetCredentials(_registry);
+                credentials = EncodeBasicCredentials(authConfig);
             }
 
             if (credentials != null)
@@ -174,9 +261,24 @@ namespace Nibbler.Utils
             return false;
         }
 
-        public static string EncodeCredentials(string username, string password)
+        public static string EncodeBasicCredentials(string username, string password)
         {
             return Convert.ToBase64String(Encoding.UTF8.GetBytes($"{username}:{password}"));
+        }
+
+        public static string EncodeBasicCredentials(AuthConfig authConfig)
+        {
+            if (authConfig?.auth != null)
+            {
+                return authConfig.auth;
+            }
+
+            if (authConfig?.username != null && authConfig?.password != null)
+            {
+                return EncodeBasicCredentials(authConfig.username, authConfig.password);
+            }
+
+            return null;
         }
 
         public class TokenResponse
@@ -184,6 +286,7 @@ namespace Nibbler.Utils
             public string token { get; set; }
             public string refresh_token { get; set; }
             public string access_token { get; set; }
+            public int expires_in { get; set; }
             public string scope { get; set; }
         }
     }
