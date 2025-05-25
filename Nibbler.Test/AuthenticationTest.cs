@@ -42,7 +42,7 @@ public class AuthenticationTest
     {
         string username = "username1";
         string password = "password1";
-        var expectedAuth = AuthenticationHandler.EncodeCredentials(username, password);
+        var expectedAuth = AuthenticationHandler.EncodeBasicCredentials(username, password);
 
         var handler = new AuthenticationHandler(null, null, false, NullLogger.Instance, null);
         handler.SetCredentials(username, password);
@@ -58,14 +58,17 @@ public class AuthenticationTest
     [TestMethod]
     public async Task AuthHandler_Selects_DockerConfig()
     {
-        var token = "token";
+        var authConfig = new AuthConfig
+        {
+            auth = "token",
+        };
 
         var dockerConfigMock = new Mock<IDockerConfigCredentials>();
-        dockerConfigMock.Setup(c => c.GetEncodedCredentials(null)).Returns(token);
+        dockerConfigMock.Setup(c => c.GetCredentials(null)).Returns(authConfig);
 
-        var handler = new AuthenticationHandler(null, dockerConfigMock.Object, false, NullLogger.Instance, null);
+        var handler = new AuthenticationHandler(null, dockerConfigMock.Object, false, NullLogger.Instance, null, false, null);
 
-        var fakeHandler = new FakeRequireAuthHandler("Basic", null, token);
+        var fakeHandler = new FakeRequireAuthHandler("Basic", null, authConfig.auth);
         handler.InnerHandler = fakeHandler;
 
         var invoker = new HttpMessageInvoker(handler);
