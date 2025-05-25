@@ -16,7 +16,7 @@ namespace Nibbler.Utils
         private const string defaultClientID = "registry-client";
 
         private readonly string _registry;
-        private readonly IDockerConfigCredentials _dockerConfigCredentials;
+        private readonly DockerConfigCredentials _dockerConfigCredentials;
         private readonly bool _push;
         private readonly bool _forceOAuth;
         private readonly string _clientId;
@@ -30,10 +30,10 @@ namespace Nibbler.Utils
         private string _password;
 
         public AuthenticationHandler(
-            string registry, 
-            IDockerConfigCredentials dockerConfigCredentials, 
-            bool push, 
-            ILogger logger, 
+            string registry,
+            DockerConfigCredentials dockerConfigCredentials,
+            bool push,
+            ILogger logger,
             HttpClient tokenClient,
             bool forceOauth = false,
             string clientId = null)
@@ -119,25 +119,27 @@ namespace Nibbler.Utils
                 _scope = scope;
             }
 
-            AuthConfig tokenCredentials;
+            Dictionary<string, string> tokenCredentials;
             if (HasCredentials())
             {
-                tokenCredentials = new AuthConfig
+                tokenCredentials = new()
                 {
-                    username = _username,
-                    password = _password,
+                    [DockerConfigCredentials.UsernameKey] = _username,
+                    [DockerConfigCredentials.PasswordKey] = _password,
                 };
+                _logger.LogDebug($"Using provided credentials");
             }
             else
             {
                 tokenCredentials = _dockerConfigCredentials?.GetCredentials(_registry);
+                _logger.LogDebug($"Using dockerConfig for {_registry}: {string.Join(", ", tokenCredentials?.Keys.ToArray() ?? new[] { "(empty)" })}");
             }
 
             authParams.TryGetValue("service", out string service);
             authParams.TryGetValue("realm", out string realm);
 
             TokenResponse tokenResponse;
-            if (_refreshToken != null || tokenCredentials?.identityToken != null || _forceOAuth)
+            if (_refreshToken != null || tokenCredentials?.ContainsKey(DockerConfigCredentials.IdentityTokenKey) == true || _forceOAuth)
             {
                 tokenResponse = await FetchOAuthToken(realm, tokenCredentials, service, scope);
             }
@@ -174,7 +176,7 @@ namespace Nibbler.Utils
         }
 
         // https://github.com/docker/cli/blob/master/vendor/github.com/docker/distribution/registry/client/auth/session.go#L323
-        private async Task<TokenResponse> FetchOAuthToken(string realm, AuthConfig authConfig, string service, string scopes)
+        private async Task<TokenResponse> FetchOAuthToken(string realm, Dictionary<string, string> authConfig, string service, string scopes)
         {
             var form = new Dictionary<string, string>
             {
@@ -183,16 +185,22 @@ namespace Nibbler.Utils
                 ["client_id"] = _clientId ?? defaultClientID,
             };
 
-            if (_refreshToken != null || authConfig?.identityToken != null)
+            if (_refreshToken != null)
             {
                 form["grant_type"] = "refresh_token";
-                form["refresh_token"] = _refreshToken ?? authConfig.identityToken;
+                form["refresh_token"] = _refreshToken;
             }
-            else if (authConfig?.HasUsernamePassword() ?? false)
+            else if (authConfig?.TryGetValue(DockerConfigCredentials.IdentityTokenKey, out var idToken) == true)
+            {
+                form["grant_type"] = "refresh_token";
+                form["refresh_token"] = idToken;
+            }
+            else if (authConfig?.TryGetValue(DockerConfigCredentials.UsernameKey, out var username) == true
+                && authConfig?.TryGetValue(DockerConfigCredentials.PasswordKey, out var password) == true)
             {
                 form["grant_type"] = "password";
-                form["username"] = authConfig?.username;
-                form["password"] = authConfig?.password;
+                form["username"] = username;
+                form["password"] = password;
                 form["access_type"] = "offline";
             }
             else
@@ -207,7 +215,7 @@ namespace Nibbler.Utils
             return tokenResponse;
         }
 
-        private async Task<TokenResponse> FetchBasicAuthToken(string realm, AuthConfig authConfig, string service, string scopes)
+        private async Task<TokenResponse> FetchBasicAuthToken(string realm, Dictionary<string, string> authConfig, string service, string scopes)
         {
             Uri realmUri = new Uri(realm);
             var queryString = new QueryString(realmUri.Query);
@@ -222,7 +230,11 @@ namespace Nibbler.Utils
                 queryString = queryString.Add("scope", scopes);
             }
 
-            // todo: support for refresh tokens here
+            if (false)
+            {
+                queryString = queryString.Add("offline_token", "true");
+                queryString = queryString.Add("client_id", _clientId ?? defaultClientID);
+            }
 
             var request = new HttpRequestMessage(HttpMethod.Get, $"{realmUri.GetLeftPart(UriPartial.Path)}{queryString}");
             if (authConfig != null)
@@ -266,16 +278,17 @@ namespace Nibbler.Utils
             return Convert.ToBase64String(Encoding.UTF8.GetBytes($"{username}:{password}"));
         }
 
-        public static string EncodeBasicCredentials(AuthConfig authConfig)
+        public static string EncodeBasicCredentials(Dictionary<string, string> authConfig)
         {
-            if (authConfig?.auth != null)
+            if (authConfig?.TryGetValue(DockerConfigCredentials.AuthKey, out var auth) == true)
             {
-                return authConfig.auth;
+                return auth;
             }
 
-            if (authConfig?.username != null && authConfig?.password != null)
+            if (authConfig?.TryGetValue(DockerConfigCredentials.UsernameKey, out var username) == true
+                && authConfig?.TryGetValue(DockerConfigCredentials.PasswordKey, out var password) == true)
             {
-                return EncodeBasicCredentials(authConfig.username, authConfig.password);
+                return EncodeBasicCredentials(username, password);
             }
 
             return null;
