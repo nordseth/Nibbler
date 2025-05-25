@@ -62,7 +62,7 @@ public class RegistryTest
     {
         var registryName = ImageHelper.GetRegistryName(image);
         var registryUrl = ImageHelper.GetRegistryBaseUrl(image, insecure);
-        IDockerConfigCredentials dockerCredentials = null;
+        DockerConfigCredentials dockerCredentials = null;
         if (useDockerConfig)
         {
             dockerCredentials = new DockerConfigCredentials(null);

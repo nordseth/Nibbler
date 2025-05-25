@@ -7,28 +7,34 @@ using System.Text.Json;
 
 namespace Nibbler.Utils
 {
-    public interface IDockerConfigCredentials
+    public class DockerConfigCredentials 
     {
-        AuthConfig GetCredentials(string registry);
-    }
+        public const string UsernameKey = "username";
+        public const string PasswordKey = "password";
+        public const string AuthKey = "auth";
+        public const string IdentityTokenKey = "identitytoken";
 
-    public class DockerConfigCredentials : IDockerConfigCredentials
-    {
         private const string TokenUserName = "<token>";
 
         private readonly string _dockerConfigFile;
+
+        protected DockerConfigCredentials()
+        {
+            // for test purposes
+            _dockerConfigFile = null;
+        }
 
         public DockerConfigCredentials(string dockerConfigFile)
         {
             _dockerConfigFile = dockerConfigFile;
         }
 
-        public AuthConfig GetCredentials(string registry)
+        public virtual Dictionary<string, string> GetCredentials(string registry)
         {
             return GetDockerConfigAuth(registry, _dockerConfigFile);
         }
 
-        private static AuthConfig GetDockerConfigAuth(string registry, string dockerConfigFile)
+        private static Dictionary<string, string> GetDockerConfigAuth(string registry, string dockerConfigFile)
         {
             var configPath = dockerConfigFile;
             if (string.IsNullOrEmpty(configPath))
@@ -50,24 +56,24 @@ namespace Nibbler.Utils
 
             if (config.auths != null && config.auths.TryGetValue(registry, out var auth))
             {
-                if (auth.EmptyCreds() && config.credsStore != null)
+                if (IsEmptyAuth(auth) && config.credsStore != null)
                 {
                     var creds = GetCredentialFromHelper(config.credsStore, registry);
                     if (creds != null)
                     {
                         if (creds.Username.Equals(TokenUserName))
                         {
-                            return new AuthConfig
+                            return new()
                             {
-                                identityToken = creds.Secret,
+                                [DockerConfigCredentials.IdentityTokenKey] = creds.Secret,
                             };
                         }
                         else
                         {
-                            return new AuthConfig
+                            return new()
                             {
-                                username = creds.Username,
-                                password = creds.Secret,
+                                [DockerConfigCredentials.UsernameKey] = creds.Username,
+                                [DockerConfigCredentials.PasswordKey] = creds.Secret,
                             };
                         }
                     }
@@ -81,6 +87,11 @@ namespace Nibbler.Utils
             }
 
             return null;
+        }
+
+        private static bool IsEmptyAuth(Dictionary<string, string> auth)
+        {
+            return !auth.ContainsKey("auth") && !auth.ContainsKey("username") && !auth.ContainsKey("password") && !auth.ContainsKey("identitytoken");
         }
 
         private static CredentialHelperResult GetCredentialFromHelper(string helper, string key)
@@ -113,7 +124,7 @@ namespace Nibbler.Utils
 
         public class DockerConfig
         {
-            public Dictionary<string, AuthConfig> auths { get; set; }
+            public Dictionary<string, Dictionary<string, string>> auths { get; set; }
             public string credsStore { get; set; }
         }
 

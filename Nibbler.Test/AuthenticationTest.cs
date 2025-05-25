@@ -58,17 +58,17 @@ public class AuthenticationTest
     [TestMethod]
     public async Task AuthHandler_Selects_DockerConfig()
     {
-        var authConfig = new AuthConfig
+        var authConfig = new Dictionary<string, string>
         {
-            auth = "token",
+            [DockerConfigCredentials.AuthKey] = "token",
         };
 
-        var dockerConfigMock = new Mock<IDockerConfigCredentials>();
+        var dockerConfigMock = new Mock<DockerConfigCredentials>();
         dockerConfigMock.Setup(c => c.GetCredentials(null)).Returns(authConfig);
 
         var handler = new AuthenticationHandler(null, dockerConfigMock.Object, false, NullLogger.Instance, null, false, null);
 
-        var fakeHandler = new FakeRequireAuthHandler("Basic", null, authConfig.auth);
+        var fakeHandler = new FakeRequireAuthHandler("Basic", null, authConfig[DockerConfigCredentials.AuthKey]);
         handler.InnerHandler = fakeHandler;
 
         var invoker = new HttpMessageInvoker(handler);
