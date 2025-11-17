@@ -31,7 +31,7 @@ public class ImageDataTest
         Assert.IsNotNull(image.Config);
 
         Assert.IsNotNull(image.LayersAdded);
-        Assert.IsNotEmpty(image.LayersAdded);
+        Assert.IsEmpty(image.LayersAdded);
         Assert.IsFalse(image.ManifestUpdated);
     }
 
