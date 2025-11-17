@@ -8,6 +8,10 @@ docker pull mcr.microsoft.com/dotnet/aspnet:9.0
 docker tag mcr.microsoft.com/dotnet/aspnet:9.0 localhost:5000/dotnet/aspnet:9.0 
 docker push localhost:5000/dotnet/aspnet:9.0 
 docker image rm localhost:5000/dotnet/aspnet:9.0 
+docker pull helloworld:latest
+docker tag helloworld:latest localhost:5000/helloworld:latest
+docker push localhost:5000/helloworld:latest
+docker image rm localhost:5000/helloworld:latest
 
 rm -rf TestData
 mkdir TestData
