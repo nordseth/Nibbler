@@ -127,7 +127,7 @@ public class MatchTest
         {
             var regex = GetRegex(pattern);
             bool result = Regex.IsMatch(input, regex, RegexOptions.Singleline);
-            Assert.Fail("Expected Exception", regex);
+            Assert.Fail($"Expected Exception: {regex}");
         }
         catch
         {
