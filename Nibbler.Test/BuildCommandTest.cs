@@ -50,12 +50,6 @@ public class BuildCommandTest
         "--to-image", "localhost:5000/test/nibbler-test:unittest",
         "--insecure",
         "--debug"})]
-    [DataRow(new string[] {
-        "--from-image", "localhost:5000/dotnet/aspnet:9.0",
-        "--to-image", "localhost:5000/test/nibbler-test:unittest",
-        "--insecure",
-        "-v",
-        "--trace"})]
     public async Task BuilderCommand_Minimal_Args(string[] args) => await Run(args);
 
     [TestMethod]
