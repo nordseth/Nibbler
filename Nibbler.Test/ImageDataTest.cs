@@ -78,8 +78,8 @@ public class ImageDataTest
         image.AddLayer(layer);
 
         Assert.IsTrue(image.ManifestUpdated);
-        Assert.IsTrue(image.Config.rootfs.diff_ids.Contains(diffId));
-        Assert.IsTrue(image.Config.history.Count() > originalHistoryCount);
+        Assert.Contains(diffId, image.Config.rootfs.diff_ids);
+        Assert.IsGreaterThan(originalHistoryCount, image.Config.history.Count());
         Assert.IsTrue(image.Manifest.layers.Any(l => l.digest == digest && l.size == size));
     }
 }

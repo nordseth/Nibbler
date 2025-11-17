@@ -100,6 +100,6 @@ public class ArchiveTest
         {
             Console.WriteLine(Archive.PrintEntry(e.Value.Item2));
         }
-        Assert.IsTrue(tarWithIgnore.Entries.Count < tarNoIgnore.Entries.Count);
+        Assert.IsLessThan(tarNoIgnore.Entries.Count, tarWithIgnore.Entries.Count);
     }
 }
