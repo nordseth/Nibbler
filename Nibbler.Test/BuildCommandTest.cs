@@ -84,6 +84,16 @@ public class BuildCommandTest
 
     [TestMethod]
     [DataRow(new string[] {
+        "--from-image", "registry.hub.docker.com/library/nginx:alpine",
+        "--to-image", "localhost:5000/test/nibbler-test:unittest",
+        "--to-insecure",
+        "--label", @"org.opencontainers.image.description=test",
+        "-v",
+        "--dry-run" })]
+    public async Task BuilderCommand_Nginx_Add_Label_DryRun(string[] args) => await Run(args);
+
+    [TestMethod]
+    [DataRow(new string[] {
         "--from-image", "localhost:5000/dotnet/aspnet:9.0",
         "--to-image", "localhost:5000/test/nibbler-test:unittest",
         "--add", @"../../../../tests/TestData/publish/:/app:1001:0:777",

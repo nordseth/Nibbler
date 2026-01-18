@@ -1,10 +1,6 @@
 ﻿using Nibbler.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 namespace Nibbler.Utils
 {
@@ -15,6 +11,7 @@ namespace Nibbler.Utils
     [JsonSerializable(typeof(AuthenticationHandler.TokenResponse))]
     [JsonSerializable(typeof(DockerConfigCredentials.DockerConfig))]
     [JsonSerializable(typeof(DockerConfigCredentials.CredentialHelperResult))]
+    [JsonSerializable(typeof(JsonElement))]
     internal partial class JsonContext : JsonSerializerContext
     {
     }
