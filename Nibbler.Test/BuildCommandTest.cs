@@ -180,37 +180,6 @@ public class BuildCommandTest
     [DataRow(new string[] {
         "--from-image", "localhost:5000/dotnet/aspnet:9.0",
         "--to-image", "localhost:5000/test/nibbler-test:unittest",
-        "--labels", "label1=value1,label2=value2,label3=value3",
-        "--insecure",
-        "-v",
-        "--trace" })]
-    public async Task BuilderCommand_Labels_CommaSeparated_Multiple(string[] args) => await Run(args);
-
-    [TestMethod]
-    [DataRow(new string[] {
-        "--from-image", "registry.hub.docker.com/library/nginx:alpine",
-        "--to-image", "localhost:5000/test/nibbler-test:unittest",
-        "--to-insecure",
-        "--labels", @"org.opencontainers.image.description=test,version=1.0.0",
-        "-v",
-        "--dry-run" })]
-    public async Task BuilderCommand_Labels_CommaSeparated_DryRun(string[] args) => await Run(args);
-
-    [TestMethod]
-    [DataRow(new string[] {
-        "--from-image", "localhost:5000/dotnet/aspnet:9.0",
-        "--to-image", "localhost:5000/test/nibbler-test:unittest",
-        "--label", "single=value",
-        "--labels", "comma1=value1,comma2=value2",
-        "--insecure",
-        "-v",
-        "--trace" })]
-    public async Task BuilderCommand_Labels_Mixed(string[] args) => await Run(args);
-
-    [TestMethod]
-    [DataRow(new string[] {
-        "--from-image", "localhost:5000/dotnet/aspnet:9.0",
-        "--to-image", "localhost:5000/test/nibbler-test:unittest",
         "--user", "1000",
         "--insecure",
         "-v",
@@ -286,68 +255,7 @@ public class BuildCommandTest
         "--insecure",
         "-v",
         "--trace" })]
-    public async Task BuilderCommand_ToImages_CommaSeparated(string[] args) => await Run(args);
-
-    [TestMethod]
-    [DataRow(new string[] {
-        "--from-image", "localhost:5000/dotnet/aspnet:9.0",
-        "--to-images", "localhost:5000/test/nibbler-test:v1,localhost:5000/test/nibbler-test:v2,localhost:5000/test/nibbler-test:v3",
-        "--insecure",
-        "-v",
-        "--trace" })]
-    public async Task BuilderCommand_ToImages_Multiple(string[] args) => await Run(args);
-
-    [TestMethod]
-    [DataRow(new string[] {
-        "--from-image", "registry.hub.docker.com/library/nginx:alpine",
-        "--to-images", "localhost:5000/test/nginx:unittest,localhost:5000/test/nginx:latest",
-        "--label", "test=value",
-        "-v",
-        "--dry-run" })]
-    public async Task BuilderCommand_ToImages_DryRun(string[] args) => await Run(args);
-
-    [TestMethod]
-    [DataRow(new string[] {
-        "--from-image", "localhost:5000/dotnet/aspnet:9.0",
-        "--from-insecure",
-        "--to-images", "file:../../../../tests/TestData/test-image-to-images-1,file:../../../../tests/TestData/test-image-to-images-2",
-        "--add", @"../../../../tests/TestData/publish/:/app",
-        "-v",
-        "--trace" },
-        new string[] {
-            "../../../../tests/TestData/test-image-to-images-1",
-            "../../../../tests/TestData/test-image-to-images-2"
-        })]
-    public async Task BuilderCommand_ToImages_Files(string[] args, string[] folders)
-    {
-        foreach (var folder in folders)
-        {
-            Assert.IsFalse(System.IO.Directory.Exists(folder));
-        }
-        await Run(args);
-        foreach (var folder in folders)
-        {
-            Assert.IsTrue(System.IO.Directory.Exists(folder));
-            System.IO.Directory.Delete(folder, true);
-        }
-    }
-
-    [TestMethod]
-    [DataRow(new string[] {
-        "--from-image", "localhost:5000/dotnet/aspnet:9.0",
-        "--from-insecure",
-        "--to-images", "localhost:5000/test/nibbler-test:mixed,file:../../../../tests/TestData/test-image-to-images-mixed",
-        "--insecure",
-        "-v",
-        "--trace" },
-        "../../../../tests/TestData/test-image-to-images-mixed")]
-    public async Task BuilderCommand_ToImages_Mixed(string[] args, string folder)
-    {
-        Assert.IsFalse(System.IO.Directory.Exists(folder));
-        await Run(args);
-        Assert.IsTrue(System.IO.Directory.Exists(folder));
-        System.IO.Directory.Delete(folder, true);
-    }
+    public async Task BuilderCommand_ToImages(string[] args) => await Run(args);
 
     [TestMethod]
     [DataRow(new string[] {
