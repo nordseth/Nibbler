@@ -81,6 +81,77 @@ Options:
   --digest-file           Output image digest to file, optionally specify file
 ```
 
+## Login Command
+
+The `nibbler login` command allows you to authenticate with a container registry and save credentials to your Docker config file. This is useful for authenticating once and then using those credentials for multiple build operations.
+
+### Usage
+
+```
+nibbler login <registry> -u <username> -p <password> [--docker-config <path>]
+```
+
+### Arguments
+
+- `<registry>` - The registry server URL (e.g., `registry.hub.docker.com`, `ghcr.io`, `myregistry.azurecr.io`)
+
+### Options
+
+- `-u|--username` - Registry username (required)
+- `-p|--password` - Registry password or access token (required)
+- `--docker-config` - Path to docker config file (default: `~/.docker/config.json`)
+
+### Examples
+
+**Authenticate with Docker Hub:**
+```bash
+nibbler login registry.hub.docker.com -u myusername -p mypassword
+```
+
+**Authenticate with GitHub Container Registry:**
+```bash
+nibbler login ghcr.io -u myusername -p ghp_myaccesstoken
+```
+
+**Authenticate with Azure Container Registry:**
+```bash
+nibbler login myregistry.azurecr.io -u myusername -p mypassword
+```
+
+**Use a custom docker config file:**
+```bash
+nibbler login myregistry.com -u myusername -p mypassword --docker-config /path/to/config.json
+```
+
+### How it Works
+
+The `nibbler login` command:
+1. Encodes your username and password as a Base64 string
+2. Writes the credentials to your Docker config file (default: `~/.docker/config.json`)
+3. Stores credentials in the `auths` section under the registry URL
+
+Once authenticated, the `nibbler build` command will automatically use these credentials when pulling from or pushing to the registry. You don't need to specify `--from-username`/`--from-password` or `--to-username`/`--to-password` in your build commands.
+
+### Multiple Registries
+
+You can authenticate with multiple registries by running the login command multiple times with different registry URLs. Each set of credentials is stored separately in the config file:
+
+```bash
+nibbler login registry.hub.docker.com -u user1 -p pass1
+nibbler login ghcr.io -u user2 -p token2
+nibbler login myregistry.azurecr.io -u user3 -p pass3
+```
+
+### Docker Hub Special Case
+
+For Docker Hub, use `registry.hub.docker.com` as the registry URL. If credentials for `registry.hub.docker.com` aren't found, Nibbler will automatically fall back to checking for `https://index.docker.io/v1/` credentials.
+
+For library images (official Docker images), remember to include `library` in the image name:
+```bash
+nibbler login registry.hub.docker.com -u myusername -p mypassword
+nibbler --from-image registry.hub.docker.com/library/alpine:latest --to-image myregistry.com/myapp:latest
+```
+
 ## Example build script
 
 ```
