@@ -170,6 +170,46 @@ public class BuildCommandTest
     [DataRow(new string[] {
         "--from-image", "localhost:5000/dotnet/aspnet:9.0",
         "--to-image", "localhost:5000/test/nibbler-test:unittest",
+        "--labels", "key1=value1",
+        "--insecure",
+        "-v",
+        "--trace" })]
+    [DataRow(new string[] {
+        "--from-image", "localhost:5000/dotnet/aspnet:9.0",
+        "--to-image", "localhost:5000/test/nibbler-test:unittest",
+        "--labels", "key1=value1,key2=value2,key3=value3",
+        "--insecure",
+        "-v",
+        "--trace" })]
+    public async Task BuilderCommand_LabelsCsv(string[] args) => await Run(args);
+
+    [TestMethod]
+    [DataRow(new string[] {
+        "--from-image", "localhost:5000/dotnet/aspnet:9.0",
+        "--to-image", "localhost:5000/test/nibbler-test:unittest",
+        "--label", "single=label",
+        "--labels", "key1=value1,key2=value2",
+        "--insecure",
+        "-v",
+        "--trace" })]
+    public async Task BuilderCommand_Label_And_LabelsCsv_Combined(string[] args) => await Run(args);
+
+    [TestMethod]
+    [DataRow(new string[] {
+        "--from-image", "localhost:5000/dotnet/aspnet:9.0",
+        "--to-image", "localhost:5000/test/nibbler-test:unittest",
+        "--labels", "invalidlabelnoequalssign",
+        "--insecure" })]
+    public async Task BuilderCommand_LabelsCsv_InvalidFormat_Error(string[] args)
+    {
+        int result = await Program.Main(args);
+        Assert.AreNotEqual(0, result);
+    }
+
+    [TestMethod]
+    [DataRow(new string[] {
+        "--from-image", "localhost:5000/dotnet/aspnet:9.0",
+        "--to-image", "localhost:5000/test/nibbler-test:unittest",
         "--user", "1000",
         "--insecure",
         "-v",
@@ -299,6 +339,49 @@ public class BuildCommandTest
         }
     }
 
+
+    [TestMethod]
+    [DataRow(new string[] {
+        "--from-image", "localhost:5000/dotnet/aspnet:9.0",
+        "--from-insecure",
+        "--to-images", "file:../../../../tests/TestData/test-to-images",
+        "-v",
+        "--trace" },
+        "../../../../tests/TestData/test-to-images")]
+    public async Task BuilderCommand_ToImages_SingleFile(string[] args, string folder)
+    {
+        Assert.IsFalse(System.IO.Directory.Exists(folder));
+        await Run(args);
+        Assert.IsTrue(System.IO.Directory.Exists(folder));
+        System.IO.Directory.Delete(folder, true);
+    }
+
+    [TestMethod]
+    [DataRow(
+        new string[] {
+            "--from-image", "localhost:5000/dotnet/aspnet:9.0",
+            "--from-insecure",
+            "--to-images", "file:../../../../tests/TestData/test-to-images-1,file:../../../../tests/TestData/test-to-images-2",
+            "-v",
+            "--trace" },
+        new string[] {
+            "../../../../tests/TestData/test-to-images-1",
+            "../../../../tests/TestData/test-to-images-2" })]
+    public async Task BuilderCommand_ToImages_MultiFile(string[] args, string[] folders)
+    {
+        foreach (var folder in folders)
+        {
+            Assert.IsFalse(System.IO.Directory.Exists(folder));
+        }
+
+        await Run(args);
+
+        foreach (var folder in folders)
+        {
+            Assert.IsTrue(System.IO.Directory.Exists(folder));
+            System.IO.Directory.Delete(folder, true);
+        }
+    }
 
     public static async Task Run(string[] args)
     {
