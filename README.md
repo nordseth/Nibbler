@@ -93,6 +93,34 @@ This stores credentials in `~/.docker/config.json` (or a custom location) that w
 
 You can authenticate with multiple registries by running the login command multiple times.
 
+## GitHub Actions
+
+Nibbler is available as a GitHub Action for easy integration into CI/CD workflows. The [nibbler-action](https://github.com/nordseth/nibbler-action) provides automated setup and execution of Nibbler without manual installation.
+
+The action includes:
+- **Main action** - Build and push images using Nibbler
+- **Login sub-action** - Authenticate to container registries
+- **Metadata sub-action** - Generate image tags and labels from Git refs
+
+Example usage:
+```yaml
+- uses: nordseth/nibbler-action/login@v1
+  with:
+    registry: my-registry.com
+    username: ${{ secrets.REGISTRY_USERNAME }}
+    password: ${{ secrets.REGISTRY_PASSWORD }}
+
+- uses: nordseth/nibbler-action@v1
+  with:
+    from-image: mcr.microsoft.com/dotnet/aspnet:9.0
+    to-image: my-registry.com/repo/image:latest
+    add: artifacts:/home/app
+    workdir: /home/app
+    entrypoint: dotnet MyApp.dll
+```
+
+See the [nibbler-action repository](https://github.com/nordseth/nibbler-action) for more details and examples.
+
 ## Example build script
 
 ```
