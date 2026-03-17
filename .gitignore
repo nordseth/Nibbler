@@ -347,3 +347,4 @@ healthchecksdb
 
 ## added
 /assets/
+.claude/settings.local.json
