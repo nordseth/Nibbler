@@ -81,6 +81,18 @@ Options:
   --digest-file           Output image digest to file, optionally specify file
 ```
 
+## Login Command
+
+Nibbler supports a `login` command to store credentials in your docker config file.
+
+```
+nibbler login <registry> -u <username> -p <password> [--docker-config <path>]
+```
+
+This stores credentials in `~/.docker/config.json` (or a custom location) that will be used automatically by the build command, so you don't need to specify `--from-username`/`--from-password` or `--to-username`/`--to-password`.
+
+You can authenticate with multiple registries by running the login command multiple times.
+
 ## Example build script
 
 ```
@@ -115,3 +127,8 @@ nibbler \
 For Docker Hub use "registry.hub.docker.com" as registry.
 If using a _library_ image, remember to include "library" in the url.
 If credentials for "registry.hub.docker.com" isn't found in docker config, Nibbler will fallback on "https://index.docker.io/v1/" as source for credentials.
+
+Example login for Docker Hub:
+```bash
+nibbler login registry.hub.docker.com -u myusername -p mypassword
+```
