@@ -31,9 +31,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: create-release
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup .NET Core
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
       - name: create nuget
@@ -51,9 +51,9 @@ jobs:
       matrix:
         runtime: ['linux-x64', 'linux-arm64', 'linux-musl-x64', 'linux-musl-arm64']
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup .NET Core
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
       - name: setup arm64
@@ -116,9 +116,9 @@ jobs:
     runs-on: windows-latest
     needs: create-release
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup .NET Core
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
       - name: create aot exe
