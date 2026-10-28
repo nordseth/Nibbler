@@ -230,11 +230,7 @@ namespace Nibbler.Utils
                 queryString = queryString.Add("scope", scopes);
             }
 
-            if (false)
-            {
-                queryString = queryString.Add("offline_token", "true");
-                queryString = queryString.Add("client_id", _clientId ?? defaultClientID);
-            }
+            // todo: request offline_token (with client_id) here to get refresh tokens via the Basic token endpoint
 
             var request = new HttpRequestMessage(HttpMethod.Get, $"{realmUri.GetLeftPart(UriPartial.Path)}{queryString}");
             if (authConfig != null)
