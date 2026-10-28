@@ -38,13 +38,11 @@ public class RegistryUploadTest
         var image = await imageSource.LoadImageMetadata();
 
         var dest = new Registry(_registryLogger, _httpClientFactory.Create(new Uri(destRegistryUrl)));
-        var uploadUri = await dest.StartUpload(imageName);
-        Console.WriteLine($"uploadUri: {uploadUri}");
 
-        await CopyBlobIfNeeded(imageName, registry, dest, uploadUri, image.Manifest.config);
+        await CopyBlobIfNeeded(imageName, registry, dest, image.Manifest.config);
         foreach (var l in image.Manifest.layers)
         {
-            await CopyBlobIfNeeded(imageName, registry, dest, uploadUri, l);
+            await CopyBlobIfNeeded(imageName, registry, dest, l);
         }
 
         await dest.UploadManifest(imageName, imageTag, image.Manifest);
@@ -64,7 +62,7 @@ public class RegistryUploadTest
         }
     }
 
-    private static async Task CopyBlobIfNeeded(string imageName, Registry source, Registry dest, string uploadUri, ManifestV2Layer layer)
+    private static async Task CopyBlobIfNeeded(string imageName, Registry source, Registry dest, ManifestV2Layer layer)
     {
         var exist = await dest.BlobExists(imageName, layer.digest);
         Console.WriteLine($"{layer.digest} - {layer.mediaType} - {layer.size} = {exist.HasValue}");
@@ -72,6 +70,7 @@ public class RegistryUploadTest
         {
             Console.WriteLine($"Copying layer: {layer.digest} - {layer.mediaType} - {layer.size}");
             var blob = await source.DownloadBlob(imageName, layer.digest);
+            var uploadUri = await dest.StartUpload(imageName);
             await dest.UploadBlob(uploadUri, layer.digest, blob, layer.size);
             Console.WriteLine($"Done copying layer: {layer.digest} to {uploadUri}");
         }
