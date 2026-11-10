@@ -112,7 +112,7 @@ Example usage:
 
 - uses: nordseth/nibbler-action@v1
   with:
-    from-image: mcr.microsoft.com/dotnet/aspnet:9.0
+    from-image: mcr.microsoft.com/dotnet/aspnet:10.0
     to-image: my-registry.com/repo/image:latest
     add: artifacts:/home/app
     workdir: /home/app
@@ -126,7 +126,7 @@ See the [nibbler-action repository](https://github.com/nordseth/nibbler-action) 
 ```
 dotnet publish -o $PWD/artifacts
 nibbler \
-	--from-image mcr.microsoft.com/dotnet/aspnet:9.0 \
+	--from-image mcr.microsoft.com/dotnet/aspnet:10.0 \
 	--to-image my-registy.com/repo/image:latest  \
 	--add "artifacts:/home/app" \
 	--workdir /home/app \

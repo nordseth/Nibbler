@@ -40,13 +40,13 @@ public class BuildCommandTest
 
     [TestMethod]
     [DataRow(new string[] {
-        "--from-image", "localhost:5000/dotnet/aspnet:9.0",
+        "--from-image", "localhost:5000/dotnet/aspnet:10.0",
         "--to-image", "localhost:5000/test/nibbler-test:unittest",
         "--insecure",
         "-v",
         "--trace"})]
     [DataRow(new string[] {
-        "--from-image", "localhost:5000/dotnet/aspnet:9.0",
+        "--from-image", "localhost:5000/dotnet/aspnet:10.0",
         "--to-image", "localhost:5000/test/nibbler-test:unittest",
         "--insecure",
         "--debug"})]
@@ -54,7 +54,7 @@ public class BuildCommandTest
 
     [TestMethod]
     [DataRow(new string[] {
-        "--from-image", "localhost:5000/dotnet/aspnet:9.0",
+        "--from-image", "localhost:5000/dotnet/aspnet:10.0",
         "--to-image", "localhost:5000/test/nibbler-test:unittest",
         "--add", @"../../../../tests/TestData/publish/:/app",
         "--insecure",
@@ -64,7 +64,7 @@ public class BuildCommandTest
 
     [TestMethod]
     [DataRow(new string[] {
-        "--from-image", "localhost:5000/dotnet/aspnet:9.0",
+        "--from-image", "localhost:5000/dotnet/aspnet:10.0",
         "--to-image", "localhost:5000/test/nibbler-test:unittest",
         "--add", @"../../../../tests/TestData/publish/:/app:1001",
         "--insecure",
@@ -74,7 +74,7 @@ public class BuildCommandTest
 
     [TestMethod]
     [DataRow(new string[] {
-        "--from-image", "localhost:5000/dotnet/aspnet:9.0",
+        "--from-image", "localhost:5000/dotnet/aspnet:10.0",
         "--to-image", "localhost:5000/test/nibbler-test:unittest",
         "--add", @"../../../../tests/TestData/publish/:/app:1001:1001",
         "--insecure",
@@ -94,7 +94,7 @@ public class BuildCommandTest
 
     [TestMethod]
     [DataRow(new string[] {
-        "--from-image", "localhost:5000/dotnet/aspnet:9.0",
+        "--from-image", "localhost:5000/dotnet/aspnet:10.0",
         "--to-image", "localhost:5000/test/nibbler-test:unittest",
         "--add", @"../../../../tests/TestData/publish/:/app:1001:0:777",
         "--insecure",
@@ -104,7 +104,7 @@ public class BuildCommandTest
 
     [TestMethod]
     [DataRow(new string[] {
-        "--from-image", "localhost:5000/dotnet/aspnet:9.0",
+        "--from-image", "localhost:5000/dotnet/aspnet:10.0",
         "--to-image", "localhost:5000/test/nibbler-test:unittest",
         "--add", @"../../../../tests/TestData/publish/:/app:::777",
         "--insecure",
@@ -114,7 +114,7 @@ public class BuildCommandTest
 
     [TestMethod]
     [DataRow(new string[] {
-        "--from-image", "localhost:5000/dotnet/aspnet:9.0",
+        "--from-image", "localhost:5000/dotnet/aspnet:10.0",
         "--to-image", "localhost:5000/test/nibbler-test:unittest",
         "--add", @"../../../../tests/TestData/publish/:/app",
         "--add", @"../../../../tests/TestData/publish/:/app",
@@ -126,7 +126,7 @@ public class BuildCommandTest
 
     [TestMethod]
     [DataRow(new string[] {
-        "--from-image", "localhost:5000/dotnet/aspnet:9.0",
+        "--from-image", "localhost:5000/dotnet/aspnet:10.0",
         "--to-image", "localhost:5000/test/nibbler-test:unittest",
         "--add", @"../../../../tests/TestData/publish/:/app",
         "--addFolder", @"/app:1001:0:777",
@@ -137,7 +137,7 @@ public class BuildCommandTest
 
     [TestMethod]
     [DataRow(new string[] {
-        "--from-image", "localhost:5000/dotnet/aspnet:9.0",
+        "--from-image", "localhost:5000/dotnet/aspnet:10.0",
         "--to-image", "localhost:5000/test/nibbler-test:unittest",
         "--addFolder", @"/app:1001:0:777",
         "--insecure",
@@ -147,7 +147,7 @@ public class BuildCommandTest
 
     [TestMethod]
     [DataRow(new string[] {
-        "--from-image", "localhost:5000/dotnet/aspnet:9.0",
+        "--from-image", "localhost:5000/dotnet/aspnet:10.0",
         "--to-image", "localhost:5000/test/nibbler-test:unittest",
         "--workdir", "/root",
         "--insecure",
@@ -157,7 +157,7 @@ public class BuildCommandTest
 
     [TestMethod]
     [DataRow(new string[] {
-        "--from-image", "localhost:5000/dotnet/aspnet:9.0",
+        "--from-image", "localhost:5000/dotnet/aspnet:10.0",
         "--to-image", "localhost:5000/test/nibbler-test:unittest",
         "--label", "test1=test2",
         "--label", "test4=test4",
@@ -168,14 +168,14 @@ public class BuildCommandTest
 
     [TestMethod]
     [DataRow(new string[] {
-        "--from-image", "localhost:5000/dotnet/aspnet:9.0",
+        "--from-image", "localhost:5000/dotnet/aspnet:10.0",
         "--to-image", "localhost:5000/test/nibbler-test:unittest",
         "--labels", "key1=value1",
         "--insecure",
         "-v",
         "--trace" })]
     [DataRow(new string[] {
-        "--from-image", "localhost:5000/dotnet/aspnet:9.0",
+        "--from-image", "localhost:5000/dotnet/aspnet:10.0",
         "--to-image", "localhost:5000/test/nibbler-test:unittest",
         "--labels", "key1=value1,key2=value2,key3=value3",
         "--insecure",
@@ -185,7 +185,7 @@ public class BuildCommandTest
 
     [TestMethod]
     [DataRow(new string[] {
-        "--from-image", "localhost:5000/dotnet/aspnet:9.0",
+        "--from-image", "localhost:5000/dotnet/aspnet:10.0",
         "--to-image", "localhost:5000/test/nibbler-test:unittest",
         "--label", "single=label",
         "--labels", "key1=value1,key2=value2",
@@ -196,7 +196,7 @@ public class BuildCommandTest
 
     [TestMethod]
     [DataRow(new string[] {
-        "--from-image", "localhost:5000/dotnet/aspnet:9.0",
+        "--from-image", "localhost:5000/dotnet/aspnet:10.0",
         "--to-image", "localhost:5000/test/nibbler-test:unittest",
         "--labels", "invalidlabelnoequalssign",
         "--insecure" })]
@@ -208,7 +208,7 @@ public class BuildCommandTest
 
     [TestMethod]
     [DataRow(new string[] {
-        "--from-image", "localhost:5000/dotnet/aspnet:9.0",
+        "--from-image", "localhost:5000/dotnet/aspnet:10.0",
         "--to-image", "localhost:5000/test/nibbler-test:unittest",
         "--user", "1000",
         "--insecure",
@@ -218,7 +218,7 @@ public class BuildCommandTest
 
     [TestMethod]
     [DataRow(new string[] {
-        "--from-image", "localhost:5000/dotnet/aspnet:9.0",
+        "--from-image", "localhost:5000/dotnet/aspnet:10.0",
         "--to-image", "localhost:5000/test/nibbler-test:unittest",
         "--env", "ENV_VAR_1=test2",
         "--env", "ENV_VAR_2=test4",
@@ -229,7 +229,7 @@ public class BuildCommandTest
 
     [TestMethod]
     [DataRow(new string[] {
-        "--from-image", "localhost:5000/dotnet/aspnet:9.0",
+        "--from-image", "localhost:5000/dotnet/aspnet:10.0",
         "--to-image", "localhost:5000/test/nibbler-test:unittest",
         "--cmd", "dotnet TestData.dll",
         "--entrypoint", "dotnet TestData.dll",
@@ -240,7 +240,7 @@ public class BuildCommandTest
 
     [TestMethod]
     [DataRow(new string[] {
-        "--from-image", "localhost:5000/dotnet/aspnet:9.0",
+        "--from-image", "localhost:5000/dotnet/aspnet:10.0",
         "--to-image", "localhost:5000/test/nibbler-test:unittest",
         "--git-labels=../../../../",
         "--insecure",
@@ -250,7 +250,7 @@ public class BuildCommandTest
 
     [TestMethod]
     [DataRow(new string[] {
-        "--from-image", "localhost:5000/dotnet/aspnet:9.0",
+        "--from-image", "localhost:5000/dotnet/aspnet:10.0",
         "--to-image", "localhost:5000/test/nibbler-test:unittest",
         "--digest-file",
         "--insecure",
@@ -280,7 +280,7 @@ public class BuildCommandTest
 
     [TestMethod]
     [DataRow(new string[] {
-        "--from-image", "localhost:5000/dotnet/aspnet:9.0",
+        "--from-image", "localhost:5000/dotnet/aspnet:10.0",
         "--from-insecure",
         "--to-file", "../../../../tests/TestData/test-image",
         "--add", @"../../../../tests/TestData/publish/:/app",
@@ -298,7 +298,7 @@ public class BuildCommandTest
     [TestMethod]
     [DataRow(
         new string[] {
-            "--from-image", "localhost:5000/dotnet/aspnet:9.0",
+            "--from-image", "localhost:5000/dotnet/aspnet:10.0",
             "--from-insecure",
             "--to-file", "../../../../tests/TestData/test-image-1",
             "-v",
@@ -342,7 +342,7 @@ public class BuildCommandTest
 
     [TestMethod]
     [DataRow(new string[] {
-        "--from-image", "localhost:5000/dotnet/aspnet:9.0",
+        "--from-image", "localhost:5000/dotnet/aspnet:10.0",
         "--from-insecure",
         "--to-images", "file:../../../../tests/TestData/test-to-images",
         "-v",
@@ -359,7 +359,7 @@ public class BuildCommandTest
     [TestMethod]
     [DataRow(
         new string[] {
-            "--from-image", "localhost:5000/dotnet/aspnet:9.0",
+            "--from-image", "localhost:5000/dotnet/aspnet:10.0",
             "--from-insecure",
             "--to-images", "file:../../../../tests/TestData/test-to-images-1,file:../../../../tests/TestData/test-to-images-2",
             "-v",
