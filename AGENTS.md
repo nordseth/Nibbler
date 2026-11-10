@@ -100,14 +100,14 @@ CLI args → BuildCommand (parse/validate) → BuildRun (orchestrate)
 ### Project Layout
 
 - `Nibbler/` — main CLI: `Command/`, `Models/`, `Utils/`, plus `Image.cs`, `Archive.cs`, `Registry.cs`, source/dest implementations
-- `Nibbler.Test/` — MSTest unit tests; uses Moq; targets net10.0
-- `Nibbler.LinuxFileUtils/` — P/Invoke bindings for Linux file ownership (uid/gid); targets net10
+- `Nibbler.Test/` — MSTest unit tests; uses Moq; targets net11.0
+- `Nibbler.LinuxFileUtils/` — P/Invoke bindings for Linux file ownership (uid/gid); targets net10 and net11
 - `Nibbler.Aot/` — AOT compilation entry point placeholder
 - `tests/` — bash end-to-end scripts run in CI against a real registry
 
 ### Target framework
 
-`Nibbler` and `Nibbler.LinuxFileUtils` target net10.0 (`RollForward=major`). `Nibbler.Test` targets net10.0 only.
+`Nibbler` and `Nibbler.LinuxFileUtils` target net10.0 and net11.0 (`RollForward=major`). `Nibbler.Test` and `Nibbler.Aot` target net11.0.
 
 ### Authentication
 
