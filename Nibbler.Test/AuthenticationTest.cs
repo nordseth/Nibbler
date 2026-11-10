@@ -13,7 +13,7 @@ public class AuthenticationTest
     public async Task BuildCommand_RegistryBaseAndDestValidate()
     {
         var args = new[] {
-            "--from-image", "localhost:5000/dotnet/aspnet:9.0",
+            "--from-image", "localhost:5000/dotnet/aspnet:10.0",
             "--to-image", "localhost:5001/test/nibbler-test:unittest",
             "--insecure",
             "-v",

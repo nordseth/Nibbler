@@ -29,9 +29,9 @@ Most unit tests require a local registry at `localhost:5000` and generated test 
 docker run -d -p 5000:5000 --name nibbler-test-registry registry:2
 
 # 2. Seed it with required images
-docker pull mcr.microsoft.com/dotnet/aspnet:9.0
-docker tag mcr.microsoft.com/dotnet/aspnet:9.0 localhost:5000/dotnet/aspnet:9.0
-docker push localhost:5000/dotnet/aspnet:9.0
+docker pull mcr.microsoft.com/dotnet/aspnet:10.0
+docker tag mcr.microsoft.com/dotnet/aspnet:10.0 localhost:5000/dotnet/aspnet:10.0
+docker push localhost:5000/dotnet/aspnet:10.0
 
 docker pull hello-world:latest
 docker tag hello-world:latest localhost:5000/hello-world:latest
@@ -101,13 +101,13 @@ CLI args → BuildCommand (parse/validate) → BuildRun (orchestrate)
 
 - `Nibbler/` — main CLI: `Command/`, `Models/`, `Utils/`, plus `Image.cs`, `Archive.cs`, `Registry.cs`, source/dest implementations
 - `Nibbler.Test/` — MSTest unit tests; uses Moq; targets net10.0
-- `Nibbler.LinuxFileUtils/` — P/Invoke bindings for Linux file ownership (uid/gid); targets net8/9/10
+- `Nibbler.LinuxFileUtils/` — P/Invoke bindings for Linux file ownership (uid/gid); targets net10
 - `Nibbler.Aot/` — AOT compilation entry point placeholder
 - `tests/` — bash end-to-end scripts run in CI against a real registry
 
-### Multi-target
+### Target framework
 
-`Nibbler` and `Nibbler.LinuxFileUtils` target net8.0, net9.0, and net10.0 (`RollForward=major`). `Nibbler.Test` targets net10.0 only.
+`Nibbler` and `Nibbler.LinuxFileUtils` target net10.0 (`RollForward=major`). `Nibbler.Test` targets net10.0 only.
 
 ### Authentication
 
